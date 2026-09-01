@@ -314,6 +314,10 @@ if st.session_state.page == "settings":
             ("vehicle",       t("row_vehicle_morning", lang) + " / " + t("row_vehicle_noon", lang)),
             ("axis",          t("row_axis_morning", lang) + " / " + t("row_axis_noon", lang)),
             ("wait_spot",     t("row_wait_morning", lang) + " / " + t("row_wait_noon", lang)),
+            ("taxi_apt",          cfg.row_label("taxi_apt", lang)),
+            ("taxi_arrival",      cfg.row_label("taxi_arrival", lang)),
+            ("taxi_emb",          cfg.row_label("taxi_emb", lang)),
+            ("taxi_arrival_noon", cfg.row_label("taxi_arrival_noon", lang)),
             ("work_hours_weekday", t("row_work_hours", lang) + f" ({weekday_lbl})"),
             ("work_hours_friday",  t("row_work_hours", lang) + f" ({t('friday', lang)})"),
         ]
@@ -1227,10 +1231,17 @@ def render_row(rk: str):
                     index=AXIS_OPTIONS.index(cur) if cur in AXIS_OPTIONS else 0,
                     key=ck, label_visibility="collapsed")
 
-            elif rk in ("wait_morning","wait_noon","taxi_apt","taxi_arrival","taxi_emb","taxi_arrival_noon"):
+            elif rk in ("wait_morning","wait_noon"):
                 cur = day.get(rk,"")
                 day[rk] = st.selectbox("", WAIT_SPOT_OPTIONS,
                     index=WAIT_SPOT_OPTIONS.index(cur) if cur in WAIT_SPOT_OPTIONS else 0,
+                    key=ck, label_visibility="collapsed")
+
+            elif rk in ("taxi_apt","taxi_arrival","taxi_emb","taxi_arrival_noon"):
+                topts = cfg.options_with_blank(rk)
+                cur = day.get(rk,"")
+                day[rk] = st.selectbox("", topts,
+                    index=topts.index(cur) if cur in topts else 0,
                     key=ck, label_visibility="collapsed")
 
             elif rk in CUSTOM_ROW_MAP:

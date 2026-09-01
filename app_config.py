@@ -48,6 +48,10 @@ DEFAULTS = {
         "vehicle":       ["BLACK", "YELLOW"],
         "axis":          [f"{c}{n}" for c in "ABCD" for n in range(1, 6)],
         "wait_spot":     ["1", "2", "3", "4", "5"],
+        "taxi_apt":          ["1", "2", "3", "4", "5"],
+        "taxi_arrival":      ["1", "2", "3", "4", "5"],
+        "taxi_emb":          ["1", "2", "3", "4", "5"],
+        "taxi_arrival_noon": ["1", "2", "3", "4", "5"],
     },
     # Values with special meaning to auto-assign/validation. Editable so that
     # renaming an option in "options" doesn't silently break the logic.

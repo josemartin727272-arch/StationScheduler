@@ -277,8 +277,8 @@ def auto_assign_week_vehicles_udex(schedule: dict, history: dict = None) -> dict
         for k in chosen_theater_days:
             schedule[k]["theater"] = _least_used(theater_vals, history.get("theater", {}))
 
-    # Taxis: morning taxis only when vehicle_morning is special; noon likewise
-    taxi_vals = cfg.options("wait_spot")
+    # Taxis: morning taxis only when vehicle_morning is special; noon likewise.
+    # Each taxi row draws from its own option list.
     for k in keys:
         day = schedule[k]
         yellow_morning = day.get("vehicle_morning") == vehicle_special
@@ -287,14 +287,14 @@ def auto_assign_week_vehicles_udex(schedule: dict, history: dict = None) -> dict
         for field in ["taxi_apt", "taxi_arrival"]:
             if yellow_morning:
                 if not day.get(field):
-                    day[field] = _least_used(taxi_vals, history.get(field, {}))
+                    day[field] = _least_used(cfg.options(field), history.get(field, {}))
             else:
                 day[field] = ""
 
         for field in ["taxi_emb", "taxi_arrival_noon"]:
             if yellow_noon:
                 if not day.get(field):
-                    day[field] = _least_used(taxi_vals, history.get(field, {}))
+                    day[field] = _least_used(cfg.options(field), history.get(field, {}))
             else:
                 day[field] = ""
 
