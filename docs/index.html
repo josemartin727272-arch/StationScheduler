@@ -38,10 +38,10 @@ main{padding:12px;max-width:1200px;margin:0 auto}
 .btn:active{transform:scale(.97)}
 .btn.primary{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:600}
 .btn.warn{background:var(--danger);border-color:var(--danger);color:#fff}
-.btn.small{padding:6px 10px;min-height:36px;font-size:.85rem}
+.btn.small{padding:6px 12px;min-height:44px;font-size:.85rem}
 .btn:disabled{opacity:.4;cursor:default}
 input[type=date],input[type=text],input[type=number],select,textarea{
-  border:1px solid var(--border);border-radius:8px;padding:9px;background:#fff;min-height:42px}
+  border:1px solid var(--border);border-radius:8px;padding:9px;background:#fff;min-height:44px}
 textarea{width:100%;min-height:100px}
 h2{font-size:1.1rem;margin:6px 0 12px}
 h3{font-size:1rem;margin:14px 0 8px;color:var(--primary)}
@@ -105,6 +105,7 @@ table.stats th{background:#eef2f7}
 #printArea{display:none}
 @media print{
   body>header,body>main,#toast{display:none!important}
+  body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
   #printArea{display:block}
   #printArea table{border-collapse:collapse;width:100%;font-size:10px}
   #printArea th,#printArea td{border:1px solid #999;padding:3px 5px;text-align:center}
@@ -145,6 +146,7 @@ err_two_il:"שגיאה: שני עובדי IL בחופשה באותו יום",err
 warn_yellow:"אזהרה: מספר YELLOW הוא {n}, צריך {t} בשבוע",warn_udex_m:"אזהרה: UDEX בוקר הוא {n}, צריך {t}",
 warn_udex_t:"אזהרה: UDEX צהריים הוא {n}, צריך {t}",warn_theater:"אזהרה: תאטרון הוא {n}, צריך {t} בשבוע",
 err_emb_vac:"{e} שובץ ל-EMB IL אך הוא בחופשה",err_emb_other:"{e} שובץ ל-EMB IL אך הוא במשימת אחר",
+err_no_il:"אין עובד IL פנוי ל-EMB IL (חופשה + משימת אחר)",err_il_unavail:"כל עובדי IL לא זמינים — EMB IL חייב להיות ממולא בעובד PE",edit:"עדכן",row_updated:"השורה עודכנה",
 s_employees:"👤 עובדים ותקציבי חופשה",s_order:"↕️ סדר השורות",s_labels:"🏷️ תוויות שורות",s_options:"📝 אפשרויות בחירה",
 s_targets:"🎯 יעדים שבועיים",s_custom:"➕ שורות מותאמות אישית",
 il_emps:"עובדי IL",pe_emps:"עובדי PE",one_per_line:"ערך אחד בכל שורה",vac_budget:"תקציב חופשה שנתי (ימים)",
@@ -181,6 +183,7 @@ err_two_il:"Error: two IL workers on vacation same day",err_two_pe:"Error: two P
 warn_yellow:"Warning: YELLOW count is {n}, should be {t}/week",warn_udex_m:"Warning: morning UDEX is {n}, should be {t}",
 warn_udex_t:"Warning: noon UDEX is {n}, should be {t}",warn_theater:"Warning: theater is {n}, should be {t}/week",
 err_emb_vac:"{e} assigned to EMB IL but is on vacation",err_emb_other:"{e} assigned to EMB IL but has another task",
+err_no_il:"No IL employee available for EMB IL (vacation + other task)",err_il_unavail:"All IL employees unavailable — EMB IL must be filled by a PE employee",edit:"Update",row_updated:"Row updated",
 s_employees:"👤 Employees & vacation budgets",s_order:"↕️ Row order",s_labels:"🏷️ Row labels",s_options:"📝 Dropdown options",
 s_targets:"🎯 Weekly targets",s_custom:"➕ Custom rows",
 il_emps:"IL employees",pe_emps:"PE employees",one_per_line:"One value per line",vac_budget:"Annual vacation budget (days)",
@@ -217,6 +220,7 @@ err_two_il:"Error: dos trabajadores IL de vacaciones el mismo día",err_two_pe:"
 warn_yellow:"Advertencia: YELLOW es {n}, debe ser {t}/semana",warn_udex_m:"Advertencia: UDEX mañana es {n}, debe ser {t}",
 warn_udex_t:"Advertencia: UDEX mediodía es {n}, debe ser {t}",warn_theater:"Advertencia: teatro es {n}, debe ser {t}/semana",
 err_emb_vac:"{e} asignado a EMB IL pero está de vacaciones",err_emb_other:"{e} asignado a EMB IL pero tiene otra tarea",
+err_no_il:"Ningún empleado IL disponible para EMB IL (vacaciones + otra tarea)",err_il_unavail:"Todos los IL no disponibles — EMB IL debe cubrirse con un PE",edit:"Actualizar",row_updated:"Fila actualizada",
 s_employees:"👤 Empleados y presupuestos",s_order:"↕️ Orden de filas",s_labels:"🏷️ Etiquetas de filas",s_options:"📝 Opciones de listas",
 s_targets:"🎯 Metas semanales",s_custom:"➕ Filas personalizadas",
 il_emps:"Empleados IL",pe_emps:"Empleados PE",one_per_line:"Un valor por línea",vac_budget:"Presupuesto anual de vacaciones (días)",
@@ -527,6 +531,10 @@ function validate(){
       if(emb===day.vacation_il) errs.push({lvl:"err",msg:"❌ "+d+": "+t("err_emb_vac",{e:emb})});
       else if(emb===day.other_empl) errs.push({lvl:"err",msg:"❌ "+d+": "+t("err_emb_other",{e:emb})});
     }
+    const availIL=IL.filter(e=>e!==day.vacation_il&&e!==day.other_empl);
+    if(!availIL.length&&!emb) errs.push({lvl:"err",msg:"❌ "+d+": "+t("err_no_il")});
+    else if(!availIL.length&&emb&&!PE.includes(emb)&&IL.length)
+      errs.push({lvl:"err",msg:"❌ "+d+": "+t("err_il_unavail")});
   }
   if(yellow!==tg.yellow_per_week) errs.push({lvl:"warn",msg:t("warn_yellow",{n:yellow,t:tg.yellow_per_week})});
   if(um!==tg.udex_m) errs.push({lvl:"warn",msg:t("warn_udex_m",{n:um,t:tg.udex_m})});
@@ -691,14 +699,24 @@ function viewSettings(){
   if(!crs.length) h+=`<div class="hint">${t("no_custom")}</div>`;
   crs.forEach(r=>{
     const conf=S.pendingConfirm==="delrow_"+r.key;
-    h+=`<div class="row-flex" style="padding:6px 0;border-bottom:1px solid var(--border)">
-      <b>📌 ${esc((r.labels&&(r.labels[S.lang]||r.labels.he))||r.key)}</b>
-      <span class="chip">${r.input==="select"?t("type_select"):t("type_text")}</span>
-      ${r.input==="select"?`<span class="hint">${esc((r.options||[]).join(", "))}</span>`:""}
-      ${conf?`<span class="inline-confirm">${t("confirm_q")}
-        <button class="btn small warn" data-delrow-yes="${esc(r.key)}">✓</button>
-        <button class="btn small" data-cancel-confirm="1">✗</button></span>`
-      :`<button class="btn small warn" data-delrow="${esc(r.key)}">🗑 ${t("delete")}</button>`}
+    const lb=r.labels||{};
+    h+=`<div style="padding:8px 0;border-bottom:1px solid var(--border)">
+      <div class="row-flex"><b>📌 ${esc(lb[S.lang]||lb.he||r.key)}</b>
+        <span class="chip">${r.input==="select"?t("type_select"):t("type_text")}</span></div>
+      <div class="grid3" style="margin-top:6px">
+        <input data-cre="${esc(r.key)}" data-fld="he" value="${esc(lb.he||"")}" placeholder="${t("lbl_he")}">
+        <input data-cre="${esc(r.key)}" data-fld="en" value="${esc(lb.en||"")}" placeholder="${t("lbl_en")}">
+        <input data-cre="${esc(r.key)}" data-fld="es" value="${esc(lb.es||"")}" placeholder="${t("lbl_es")}">
+      </div>
+      ${r.input==="select"?`<label style="display:block;margin-top:6px">${t("row_opts")}
+        <textarea data-cre-opts="${esc(r.key)}" style="min-height:60px">${esc((r.options||[]).join("\n"))}</textarea></label>`:""}
+      <div class="row-flex" style="margin-top:6px">
+        <button class="btn small primary" data-crsave="${esc(r.key)}">💾 ${t("edit")}</button>
+        ${conf?`<span class="inline-confirm">${t("confirm_q")}
+          <button class="btn small warn" data-delrow-yes="${esc(r.key)}">✓</button>
+          <button class="btn small" data-cancel-confirm="1">✗</button></span>`
+        :`<button class="btn small warn" data-delrow="${esc(r.key)}">🗑 ${t("delete")}</button>`}
+      </div>
     </div>`;
   });
   h+=`</div></details>`;
@@ -735,7 +753,8 @@ function computeStats(schedules){
   const empC={}; emps.forEach(e=>{ empC[e]={emb_il:0,apt_il:0,emb_pe:0,apt_pe:0}; });
   const vac={}, oth={}; emps.forEach(e=>{vac[e]=0;oth[e]=0;});
   const fields=["entry","exit","arrival_point","theater","udex","vehicle_morning","axis_morning",
-    "wait_morning","vehicle_noon","axis_noon","wait_noon"];
+    "wait_morning","vehicle_noon","axis_noon","wait_noon"]
+    .concat(customRows().filter(r=>r.input==="select").map(r=>r.key));
   const fieldC={}; fields.forEach(f=>fieldC[f]={});
   let nd=0;
   schedules.forEach(days=>{ for(const dk in days){ const day=days[dk]; nd++;
@@ -980,6 +999,19 @@ function wireSettings(){
     saveConfig(); saveDraft(); toast("✅ "+t("row_added")); render();
     document.querySelectorAll("details.sect")[5].open=true;
   };
+  document.querySelectorAll("[data-crsave]").forEach(b=>b.onclick=()=>{
+    const key=b.dataset.crsave;
+    const row=CFG.custom_rows.find(r=>r.key===key);
+    if(!row) return;
+    row.labels=row.labels||{};
+    document.querySelectorAll(`[data-cre="${key}"]`).forEach(inp=>{
+      row.labels[inp.dataset.fld]=inp.value.trim();
+    });
+    const ta=document.querySelector(`[data-cre-opts="${key}"]`);
+    if(ta) row.options=ta.value.split("\n").map(s=>s.trim()).filter(Boolean);
+    saveConfig(); toast("✅ "+t("row_updated")); render();
+    document.querySelectorAll("details.sect")[5].open=true;
+  });
   document.querySelectorAll("[data-delrow]").forEach(b=>b.onclick=()=>{S.pendingConfirm="delrow_"+b.dataset.delrow;render();
     document.querySelectorAll("details.sect")[5].open=true;});
   document.querySelectorAll("[data-delrow-yes]").forEach(b=>b.onclick=()=>{

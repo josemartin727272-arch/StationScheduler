@@ -1,5 +1,5 @@
 /* Offline-first service worker: pre-cache the whole app, serve from cache. */
-const CACHE = "agenda-pwa-v1";
+const CACHE = "agenda-pwa-v2";
 const ASSETS = [
   "./",
   "./index.html",
