@@ -154,7 +154,7 @@ rename_warn:"שינוי שם עובד לא מעדכן סידורים שמורי�
 order_hint:"גרור (⠿) או השתמש בחצים — נשמר אוטומטית",
 save_settings:"💾 שמור הגדרות",settings_saved:"ההגדרות נשמרו",
 lbl_he:"עברית",lbl_en:"English",lbl_es:"Español",
-opt_escort:"ליווי",opt_vehicle:"סוג רכב",opt_axis:"ציר",opt_wait:"מקום המתנה / מוניות",
+opt_escort:"ליווי",opt_vehicle:"סוג רכב",opt_axis:"ציר",opt_wait:"מקום המתנה בוקר / צהריים",
 opt_wh_wd:"שעות עבודה (א'-ה')",opt_wh_fr:"שעות עבודה (שישי)",
 special_note:"ערכים עם משמעות בשיבוץ: חג, YELLOW, EMB-M/R-M, EMB-T/R-T — אם שינית אותם ברשימות עדכן גם כאן",
 sv_holiday:"ערך חג",sv_vehicle:"רכב מיוחד",sv_udex_m:"UDEX בוקר (מופרד בפסיק)",sv_udex_t:"UDEX צהריים (מופרד בפסיק)",
@@ -191,7 +191,7 @@ rename_warn:"Renaming an employee does not update archived schedules",
 order_hint:"Drag (⠿) or use the arrows — saved automatically",
 save_settings:"💾 Save settings",settings_saved:"Settings saved",
 lbl_he:"Hebrew",lbl_en:"English",lbl_es:"Spanish",
-opt_escort:"Escort",opt_vehicle:"Vehicle",opt_axis:"Axis",opt_wait:"Wait spot / taxis",
+opt_escort:"Escort",opt_vehicle:"Vehicle",opt_axis:"Axis",opt_wait:"Wait spot morning / noon",
 opt_wh_wd:"Work hours (Mon-Thu)",opt_wh_fr:"Work hours (Friday)",
 special_note:"Values with special meaning in auto-assign: חג, YELLOW, EMB-M/R-M, EMB-T/R-T — if renamed in the lists, update here too",
 sv_holiday:"Holiday value",sv_vehicle:"Special vehicle",sv_udex_m:"UDEX morning (comma-separated)",sv_udex_t:"UDEX noon (comma-separated)",
@@ -228,7 +228,7 @@ rename_warn:"Renombrar un empleado no actualiza horarios archivados",
 order_hint:"Arrastra (⠿) o usa las flechas — se guarda automáticamente",
 save_settings:"💾 Guardar configuración",settings_saved:"Configuración guardada",
 lbl_he:"Hebreo",lbl_en:"Inglés",lbl_es:"Español",
-opt_escort:"Escolta",opt_vehicle:"Vehículo",opt_axis:"Ruta",opt_wait:"Espera / taxis",
+opt_escort:"Escolta",opt_vehicle:"Vehículo",opt_axis:"Ruta",opt_wait:"Punta llegada mañana / mediodía",
 opt_wh_wd:"Horas (Lun-Jue)",opt_wh_fr:"Horas (Viernes)",
 special_note:"Valores con significado especial: חג, YELLOW, EMB-M/R-M, EMB-T/R-T — si los renombraste, actualízalos aquí también",
 sv_holiday:"Valor feriado",sv_vehicle:"Vehículo especial",sv_udex_m:"UDEX mañana (coma)",sv_udex_t:"UDEX mediodía (coma)",
@@ -262,7 +262,11 @@ const DEFAULT_CONFIG = {
     udex:["EMB-M","EMB-T","R-M","R-T"],
     vehicle:["BLACK","YELLOW"],
     axis: AXIS.slice(),
-    wait_spot:["1","2","3","4","5"]
+    wait_spot:["1","2","3","4","5"],
+    taxi_apt:["1","2","3","4","5"],
+    taxi_arrival:["1","2","3","4","5"],
+    taxi_emb:["1","2","3","4","5"],
+    taxi_arrival_noon:["1","2","3","4","5"]
   },
   special_values: {
     holiday:"חג", vehicle_special:"YELLOW",
@@ -281,8 +285,8 @@ const BASE_ROW_KEYS = ["work_hours","entry","exit","escort_morning","school","es
 const ROW_OPTS = {work_hours:null, entry:"entry", exit:"exit", escort_morning:"escort",
   escort_noon:"escort", arrival_point:"arrival_point", theater:"theater", udex:"udex",
   vehicle_morning:"vehicle", vehicle_noon:"vehicle", axis_morning:"axis", axis_noon:"axis",
-  wait_morning:"wait_spot", wait_noon:"wait_spot", taxi_apt:"wait_spot", taxi_arrival:"wait_spot",
-  taxi_emb:"wait_spot", taxi_arrival_noon:"wait_spot"};
+  wait_morning:"wait_spot", wait_noon:"wait_spot", taxi_apt:"taxi_apt", taxi_arrival:"taxi_arrival",
+  taxi_emb:"taxi_emb", taxi_arrival_noon:"taxi_arrival_noon"};
 const TEXT_ROWS = new Set(["school"]);
 const SECTIONS = {emb_il:"EMB", arrival_point:"◈", apt_il:"◈", vehicle_morning:"◈", vehicle_noon:"◈", vacation:"◈"};
 const HISTORY_FIELDS = ["entry","exit","emb_il","emb_pe","arrival_point","theater","apt_il","apt_pe",
@@ -501,11 +505,11 @@ function autoAssign(){
   let thNeed=tg.theater_per_week-keys.filter(k=>S.days[k].theater).length;
   while(thNeed-->0&&thFree.length&&thVals.length) S.days[thFree.shift()].theater=leastUsed(thVals,hist.theater||{});
 
-  /* taxis only on special-vehicle slots */
+  /* taxis only on special-vehicle slots — each taxi row has its own option list */
   keys.forEach(k=>{ const day=S.days[k];
     const ym=day.vehicle_morning===VS, yn=day.vehicle_noon===VS;
-    ["taxi_apt","taxi_arrival"].forEach(f=>{ day[f]=ym?(day[f]||leastUsed(waitVals,hist[f]||{})):""; });
-    ["taxi_emb","taxi_arrival_noon"].forEach(f=>{ day[f]=yn?(day[f]||leastUsed(waitVals,hist[f]||{})):""; });
+    ["taxi_apt","taxi_arrival"].forEach(f=>{ day[f]=ym?(day[f]||leastUsed(opts(f),hist[f]||{})):""; });
+    ["taxi_emb","taxi_arrival_noon"].forEach(f=>{ day[f]=yn?(day[f]||leastUsed(opts(f),hist[f]||{})):""; });
   });
   saveDraft(); render(); toast("⚡ ✓");
 }
@@ -668,6 +672,8 @@ function viewSettings(){
   const groups=[["entry",rowLabel("entry")],["exit",rowLabel("exit")],["escort",t("opt_escort")],
     ["arrival_point",rowLabel("arrival_point")],["theater",rowLabel("theater")],["udex","UDEX"],
     ["vehicle",t("opt_vehicle")],["axis",t("opt_axis")],["wait_spot",t("opt_wait")],
+    ["taxi_apt",rowLabel("taxi_apt")],["taxi_arrival",rowLabel("taxi_arrival")],
+    ["taxi_emb",rowLabel("taxi_emb")],["taxi_arrival_noon",rowLabel("taxi_arrival_noon")],
     ["work_hours_weekday",t("opt_wh_wd")],["work_hours_friday",t("opt_wh_fr")]];
   h+=`<details class="sect"><summary>${t("s_options")}</summary><div class="inner">
     <div class="hint">${t("one_per_line")}</div><div class="grid3">`;
