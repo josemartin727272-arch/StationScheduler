@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1F4E79">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>סידור עבודה 🚕</title>
+<style>
+:root{
+  --primary:#1F4E79; --primary-lt:#2E86C1; --accent:#FFC800;
+  --bg:#f4f6f9; --card:#ffffff; --text:#1c2733; --muted:#6b7a8c;
+  --border:#d7dee6; --danger:#c0392b; --ok:#1e8449; --warn:#b7950b;
+  --il:#D6E4F0; --pe:#FAD7A0; --yellow:#fff3bf; --vac:#fadbd8;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,"Segoe UI",Roboto,Arial,"Noto Sans Hebrew",sans-serif;font-size:16px}
+button,select,input,textarea{font:inherit;color:inherit}
+header{position:sticky;top:0;z-index:50;background:var(--primary);color:#fff;
+  display:flex;align-items:center;gap:8px;padding:10px 14px;flex-wrap:wrap;
+  box-shadow:0 2px 6px rgba(0,0,0,.25)}
+header h1{font-size:1.15rem;margin:0;flex:1;white-space:nowrap}
+nav{display:flex;gap:6px;flex-wrap:wrap}
+nav button{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);
+  color:#fff;border-radius:10px;padding:10px 14px;cursor:pointer;font-size:.95rem;min-height:44px}
+nav button.active{background:var(--accent);color:#222;border-color:var(--accent);font-weight:700}
+#langSel{border-radius:10px;padding:8px;border:none;min-height:44px}
+main{padding:12px;max-width:1200px;margin:0 auto}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;
+  padding:14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.row-flex{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.btn{border:1px solid var(--border);background:#fff;border-radius:10px;
+  padding:10px 16px;cursor:pointer;min-height:46px;font-size:.95rem}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--primary);border-color:var(--primary);color:#fff;font-weight:600}
+.btn.warn{background:var(--danger);border-color:var(--danger);color:#fff}
+.btn.small{padding:6px 10px;min-height:36px;font-size:.85rem}
+.btn:disabled{opacity:.4;cursor:default}
+input[type=date],input[type=text],input[type=number],select,textarea{
+  border:1px solid var(--border);border-radius:8px;padding:9px;background:#fff;min-height:42px}
+textarea{width:100%;min-height:100px}
+h2{font-size:1.1rem;margin:6px 0 12px}
+h3{font-size:1rem;margin:14px 0 8px;color:var(--primary)}
+.hint{color:var(--muted);font-size:.85rem;margin:4px 0 10px}
+/* schedule table */
+.tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:#fff}
+table.sched{border-collapse:collapse;width:100%;min-width:720px}
+table.sched th,table.sched td{border:1px solid var(--border);padding:4px;text-align:center}
+table.sched thead th{background:var(--primary);color:#fff;font-size:.85rem;padding:8px 4px;
+  position:sticky;top:0}
+table.sched td.label{background:#eef2f7;font-weight:600;font-size:.83rem;
+  text-align:start;padding:4px 8px;white-space:nowrap;position:sticky;inset-inline-start:0}
+table.sched select,table.sched input[type=text]{width:100%;min-width:92px;min-height:44px;
+  border:1px solid #e3e8ee;background:#fbfcfe}
+tr.section td{background:#dde5ee;color:#4a5a6d;font-size:.75rem;padding:3px;font-weight:600}
+td.cell-yellow select{background:var(--yellow)}
+td.cell-il select{background:var(--il)} td.cell-pe select{background:var(--pe)}
+.msg{border-radius:10px;padding:10px 12px;margin:8px 0;font-size:.92rem}
+.msg.err{background:#fdecea;color:var(--danger);border:1px solid #f5b7b1}
+.msg.warn{background:#fef9e7;color:#7d6608;border:1px solid #f7dc6f}
+.msg.ok{background:#eafaf1;color:var(--ok);border:1px solid #a9dfbf}
+/* settings */
+details.sect{border:1px solid var(--border);border-radius:12px;background:#fff;margin-bottom:10px}
+details.sect>summary{cursor:pointer;padding:14px;font-weight:700;color:var(--primary);
+  list-style:none;display:flex;align-items:center;gap:8px}
+details.sect>summary::after{content:"▾";margin-inline-start:auto;color:var(--muted)}
+details.sect[open]>summary::after{content:"▴"}
+details.sect>.inner{padding:0 14px 14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+@media(max-width:700px){.grid2,.grid3{grid-template-columns:1fr}}
+.lbl-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px}
+.lbl-row input{min-height:40px;font-size:.88rem}
+/* drag list */
+#orderList{list-style:none;margin:0;padding:0;user-select:none}
+#orderList li{display:flex;align-items:center;gap:10px;background:#fff;
+  border:1px solid var(--border);border-radius:10px;padding:8px 12px;margin-bottom:6px;
+  font-size:.92rem;touch-action:none}
+#orderList li.dragging{opacity:.5;border-style:dashed;background:#eef6ff}
+#orderList .handle{cursor:grab;font-size:1.2rem;color:var(--muted);padding:4px 8px}
+#orderList .updown{margin-inline-start:auto;display:flex;gap:4px}
+/* archive */
+.arch-item{display:flex;align-items:center;gap:8px;padding:10px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.arch-item:last-child{border-bottom:none}
+.arch-item .wk{font-weight:600;flex:1;min-width:130px}
+/* stats */
+table.stats{border-collapse:collapse;width:100%;font-size:.88rem;margin-bottom:14px}
+table.stats th,table.stats td{border:1px solid var(--border);padding:6px 8px;text-align:center}
+table.stats th{background:#eef2f7}
+.bar{background:#e8eef5;border-radius:6px;height:14px;overflow:hidden;min-width:70px}
+.bar>i{display:block;height:100%;background:var(--primary-lt)}
+.chip{display:inline-block;background:#eef2f7;border-radius:8px;padding:2px 8px;margin:2px;font-size:.85rem}
+#toast{position:fixed;bottom:20px;inset-inline-start:50%;transform:translateX(-50%);
+  background:#222;color:#fff;padding:12px 22px;border-radius:12px;opacity:0;
+  transition:opacity .3s;z-index:99;pointer-events:none;max-width:90vw;text-align:center}
+[dir=ltr] #toast{transform:translateX(-50%)}
+#toast.show{opacity:.95}
+.inline-confirm{display:inline-flex;gap:6px;align-items:center;background:#fdecea;
+  border-radius:10px;padding:4px 8px}
+/* print */
+#printArea{display:none}
+@media print{
+  body>header,body>main,#toast{display:none!important}
+  #printArea{display:block}
+  #printArea table{border-collapse:collapse;width:100%;font-size:10px}
+  #printArea th,#printArea td{border:1px solid #999;padding:3px 5px;text-align:center}
+  #printArea th{background:#ddd}
+  #printArea td.label{text-align:start;font-weight:bold;background:#f0f0f0}
+  #printArea td.y{background:#fff3bf}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>🚕 <span id="hTitle"></span></h1>
+  <nav id="nav"></nav>
+  <select id="langSel">
+    <option value="he">עברית</option><option value="en">English</option><option value="es">Español</option>
+  </select>
+</header>
+<main id="app"></main>
+<div id="printArea"></div>
+<div id="toast"></div>
+
+<script>
+"use strict";
+/* ═══════════════ i18n ═══════════════ */
+const I18N = {
+he:{app_title:"סידור עבודה שבועי",nav_sched:"📋 סידור",nav_settings:"⚙️ הגדרות",nav_archive:"📁 ארכיון",nav_stats:"📊 סטטיסטיקה",
+week_start:"תחילת שבוע",generate:"צור סידור",auto_assign:"⚡ שיבוץ אוטומטי",save:"💾 שמור",export_excel:"📤 ייצוא Excel",print:"🖨️ הדפסה",
+saved:"הסידור נשמר בארכיון",valid:"הסידור תקין ✓",replace_q:"קיים סידור שמור לשבוע זה — להחליף?",yes:"כן",no:"ביטול",
+row_dates:"תאריכים",row_days:"ימים",row_work_hours:"שעות עבודה",row_entry:"כניסה",row_exit:"יציאה",
+row_escort_morning:"ליווי בוקר",row_school:"בית ספר",row_escort_noon:"ליווי צהריים",row_emb_il:"EMB IL",row_emb_pe:"EMB PE",
+row_other_empl:"אחר",row_arrival_point:"נקודת הגעה",row_theater:"תאטרון",row_udex:"UDEX",row_apt_il:"דירה IL",row_apt_pe:"דירה PE",
+row_vehicle_morning:"סוג רכב בוקר",row_axis_morning:"ציר בוקר",row_wait_morning:"מקום המתנה בוקר",
+row_taxi_apt:"מונית מיוחדת לדירה",row_taxi_arrival:"מונית מיוחדת הגעה",row_vehicle_noon:"סוג רכב צהריים",
+row_axis_noon:"ציר צהריים",row_wait_noon:"מקום המתנה צהריים",row_taxi_emb:"מונית מיוחדת EMB",
+row_taxi_arrival_noon:"מונית מיוחדת הגעה צהריים",row_vacation:"חופשות",
+monday:"שני",tuesday:"שלישי",wednesday:"רביעי",thursday:"חמישי",friday:"שישי",
+err_two_il:"שגיאה: שני עובדי IL בחופשה באותו יום",err_two_pe:"שגיאה: שני עובדי PE בחופשה באותו יום",
+warn_yellow:"אזהרה: מספר YELLOW הוא {n}, צריך {t} בשבוע",warn_udex_m:"אזהרה: UDEX בוקר הוא {n}, צריך {t}",
+warn_udex_t:"אזהרה: UDEX צהריים הוא {n}, צריך {t}",warn_theater:"אזהרה: תאטרון הוא {n}, צריך {t} בשבוע",
+err_emb_vac:"{e} שובץ ל-EMB IL אך הוא בחופשה",err_emb_other:"{e} שובץ ל-EMB IL אך הוא במשימת אחר",
+s_employees:"👤 עובדים ותקציבי חופשה",s_order:"↕️ סדר השורות",s_labels:"🏷️ תוויות שורות",s_options:"📝 אפשרויות בחירה",
+s_targets:"🎯 יעדים שבועיים",s_custom:"➕ שורות מותאמות אישית",
+il_emps:"עובדי IL",pe_emps:"עובדי PE",one_per_line:"ערך אחד בכל שורה",vac_budget:"תקציב חופשה שנתי (ימים)",
+rename_warn:"שינוי שם עובד לא מעדכן סידורים שמורים בארכיון",
+order_hint:"גרור (⠿) או השתמש בחצים — נשמר אוטומטית",
+save_settings:"💾 שמור הגדרות",settings_saved:"ההגדרות נשמרו",
+lbl_he:"עברית",lbl_en:"English",lbl_es:"Español",
+opt_escort:"ליווי",opt_vehicle:"סוג רכב",opt_axis:"ציר",opt_wait:"מקום המתנה / מוניות",
+opt_wh_wd:"שעות עבודה (א'-ה')",opt_wh_fr:"שעות עבודה (שישי)",
+special_note:"ערכים עם משמעות בשיבוץ: חג, YELLOW, EMB-M/R-M, EMB-T/R-T — אם שינית אותם ברשימות עדכן גם כאן",
+sv_holiday:"ערך חג",sv_vehicle:"רכב מיוחד",sv_udex_m:"UDEX בוקר (מופרד בפסיק)",sv_udex_t:"UDEX צהריים (מופרד בפסיק)",
+tg_yellow:"רכבי YELLOW בשבוע",tg_udex_m:"UDEX בוקר בשבוע",tg_udex_t:"UDEX צהריים בשבוע",tg_theater:"תאטרון בשבוע",
+add_row:"הוסף שורה",row_name:"שם השורה",input_type:"סוג קלט",type_select:"רשימת בחירה",type_text:"טקסט חופשי",
+row_opts:"אפשרויות (שורה לכל ערך)",delete:"מחק",row_added:"השורה נוספה",row_deleted:"השורה נמחקה",name_required:"חובה שם בעברית",
+no_custom:"אין שורות מותאמות עדיין",confirm_q:"בטוח?",
+arch_title:"סידורים שמורים",arch_empty:"אין סידורים שמורים עדיין",load:"טען",loaded:"הסידור נטען",deleted:"נמחק",
+st_period:"תקופה",st_week:"שבוע נוכחי",st_month:"חודשי",st_year:"שנתי",st_no_data:"אין נתונים לתקופה זו",
+st_employees:"חלוקת עובדים",st_vacation:"ניצול תקציב חופשה",st_fields:"חלוקת ערכים",st_weeks:"שבועות",st_days:"ימים",
+st_used:"נוצל",st_budget:"תקציב",st_left:"נותר",st_other:"אחר",st_role_emb_il:"EMB IL",st_role_apt_il:"דירה IL",
+st_role_emb_pe:"EMB PE",st_role_apt_pe:"דירה PE",st_vac_col:"חופשה",
+fri6:"‏6ש",offline_ready:"האפליקציה מוכנה לעבודה ללא אינטרנט"},
+en:{app_title:"Weekly Work Schedule",nav_sched:"📋 Schedule",nav_settings:"⚙️ Settings",nav_archive:"📁 Archive",nav_stats:"📊 Statistics",
+week_start:"Week start",generate:"New Schedule",auto_assign:"⚡ Auto Assign",save:"💾 Save",export_excel:"📤 Export Excel",print:"🖨️ Print",
+saved:"Schedule saved to archive",valid:"Schedule is valid ✓",replace_q:"A schedule exists for this week — replace?",yes:"Yes",no:"Cancel",
+row_dates:"Dates",row_days:"Days",row_work_hours:"Work Hours",row_entry:"Entry",row_exit:"Exit",
+row_escort_morning:"Morning Escort",row_school:"School",row_escort_noon:"Noon Escort",row_emb_il:"EMB IL",row_emb_pe:"EMB PE",
+row_other_empl:"Other",row_arrival_point:"Arrival Point",row_theater:"Theater",row_udex:"UDEX",row_apt_il:"Apartment IL",row_apt_pe:"Apartment PE",
+row_vehicle_morning:"Morning Vehicle",row_axis_morning:"Morning Axis",row_wait_morning:"Morning Wait Spot",
+row_taxi_apt:"Special Taxi Apartment",row_taxi_arrival:"Special Taxi Arrival",row_vehicle_noon:"Noon Vehicle",
+row_axis_noon:"Noon Axis",row_wait_noon:"Noon Wait Spot",row_taxi_emb:"Special Taxi EMB",
+row_taxi_arrival_noon:"Special Taxi Arrival Noon",row_vacation:"Vacations",
+monday:"Mon",tuesday:"Tue",wednesday:"Wed",thursday:"Thu",friday:"Fri",
+err_two_il:"Error: two IL workers on vacation same day",err_two_pe:"Error: two PE workers on vacation same day",
+warn_yellow:"Warning: YELLOW count is {n}, should be {t}/week",warn_udex_m:"Warning: morning UDEX is {n}, should be {t}",
+warn_udex_t:"Warning: noon UDEX is {n}, should be {t}",warn_theater:"Warning: theater is {n}, should be {t}/week",
+err_emb_vac:"{e} assigned to EMB IL but is on vacation",err_emb_other:"{e} assigned to EMB IL but has another task",
+s_employees:"👤 Employees & vacation budgets",s_order:"↕️ Row order",s_labels:"🏷️ Row labels",s_options:"📝 Dropdown options",
+s_targets:"🎯 Weekly targets",s_custom:"➕ Custom rows",
+il_emps:"IL employees",pe_emps:"PE employees",one_per_line:"One value per line",vac_budget:"Annual vacation budget (days)",
+rename_warn:"Renaming an employee does not update archived schedules",
+order_hint:"Drag (⠿) or use the arrows — saved automatically",
+save_settings:"💾 Save settings",settings_saved:"Settings saved",
+lbl_he:"Hebrew",lbl_en:"English",lbl_es:"Spanish",
+opt_escort:"Escort",opt_vehicle:"Vehicle",opt_axis:"Axis",opt_wait:"Wait spot / taxis",
+opt_wh_wd:"Work hours (Mon-Thu)",opt_wh_fr:"Work hours (Friday)",
+special_note:"Values with special meaning in auto-assign: חג, YELLOW, EMB-M/R-M, EMB-T/R-T — if renamed in the lists, update here too",
+sv_holiday:"Holiday value",sv_vehicle:"Special vehicle",sv_udex_m:"UDEX morning (comma-separated)",sv_udex_t:"UDEX noon (comma-separated)",
+tg_yellow:"YELLOW vehicles per week",tg_udex_m:"Morning UDEX per week",tg_udex_t:"Noon UDEX per week",tg_theater:"Theater per week",
+add_row:"Add row",row_name:"Row name",input_type:"Input type",type_select:"Dropdown",type_text:"Free text",
+row_opts:"Options (one per line)",delete:"Delete",row_added:"Row added",row_deleted:"Row deleted",name_required:"Hebrew name required",
+no_custom:"No custom rows yet",confirm_q:"Sure?",
+arch_title:"Saved schedules",arch_empty:"No saved schedules yet",load:"Load",loaded:"Schedule loaded",deleted:"Deleted",
+st_period:"Period",st_week:"Current week",st_month:"Monthly",st_year:"Yearly",st_no_data:"No data for this period",
+st_employees:"Employee distribution",st_vacation:"Vacation budget usage",st_fields:"Value distribution",st_weeks:"weeks",st_days:"days",
+st_used:"Used",st_budget:"Budget",st_left:"Left",st_other:"Other",st_role_emb_il:"EMB IL",st_role_apt_il:"Apt IL",
+st_role_emb_pe:"EMB PE",st_role_apt_pe:"Apt PE",st_vac_col:"Vacation",
+fri6:"6h",offline_ready:"App is ready for offline use"},
+es:{app_title:"Horario Semanal de Trabajo",nav_sched:"📋 Horario",nav_settings:"⚙️ Configuración",nav_archive:"📁 Archivo",nav_stats:"📊 Estadísticas",
+week_start:"Inicio de semana",generate:"Nuevo Horario",auto_assign:"⚡ Asignación Automática",save:"💾 Guardar",export_excel:"📤 Exportar Excel",print:"🖨️ Imprimir",
+saved:"Horario guardado en archivo",valid:"El horario es válido ✓",replace_q:"Existe un horario para esta semana — ¿reemplazar?",yes:"Sí",no:"Cancelar",
+row_dates:"Fechas",row_days:"Días",row_work_hours:"Horas de Trabajo",row_entry:"Ingreso",row_exit:"Salida",
+row_escort_morning:"Escolta Mañana",row_school:"Colegio",row_escort_noon:"Escolta Mediodía",row_emb_il:"EMB IL",row_emb_pe:"EMB PE",
+row_other_empl:"Otro",row_arrival_point:"Punto de Llegada",row_theater:"Teatro",row_udex:"UDEX",row_apt_il:"R IL",row_apt_pe:"R PE",
+row_vehicle_morning:"Vehículo Mañana",row_axis_morning:"Ruta Mañana",row_wait_morning:"Punta Llegada Mañana",
+row_taxi_apt:"Taxi R",row_taxi_arrival:"Taxi Llegada",row_vehicle_noon:"Vehículo Mediodía",
+row_axis_noon:"Ruta Mediodía",row_wait_noon:"Punta Llegada Mediodía",row_taxi_emb:"Taxi Emb",
+row_taxi_arrival_noon:"Taxi Llegada Mediodía",row_vacation:"Vacaciones",
+monday:"Lun",tuesday:"Mar",wednesday:"Mié",thursday:"Jue",friday:"Vie",
+err_two_il:"Error: dos trabajadores IL de vacaciones el mismo día",err_two_pe:"Error: dos trabajadores PE de vacaciones el mismo día",
+warn_yellow:"Advertencia: YELLOW es {n}, debe ser {t}/semana",warn_udex_m:"Advertencia: UDEX mañana es {n}, debe ser {t}",
+warn_udex_t:"Advertencia: UDEX mediodía es {n}, debe ser {t}",warn_theater:"Advertencia: teatro es {n}, debe ser {t}/semana",
+err_emb_vac:"{e} asignado a EMB IL pero está de vacaciones",err_emb_other:"{e} asignado a EMB IL pero tiene otra tarea",
+s_employees:"👤 Empleados y presupuestos",s_order:"↕️ Orden de filas",s_labels:"🏷️ Etiquetas de filas",s_options:"📝 Opciones de listas",
+s_targets:"🎯 Metas semanales",s_custom:"➕ Filas personalizadas",
+il_emps:"Empleados IL",pe_emps:"Empleados PE",one_per_line:"Un valor por línea",vac_budget:"Presupuesto anual de vacaciones (días)",
+rename_warn:"Renombrar un empleado no actualiza horarios archivados",
+order_hint:"Arrastra (⠿) o usa las flechas — se guarda automáticamente",
+save_settings:"💾 Guardar configuración",settings_saved:"Configuración guardada",
+lbl_he:"Hebreo",lbl_en:"Inglés",lbl_es:"Español",
+opt_escort:"Escolta",opt_vehicle:"Vehículo",opt_axis:"Ruta",opt_wait:"Espera / taxis",
+opt_wh_wd:"Horas (Lun-Jue)",opt_wh_fr:"Horas (Viernes)",
+special_note:"Valores con significado especial: חג, YELLOW, EMB-M/R-M, EMB-T/R-T — si los renombraste, actualízalos aquí también",
+sv_holiday:"Valor feriado",sv_vehicle:"Vehículo especial",sv_udex_m:"UDEX mañana (coma)",sv_udex_t:"UDEX mediodía (coma)",
+tg_yellow:"Vehículos YELLOW por semana",tg_udex_m:"UDEX mañana por semana",tg_udex_t:"UDEX mediodía por semana",tg_theater:"Teatro por semana",
+add_row:"Agregar fila",row_name:"Nombre de fila",input_type:"Tipo de entrada",type_select:"Lista",type_text:"Texto libre",
+row_opts:"Opciones (una por línea)",delete:"Eliminar",row_added:"Fila agregada",row_deleted:"Fila eliminada",name_required:"Nombre en hebreo obligatorio",
+no_custom:"Aún no hay filas personalizadas",confirm_q:"¿Seguro?",
+arch_title:"Horarios guardados",arch_empty:"No hay horarios guardados",load:"Cargar",loaded:"Horario cargado",deleted:"Eliminado",
+st_period:"Período",st_week:"Semana actual",st_month:"Mensual",st_year:"Anual",st_no_data:"Sin datos para este período",
+st_employees:"Distribución de empleados",st_vacation:"Uso de vacaciones",st_fields:"Distribución de valores",st_weeks:"semanas",st_days:"días",
+st_used:"Usado",st_budget:"Presupuesto",st_left:"Restante",st_other:"Otro",st_role_emb_il:"EMB IL",st_role_apt_il:"R IL",
+st_role_emb_pe:"EMB PE",st_role_apt_pe:"R PE",st_vac_col:"Vacaciones",
+fri6:"6h",offline_ready:"La aplicación está lista para uso sin conexión"}
+};
+
+/* ═══════════════ default config (mirrors ~/Agenda app_config.py) ═══════════════ */
+const AXIS = [];
+for (const c of "ABCD") for (let n=1;n<=5;n++) AXIS.push(c+n);
+const DEFAULT_CONFIG = {
+  schema_version: 1,
+  employees: { il: ["LEON","CUY"], pe: ["HALCON","CHCHORRO","BUHO"] },
+  vacation_budget: { LEON:14, CUY:14, HALCON:30, CHCHORRO:30, BUHO:30 },
+  options: {
+    work_hours_weekday: ["7:30-16:00","8:00-16:30","8:30-17:00"],
+    work_hours_friday:  ["7:30-13:30","8:00-14:00","8:30-14:30"],
+    entry: ["10","13","10-T","13-D","SPLIT","חג"],
+    exit:  ["10","13","13-T","10-D","SPLIT","חג"],
+    escort:["200","201","300","301","400","500"],
+    arrival_point:["CHILE","BRAZIL","COLOMBIA","BOLIVIA"],
+    theater:["משקפת","רדיו","תמונות"],
+    udex:["EMB-M","EMB-T","R-M","R-T"],
+    vehicle:["BLACK","YELLOW"],
+    axis: AXIS.slice(),
+    wait_spot:["1","2","3","4","5"]
+  },
+  special_values: {
+    holiday:"חג", vehicle_special:"YELLOW",
+    udex_morning:["EMB-M","R-M"], udex_noon:["EMB-T","R-T"]
+  },
+  targets: { yellow_per_week:4, udex_m:3, udex_t:2, theater_per_week:3 },
+  row_order: [],
+  row_labels: {},
+  custom_rows: []
+};
+const BASE_ROW_KEYS = ["work_hours","entry","exit","escort_morning","school","escort_noon",
+  "emb_il","emb_pe","other_empl","arrival_point","theater","udex","apt_il","apt_pe",
+  "vehicle_morning","axis_morning","wait_morning","taxi_apt","taxi_arrival",
+  "vehicle_noon","axis_noon","wait_noon","taxi_emb","taxi_arrival_noon","vacation"];
+/* which config option list feeds each select row */
+const ROW_OPTS = {work_hours:null, entry:"entry", exit:"exit", escort_morning:"escort",
+  escort_noon:"escort", arrival_point:"arrival_point", theater:"theater", udex:"udex",
+  vehicle_morning:"vehicle", vehicle_noon:"vehicle", axis_morning:"axis", axis_noon:"axis",
+  wait_morning:"wait_spot", wait_noon:"wait_spot", taxi_apt:"wait_spot", taxi_arrival:"wait_spot",
+  taxi_emb:"wait_spot", taxi_arrival_noon:"wait_spot"};
+const TEXT_ROWS = new Set(["school"]);
+const SECTIONS = {emb_il:"EMB", arrival_point:"◈", apt_il:"◈", vehicle_morning:"◈", vehicle_noon:"◈", vacation:"◈"};
+const HISTORY_FIELDS = ["entry","exit","emb_il","emb_pe","arrival_point","theater","apt_il","apt_pe",
+  "axis_morning","axis_noon","wait_morning","wait_noon","taxi_apt","taxi_arrival",
+  "vehicle_morning","vehicle_noon","udex","taxi_emb","taxi_arrival_noon"];
+
+/* ═══════════════ storage ═══════════════ */
+const LS = {config:"agenda_config", archive:"agenda_archive", draft:"agenda_draft", lang:"agenda_lang"};
+function deepMerge(base, over){
+  for (const k in over){
+    if (over[k] && typeof over[k]==="object" && !Array.isArray(over[k]) &&
+        base[k] && typeof base[k]==="object" && !Array.isArray(base[k])) deepMerge(base[k], over[k]);
+    else base[k]=over[k];
+  }
+  return base;
+}
+function loadConfig(){
+  const cfg = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+  try{ const u = JSON.parse(localStorage.getItem(LS.config)||"{}"); deepMerge(cfg,u); }catch(e){}
+  return cfg;
+}
+function saveConfig(){ localStorage.setItem(LS.config, JSON.stringify(CFG)); toast(t("settings_saved")); }
+function loadArchive(){ try{ return JSON.parse(localStorage.getItem(LS.archive)||"{}"); }catch(e){ return {}; } }
+function saveArchive(a){ localStorage.setItem(LS.archive, JSON.stringify(a)); }
+
+/* ═══════════════ state ═══════════════ */
+let CFG = loadConfig();
+let S = {
+  lang: localStorage.getItem(LS.lang)||"he",
+  screen: "sched",
+  weekStart: nextMonday(new Date()),
+  days: null,          // {iso: {field:value}}
+  statsTab: "week", statsMonth:"", statsYear:"",
+  pendingConfirm: null // key for inline confirms
+};
+(function restoreDraft(){
+  try{
+    const d = JSON.parse(localStorage.getItem(LS.draft)||"null");
+    if (d && d.weekStart && d.days){ S.weekStart=d.weekStart; S.days=d.days; }
+  }catch(e){}
+})();
+function saveDraft(){ localStorage.setItem(LS.draft, JSON.stringify({weekStart:S.weekStart, days:S.days})); }
+
+/* ═══════════════ helpers ═══════════════ */
+function t(key,vars){ let s=(I18N[S.lang]&&I18N[S.lang][key])||I18N.he[key]||key;
+  if(vars) for(const k in vars) s=s.replace("{"+k+"}",vars[k]); return s; }
+function esc(s){ return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function toast(msg){ const el=document.getElementById("toast"); el.textContent=msg;
+  el.classList.add("show"); clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove("show"),2200); }
+function nextMonday(d){ const x=new Date(d); const diff=(8-x.getDay())%7||7; x.setDate(x.getDate()+diff);
+  return iso(x); }
+function snapMonday(isoStr){ const x=new Date(isoStr+"T12:00:00"); const dow=(x.getDay()+6)%7; x.setDate(x.getDate()-dow); return iso(x); }
+function iso(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function addDays(isoStr,n){ const x=new Date(isoStr+"T12:00:00"); x.setDate(x.getDate()+n); return iso(x); }
+function fmtDM(isoStr){ const p=isoStr.split("-"); return p[2]+"/"+p[1]; }
+function dayName(isoStr){ const names=["monday","tuesday","wednesday","thursday","friday"];
+  const dow=(new Date(isoStr+"T12:00:00").getDay()+6)%7; return t(names[dow]||"monday"); }
+function empsIL(){ return CFG.employees.il.slice(); }
+function empsPE(){ return CFG.employees.pe.slice(); }
+function allEmps(){ return empsIL().concat(empsPE()); }
+function opts(name){ return (CFG.options[name]||[]).filter(Boolean); }
+function customRows(){ return (CFG.custom_rows||[]).filter(r=>r&&r.key); }
+function customKeys(){ return customRows().map(r=>r.key); }
+function reorderableKeys(){
+  const natural = BASE_ROW_KEYS.concat(customKeys());
+  const order = (CFG.row_order||[]).filter(k=>natural.includes(k));
+  return order.concat(natural.filter(k=>!order.includes(k)));
+}
+function rowLabel(key, lang){
+  lang = lang||S.lang;
+  const ov=(CFG.row_labels||{})[key];
+  if (ov && ov[lang]) return ov[lang];
+  const cr=customRows().find(r=>r.key===key);
+  if (cr) return (cr.labels&&(cr.labels[lang]||cr.labels.he))||key;
+  return (I18N[lang]&&I18N[lang]["row_"+key])||I18N.he["row_"+key]||key;
+}
+function emptyWeek(weekStart){
+  const fields = ["work_hours","entry","exit","escort_morning","school","escort_noon",
+    "emb_il","emb_pe","other_empl","arrival_point","theater","udex","apt_il","apt_pe",
+    "vehicle_morning","axis_morning","wait_morning","taxi_apt","taxi_arrival",
+    "vehicle_noon","axis_noon","wait_noon","taxi_emb","taxi_arrival_noon",
+    "vacation_il","vacation_pe"].concat(customKeys());
+  const days={};
+  for(let i=0;i<5;i++){ const d=addDays(weekStart,i); days[d]={}; fields.forEach(f=>days[d][f]=""); }
+  return days;
+}
+
+/* ═══════════════ history & auto-assign (port of schedule_logic.py) ═══════════════ */
+function buildHistory(){
+  const hist={}; const arch=loadArchive();
+  for(const wk in arch){ const days=arch[wk];
+    for(const d in days){ const day=days[d];
+      for(const f of HISTORY_FIELDS){ const v=day[f];
+        if(v){ hist[f]=hist[f]||{}; hist[f][v]=(hist[f][v]||0)+1; } } } }
+  return hist;
+}
+function leastUsed(options, counts){
+  if(!options.length) return "";
+  counts=counts||{};
+  const min=Math.min(...options.map(o=>counts[o]||0));
+  const cand=options.filter(o=>(counts[o]||0)===min);
+  return cand[Math.floor(Math.random()*cand.length)];
+}
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function bump(h,f,v){ if(!v)return; h[f]=h[f]||{}; h[f][v]=(h[f][v]||0)+1; }
+
+function autoAssign(){
+  if(!S.days) return;
+  const hist=buildHistory();
+  const keys=Object.keys(S.days).sort();
+  const IL=empsIL(), PE=empsPE();
+  const sv=CFG.special_values, tg=CFG.targets;
+  const holiday=sv.holiday, VS=sv.vehicle_special;
+
+  /* pre-plan EMB IL: alternate the two least-used (3:2) */
+  const ilHist=hist.emb_il||{};
+  let sortedIL=IL.slice().sort((a,b)=>(ilHist[a]||0)-(ilHist[b]||0));
+  if(sortedIL.length>=2 && (ilHist[sortedIL[0]]||0)===(ilHist[sortedIL[1]]||0)) shuffle(sortedIL);
+  const embIlPlan=keys.map((_,i)=>sortedIL[i%Math.max(sortedIL.length,1)]||"");
+
+  /* pre-plan Apt PE: 2:2:1 by least-used */
+  const peHist=hist.apt_pe||{};
+  const sortedPE=PE.slice().sort((a,b)=>(peHist[a]||0)-(peHist[b]||0));
+  let aptPePlan=[];
+  if(sortedPE.length>=3) aptPePlan=[sortedPE[0],sortedPE[0],sortedPE[1],sortedPE[1],sortedPE[2]];
+  else if(sortedPE.length) aptPePlan=keys.map((_,i)=>sortedPE[i%sortedPE.length]);
+  shuffle(aptPePlan);
+
+  /* pre-plan axis: 5 least-used morning, next 5 noon; wait: round-robin */
+  const axisVals=opts("axis");
+  const am=axisVals.slice().sort((a,b)=>((hist.axis_morning||{})[a]||0)-((hist.axis_morning||{})[b]||0)||a.localeCompare(b)).slice(0,5);
+  let an=axisVals.filter(x=>!am.includes(x))
+        .sort((a,b)=>((hist.axis_noon||{})[a]||0)-((hist.axis_noon||{})[b]||0)||a.localeCompare(b)).slice(0,5);
+  while(an.length<5&&axisVals.length) an.push(axisVals[an.length%axisVals.length]);
+  shuffle(am); shuffle(an);
+  const waitVals=opts("wait_spot");
+  const wm=waitVals.slice().sort((a,b)=>((hist.wait_morning||{})[a]||0)-((hist.wait_morning||{})[b]||0)).slice(0,5);
+  const wn=waitVals.slice().sort((a,b)=>((hist.wait_noon||{})[a]||0)-((hist.wait_noon||{})[b]||0)).slice(0,5);
+  shuffle(wm); shuffle(wn);
+
+  const weekly={};                    // in-week usage so days differ
+  const H=f=>{ const c={...(hist[f]||{})}; const w=weekly[f]||{};
+    for(const v in w) c[v]=(c[v]||0)+w[v]; return c; };
+
+  keys.forEach((dk,i)=>{
+    const day=S.days[dk];
+    const vacIl=day.vacation_il||"", vacPe=day.vacation_pe||"", other=day.other_empl||"";
+    const actIL=IL.filter(e=>e!==vacIl&&e!==other);
+    const actPE=PE.filter(e=>e!==vacPe&&e!==other);
+
+    if(!day.entry) day.entry=leastUsed(opts("entry").filter(o=>o!==holiday),H("entry"));
+    if(!day.exit)  day.exit =leastUsed(opts("exit").filter(o=>o!==holiday),H("exit"));
+
+    if(!day.emb_il){
+      let planned=embIlPlan[i]||"";
+      if(planned===vacIl||planned===other||!planned){
+        const others=actIL.length?actIL:actPE;
+        planned=others.length?leastUsed(others,H("emb_il")):"";
+      }
+      day.emb_il=planned;
+    }
+    const embIl=day.emb_il;
+    if(!day.apt_il){
+      const c=actIL.filter(e=>e!==embIl);
+      if(c.length) day.apt_il=leastUsed(c,H("apt_il"));
+    }
+    if(!day.apt_pe){
+      let planned=aptPePlan[i]||"";
+      const embIlPe=PE.includes(embIl)?embIl:"";
+      if(!planned||planned===vacPe||planned===embIlPe){
+        const c=actPE.filter(e=>e!==embIlPe);
+        planned=c.length?leastUsed(c,H("apt_pe")):"";
+      }
+      day.apt_pe=planned;
+    }
+    if(!day.emb_pe){
+      const embIlPe=PE.includes(embIl)?embIl:"";
+      const avail=actPE.filter(e=>e!==day.apt_pe&&e!==embIlPe);
+      if(avail.length>=2){
+        const pairs=[];
+        for(let a=0;a<PE.length;a++) for(let b=a+1;b<PE.length;b++)
+          if(avail.includes(PE[a])&&avail.includes(PE[b])) pairs.push(PE[a]+"+"+PE[b]);
+        if(pairs.length) day.emb_pe=leastUsed(pairs,H("emb_pe"));
+      } else if(avail.length===1) day.emb_pe=avail[0];
+    }
+    if(!day.arrival_point) day.arrival_point=leastUsed(opts("arrival_point"),H("arrival_point"));
+    if(!day.axis_morning) day.axis_morning=am[i]||leastUsed(axisVals,H("axis_morning"));
+    if(!day.axis_noon)    day.axis_noon   =an[i]||leastUsed(axisVals,H("axis_noon"));
+    if(!day.wait_morning) day.wait_morning=wm[i]||leastUsed(waitVals,H("wait_morning"));
+    if(!day.wait_noon)    day.wait_noon   =wn[i]||leastUsed(waitVals,H("wait_noon"));
+
+    for(const f of HISTORY_FIELDS) bump(weekly,f,day[f]);
+  });
+
+  /* vehicles: N special slots over morning+noon; rest regular */
+  const vehRegular=opts("vehicle").find(v=>v!==VS)||"";
+  const slots=[];
+  keys.forEach(k=>{ slots.push([k,"vehicle_morning"]); slots.push([k,"vehicle_noon"]); });
+  const unass=slots.filter(([k,f])=>!S.days[k][f]);
+  let need=tg.yellow_per_week - slots.filter(([k,f])=>S.days[k][f]===VS).length;
+  shuffle(unass);
+  unass.forEach(([k,f])=>{ if(need>0){ S.days[k][f]=VS; need--; } else if(!S.days[k][f]) S.days[k][f]=vehRegular; });
+
+  /* UDEX: m-type + t-type targets, balanced within type */
+  const mVals=sv.udex_morning.slice(), tVals=sv.udex_noon.slice();
+  let udexFree=shuffle(keys.filter(k=>!S.days[k].udex));
+  let mNeed=tg.udex_m-keys.filter(k=>mVals.includes(S.days[k].udex)).length;
+  let tNeed=tg.udex_t-keys.filter(k=>tVals.includes(S.days[k].udex)).length;
+  const mh={...(hist.udex||{})}, th={...(hist.udex||{})};
+  while(mNeed-->0&&udexFree.length){ const c=leastUsed(mVals,mh); mh[c]=(mh[c]||0)+1; S.days[udexFree.shift()].udex=c; }
+  while(tNeed-->0&&udexFree.length){ const c=leastUsed(tVals,th); th[c]=(th[c]||0)+1; S.days[udexFree.shift()].udex=c; }
+
+  /* theater: exactly N days */
+  const thVals=opts("theater");
+  let thFree=shuffle(keys.filter(k=>!S.days[k].theater));
+  let thNeed=tg.theater_per_week-keys.filter(k=>S.days[k].theater).length;
+  while(thNeed-->0&&thFree.length&&thVals.length) S.days[thFree.shift()].theater=leastUsed(thVals,hist.theater||{});
+
+  /* taxis only on special-vehicle slots */
+  keys.forEach(k=>{ const day=S.days[k];
+    const ym=day.vehicle_morning===VS, yn=day.vehicle_noon===VS;
+    ["taxi_apt","taxi_arrival"].forEach(f=>{ day[f]=ym?(day[f]||leastUsed(waitVals,hist[f]||{})):""; });
+    ["taxi_emb","taxi_arrival_noon"].forEach(f=>{ day[f]=yn?(day[f]||leastUsed(waitVals,hist[f]||{})):""; });
+  });
+  saveDraft(); render(); toast("⚡ ✓");
+}
+
+/* ═══════════════ validation (port of validate_schedule) ═══════════════ */
+function validate(){
+  if(!S.days) return [];
+  const errs=[]; const IL=empsIL(), PE=empsPE();
+  const sv=CFG.special_values, tg=CFG.targets, VS=sv.vehicle_special;
+  let yellow=0,um=0,ut=0,th=0;
+  for(const dk of Object.keys(S.days).sort()){
+    const day=S.days[dk];
+    if(day.vehicle_morning===VS) yellow++;
+    if(day.vehicle_noon===VS) yellow++;
+    if(sv.udex_morning.includes(day.udex)) um++;
+    else if(sv.udex_noon.includes(day.udex)) ut++;
+    if(day.theater) th++;
+    const d=fmtDM(dk);
+    if((day.vacation_il||"").includes(",")) errs.push({lvl:"err",msg:d+": "+t("err_two_il")});
+    if((day.vacation_pe||"").includes(",")) errs.push({lvl:"err",msg:d+": "+t("err_two_pe")});
+    const emb=day.emb_il;
+    if(emb&&IL.includes(emb)){
+      if(emb===day.vacation_il) errs.push({lvl:"err",msg:"❌ "+d+": "+t("err_emb_vac",{e:emb})});
+      else if(emb===day.other_empl) errs.push({lvl:"err",msg:"❌ "+d+": "+t("err_emb_other",{e:emb})});
+    }
+  }
+  if(yellow!==tg.yellow_per_week) errs.push({lvl:"warn",msg:t("warn_yellow",{n:yellow,t:tg.yellow_per_week})});
+  if(um!==tg.udex_m) errs.push({lvl:"warn",msg:t("warn_udex_m",{n:um,t:tg.udex_m})});
+  if(ut!==tg.udex_t) errs.push({lvl:"warn",msg:t("warn_udex_t",{n:ut,t:tg.udex_t})});
+  if(th!==tg.theater_per_week) errs.push({lvl:"warn",msg:t("warn_theater",{n:th,t:tg.theater_per_week})});
+  return errs;
+}
+
+/* ═══════════════ render: shell ═══════════════ */
+function render(){
+  document.documentElement.lang=S.lang;
+  document.documentElement.dir=(S.lang==="he")?"rtl":"ltr";
+  document.title=t("app_title")+" 🚕";
+  document.getElementById("hTitle").textContent=t("app_title");
+  const nav=document.getElementById("nav");
+  nav.innerHTML=[["sched","nav_sched"],["settings","nav_settings"],["archive","nav_archive"],["stats","nav_stats"]]
+    .map(([id,k])=>`<button data-nav="${id}" class="${S.screen===id?"active":""}">${t(k)}</button>`).join("");
+  nav.querySelectorAll("button").forEach(b=>b.onclick=()=>{S.screen=b.dataset.nav;S.pendingConfirm=null;render();});
+  const app=document.getElementById("app");
+  if(S.screen==="sched") app.innerHTML=viewSched();
+  else if(S.screen==="settings") app.innerHTML=viewSettings();
+  else if(S.screen==="archive") app.innerHTML=viewArchive();
+  else app.innerHTML=viewStats();
+  wire();
+}
+
+/* ═══════════════ screen 1: schedule ═══════════════ */
+function viewSched(){
+  let h=`<div class="card row-flex">
+    <label>${t("week_start")} <input type="date" id="weekPick" value="${S.weekStart}"></label>
+    <button class="btn primary" id="btnGen">🔄 ${t("generate")}</button>
+    <button class="btn primary" id="btnAuto" ${S.days?"":"disabled"}>${t("auto_assign")}</button>
+    <button class="btn" id="btnSave" ${S.days?"":"disabled"}>${t("save")}</button>
+    <button class="btn" id="btnCsv" ${S.days?"":"disabled"}>${t("export_excel")}</button>
+    <button class="btn" id="btnPrint" ${S.days?"":"disabled"}>${t("print")}</button>
+  </div>`;
+  if(S.pendingConfirm==="gen")
+    h+=`<div class="msg warn">${t("replace_q")}
+      <button class="btn small primary" id="genYes">${t("yes")}</button>
+      <button class="btn small" id="genNo">${t("no")}</button></div>`;
+  if(!S.days) return h;
+  const keys=Object.keys(S.days).sort();
+  h+=`<div class="tbl-wrap"><table class="sched"><thead><tr><th>${esc(t("row_dates"))}</th>`;
+  keys.forEach((dk,i)=>{ h+=`<th>${dayName(dk)}${i===4?" ⏱"+t("fri6"):""}<br><small>${fmtDM(dk)}</small></th>`; });
+  h+=`</tr></thead><tbody>`;
+  for(const rk of reorderableKeys()){
+    if(SECTIONS[rk]) h+=`<tr class="section"><td colspan="6">— ${rk==="emb_il"?"EMB":esc(rowLabel(rk))} —</td></tr>`;
+    h+=renderRow(rk,keys);
+  }
+  h+=`</tbody></table></div>`;
+  const errs=validate();
+  if(errs.length) errs.forEach(e=>{ h+=`<div class="msg ${e.lvl}">${esc(e.msg)}</div>`; });
+  else h+=`<div class="msg ok">${t("valid")}</div>`;
+  return h;
+}
+function selCell(dk,field,options,val,cls){
+  let o=`<option value=""></option>`;
+  const list=options.slice();
+  if(val&&!list.includes(val)) list.push(val);
+  list.forEach(v=>{ o+=`<option value="${esc(v)}" ${v===val?"selected":""}>${esc(v)}</option>`; });
+  return `<td class="${cls||""}"><select data-dk="${dk}" data-f="${field}">${o}</select></td>`;
+}
+function renderRow(rk,keys){
+  const cr=customRows().find(r=>r.key===rk);
+  let h=`<tr><td class="label">${esc(rowLabel(rk))}</td>`;
+  for(let i=0;i<keys.length;i++){
+    const dk=keys[i], day=S.days[dk];
+    if(rk==="work_hours"){
+      const list=opts(i===4?"work_hours_friday":"work_hours_weekday");
+      h+=selCell(dk,"work_hours",list,day.work_hours);
+    } else if(rk==="vacation"){
+      const vIL=`<select data-dk="${dk}" data-f="vacation_il"><option value=""></option>${empsIL().map(e=>`<option ${e===day.vacation_il?"selected":""}>${esc(e)}</option>`).join("")}</select>`;
+      const vPE=`<select data-dk="${dk}" data-f="vacation_pe"><option value=""></option>${empsPE().map(e=>`<option ${e===day.vacation_pe?"selected":""}>${esc(e)}</option>`).join("")}</select>`;
+      h+=`<td>${vIL}${vPE}</td>`;
+    } else if(rk==="emb_il"||rk==="apt_il"){
+      const avail=empsIL().filter(e=>e!==day.vacation_il);
+      h+=selCell(dk,rk,avail,day[rk],"cell-il");
+    } else if(rk==="apt_pe"){
+      const avail=empsPE().filter(e=>e!==day.vacation_pe);
+      h+=selCell(dk,rk,avail,day[rk],"cell-pe");
+    } else if(rk==="emb_pe"){
+      const PE=empsPE().filter(e=>e!==day.vacation_pe);
+      const pairs=[];
+      for(let a=0;a<PE.length;a++) for(let b=a+1;b<PE.length;b++) pairs.push(PE[a]+"+"+PE[b]);
+      h+=selCell(dk,rk,PE.concat(pairs),day[rk],"cell-pe");
+    } else if(rk==="other_empl"){
+      h+=selCell(dk,rk,allEmps(),day[rk]);
+    } else if(TEXT_ROWS.has(rk)||(cr&&cr.input!=="select")){
+      h+=`<td><input type="text" data-dk="${dk}" data-f="${rk}" value="${esc(day[rk]||"")}"></td>`;
+    } else if(cr){
+      h+=selCell(dk,rk,(cr.options||[]).filter(Boolean),day[rk]);
+    } else {
+      const cls=(rk==="vehicle_morning"||rk==="vehicle_noon")&&day[rk]===CFG.special_values.vehicle_special?"cell-yellow":"";
+      h+=selCell(dk,rk,opts(ROW_OPTS[rk]||""),day[rk],cls);
+    }
+  }
+  return h+"</tr>";
+}
+
+/* ═══════════════ screen 2: settings ═══════════════ */
+function viewSettings(){
+  const emps=allEmps();
+  let h=`<h2>${t("nav_settings")}</h2>`;
+  /* employees */
+  h+=`<details class="sect" open><summary>${t("s_employees")}</summary><div class="inner">
+    <div class="grid2">
+      <label>${t("il_emps")}<br><textarea id="empIL">${esc(CFG.employees.il.join("\n"))}</textarea></label>
+      <label>${t("pe_emps")}<br><textarea id="empPE">${esc(CFG.employees.pe.join("\n"))}</textarea></label>
+    </div>
+    <div class="hint">⚠️ ${t("rename_warn")} · ${t("one_per_line")}</div>
+    <h3>${t("vac_budget")}</h3><div class="grid3">`;
+  emps.forEach(e=>{ h+=`<label>${esc(e)}<br><input type="number" min="0" max="365" id="vb_${esc(e)}" value="${CFG.vacation_budget[e]!=null?CFG.vacation_budget[e]:(CFG.employees.il.includes(e)?14:30)}"></label>`; });
+  h+=`</div><p><button class="btn primary" id="saveEmps">${t("save_settings")}</button></p></div></details>`;
+  /* row order */
+  h+=`<details class="sect"><summary>${t("s_order")}</summary><div class="inner">
+    <div class="hint">${t("order_hint")}</div><ul id="orderList">`;
+  const rk=reorderableKeys();
+  rk.forEach((k,i)=>{ h+=`<li data-key="${esc(k)}"><span class="handle">⠿</span><span>${esc(rowLabel(k))}</span>
+    <span class="updown"><button class="btn small" data-up="${i}" ${i===0?"disabled":""}>↑</button>
+    <button class="btn small" data-dn="${i}" ${i===rk.length-1?"disabled":""}>↓</button></span></li>`; });
+  h+=`</ul></div></details>`;
+  /* labels */
+  h+=`<details class="sect"><summary>${t("s_labels")}</summary><div class="inner">
+    <div class="lbl-row"><b>${t("lbl_he")}</b><b>${t("lbl_en")}</b><b>${t("lbl_es")}</b></div>`;
+  BASE_ROW_KEYS.forEach(k=>{ h+=`<div class="lbl-row">
+    <input data-lbl="${k}" data-lang="he" value="${esc(rowLabel(k,"he"))}">
+    <input data-lbl="${k}" data-lang="en" value="${esc(rowLabel(k,"en"))}">
+    <input data-lbl="${k}" data-lang="es" value="${esc(rowLabel(k,"es"))}"></div>`; });
+  h+=`<p><button class="btn primary" id="saveLabels">${t("save_settings")}</button></p></div></details>`;
+  /* options */
+  const groups=[["entry",rowLabel("entry")],["exit",rowLabel("exit")],["escort",t("opt_escort")],
+    ["arrival_point",rowLabel("arrival_point")],["theater",rowLabel("theater")],["udex","UDEX"],
+    ["vehicle",t("opt_vehicle")],["axis",t("opt_axis")],["wait_spot",t("opt_wait")],
+    ["work_hours_weekday",t("opt_wh_wd")],["work_hours_friday",t("opt_wh_fr")]];
+  h+=`<details class="sect"><summary>${t("s_options")}</summary><div class="inner">
+    <div class="hint">${t("one_per_line")}</div><div class="grid3">`;
+  groups.forEach(([k,lbl])=>{ h+=`<label>${esc(lbl)}<br><textarea data-opt="${k}">${esc((CFG.options[k]||[]).join("\n"))}</textarea></label>`; });
+  h+=`</div><div class="hint">⚠️ ${t("special_note")}</div><div class="grid2">
+    <label>${t("sv_holiday")}<br><input id="svHoliday" value="${esc(CFG.special_values.holiday)}"></label>
+    <label>${t("sv_vehicle")}<br><input id="svVehicle" value="${esc(CFG.special_values.vehicle_special)}"></label>
+    <label>${t("sv_udex_m")}<br><input id="svUdexM" value="${esc(CFG.special_values.udex_morning.join(","))}"></label>
+    <label>${t("sv_udex_t")}<br><input id="svUdexT" value="${esc(CFG.special_values.udex_noon.join(","))}"></label>
+  </div><p><button class="btn primary" id="saveOpts">${t("save_settings")}</button></p></div></details>`;
+  /* targets */
+  h+=`<details class="sect"><summary>${t("s_targets")}</summary><div class="inner"><div class="grid2">
+    <label>${t("tg_yellow")}<br><input type="number" id="tgY" min="0" max="10" value="${CFG.targets.yellow_per_week}"></label>
+    <label>${t("tg_theater")}<br><input type="number" id="tgTh" min="0" max="5" value="${CFG.targets.theater_per_week}"></label>
+    <label>${t("tg_udex_m")}<br><input type="number" id="tgM" min="0" max="5" value="${CFG.targets.udex_m}"></label>
+    <label>${t("tg_udex_t")}<br><input type="number" id="tgT" min="0" max="5" value="${CFG.targets.udex_t}"></label>
+  </div><p><button class="btn primary" id="saveTargets">${t("save_settings")}</button></p></div></details>`;
+  /* custom rows */
+  h+=`<details class="sect"><summary>${t("s_custom")}</summary><div class="inner">
+    <div class="grid3">
+      <label>${t("row_name")} (${t("lbl_he")})<br><input id="crHe"></label>
+      <label>${t("row_name")} (${t("lbl_en")})<br><input id="crEn"></label>
+      <label>${t("row_name")} (${t("lbl_es")})<br><input id="crEs"></label>
+    </div><div class="grid2">
+      <label>${t("input_type")}<br><select id="crType"><option value="select">${t("type_select")}</option><option value="text">${t("type_text")}</option></select></label>
+      <label>${t("row_opts")}<br><textarea id="crOpts" style="min-height:70px"></textarea></label>
+    </div><p><button class="btn primary" id="addRow">➕ ${t("add_row")}</button></p><hr>`;
+  const crs=customRows();
+  if(!crs.length) h+=`<div class="hint">${t("no_custom")}</div>`;
+  crs.forEach(r=>{
+    const conf=S.pendingConfirm==="delrow_"+r.key;
+    h+=`<div class="row-flex" style="padding:6px 0;border-bottom:1px solid var(--border)">
+      <b>📌 ${esc((r.labels&&(r.labels[S.lang]||r.labels.he))||r.key)}</b>
+      <span class="chip">${r.input==="select"?t("type_select"):t("type_text")}</span>
+      ${r.input==="select"?`<span class="hint">${esc((r.options||[]).join(", "))}</span>`:""}
+      ${conf?`<span class="inline-confirm">${t("confirm_q")}
+        <button class="btn small warn" data-delrow-yes="${esc(r.key)}">✓</button>
+        <button class="btn small" data-cancel-confirm="1">✗</button></span>`
+      :`<button class="btn small warn" data-delrow="${esc(r.key)}">🗑 ${t("delete")}</button>`}
+    </div>`;
+  });
+  h+=`</div></details>`;
+  return h;
+}
+
+/* ═══════════════ screen 3: archive ═══════════════ */
+function viewArchive(){
+  const arch=loadArchive();
+  const weeks=Object.keys(arch).sort().reverse();
+  let h=`<h2>📁 ${t("arch_title")}</h2><div class="card">`;
+  if(!weeks.length) h+=`<div class="hint">${t("arch_empty")}</div>`;
+  let curYm="";
+  weeks.forEach(wk=>{
+    const ym=wk.slice(0,7);
+    if(ym!==curYm){ curYm=ym; h+=`<h3>📅 ${ym}</h3>`; }
+    const conf=S.pendingConfirm==="delarch_"+wk;
+    h+=`<div class="arch-item"><span class="wk">${wk}</span>
+      <button class="btn small primary" data-load="${wk}">${t("load")}</button>
+      <button class="btn small" data-csv="${wk}">CSV</button>
+      ${conf?`<span class="inline-confirm">${t("confirm_q")}
+        <button class="btn small warn" data-delarch-yes="${wk}">✓</button>
+        <button class="btn small" data-cancel-confirm="1">✗</button></span>`
+      :`<button class="btn small warn" data-delarch="${wk}">🗑</button>`}
+    </div>`;
+  });
+  return h+"</div>";
+}
+
+/* ═══════════════ screen 4: stats ═══════════════ */
+function computeStats(schedules){
+  const roles=["emb_il","apt_il","emb_pe","apt_pe"];
+  const emps=allEmps();
+  const empC={}; emps.forEach(e=>{ empC[e]={emb_il:0,apt_il:0,emb_pe:0,apt_pe:0}; });
+  const vac={}, oth={}; emps.forEach(e=>{vac[e]=0;oth[e]=0;});
+  const fields=["entry","exit","arrival_point","theater","udex","vehicle_morning","axis_morning",
+    "wait_morning","vehicle_noon","axis_noon","wait_noon"];
+  const fieldC={}; fields.forEach(f=>fieldC[f]={});
+  let nd=0;
+  schedules.forEach(days=>{ for(const dk in days){ const day=days[dk]; nd++;
+    ["emb_il","apt_il","apt_pe"].forEach(r=>{ const v=day[r]; if(empC[v]) empC[v][r]++; });
+    (day.emb_pe||"").split("+").forEach(e=>{ if(e&&empC[e]) empC[e].emb_pe++; });
+    fields.forEach(f=>{ const v=day[f]; if(v) fieldC[f][v]=(fieldC[f][v]||0)+1; });
+    ["vacation_il","vacation_pe"].forEach(f=>{ const v=day[f]; if(v&&vac[v]!=null) vac[v]++; });
+    const o=day.other_empl; if(o&&oth[o]!=null) oth[o]++;
+  }});
+  return {empC,fieldC,nd,vac,oth,roles};
+}
+function viewStats(){
+  const arch=loadArchive();
+  const weeks=Object.keys(arch).sort();
+  const months=[...new Set(weeks.map(w=>w.slice(0,7)))].reverse();
+  const years=[...new Set(weeks.map(w=>w.slice(0,4)))].reverse();
+  if(!S.statsMonth&&months.length) S.statsMonth=months[0];
+  if(!S.statsYear&&years.length) S.statsYear=years[0];
+  let h=`<h2>📊 ${t("nav_stats")}</h2><div class="card row-flex">
+    <label>${t("st_period")}
+    <select id="statsTab">
+      <option value="week" ${S.statsTab==="week"?"selected":""}>${t("st_week")}</option>
+      <option value="month" ${S.statsTab==="month"?"selected":""}>${t("st_month")}</option>
+      <option value="year" ${S.statsTab==="year"?"selected":""}>${t("st_year")}</option>
+    </select></label>`;
+  if(S.statsTab==="month") h+=`<select id="statsMonth">${months.map(m=>`<option ${m===S.statsMonth?"selected":""}>${m}</option>`).join("")}</select>`;
+  if(S.statsTab==="year") h+=`<select id="statsYear">${years.map(y=>`<option ${y===S.statsYear?"selected":""}>${y}</option>`).join("")}</select>`;
+  h+=`</div>`;
+  let schedules=[],label="";
+  if(S.statsTab==="week"){ if(S.days) schedules=[S.days]; label=t("st_week"); }
+  else if(S.statsTab==="month"){ schedules=weeks.filter(w=>w.startsWith(S.statsMonth)).map(w=>arch[w]); label=S.statsMonth; }
+  else { schedules=weeks.filter(w=>w.startsWith(S.statsYear)).map(w=>arch[w]); label=S.statsYear; }
+  if(!schedules.length) return h+`<div class="msg warn">${t("st_no_data")}</div>`;
+  const st=computeStats(schedules);
+  h+=`<div class="hint"><b>${esc(label)}</b> — ${schedules.length} ${t("st_weeks")} · ${st.nd} ${t("st_days")}</div>`;
+  /* employees */
+  h+=`<div class="card"><h3>👤 ${t("st_employees")}</h3><div class="tbl-wrap"><table class="stats"><tr><th></th>`;
+  st.roles.forEach(r=>h+=`<th>${t("st_role_"+r)}</th>`);
+  h+=`<th>${t("st_vac_col")}</th><th>${t("st_other")}</th></tr>`;
+  allEmps().forEach(e=>{ h+=`<tr><th>${esc(e)}</th>`;
+    st.roles.forEach(r=>{ const c=st.empC[e]?st.empC[e][r]:0; const p=st.nd?Math.round(c/st.nd*100):0;
+      h+=`<td>${c} <small>(${p}%)</small></td>`; });
+    h+=`<td>${st.vac[e]||0}</td><td>${st.oth[e]||0}</td></tr>`; });
+  h+=`</table></div></div>`;
+  /* vacation budget */
+  h+=`<div class="card"><h3>🏖 ${t("st_vacation")}</h3><div class="tbl-wrap"><table class="stats">
+    <tr><th></th><th>${t("st_used")}</th><th>${t("st_budget")}</th><th>%</th><th>${t("st_left")}</th><th></th></tr>`;
+  allEmps().forEach(e=>{ const used=st.vac[e]||0;
+    const bud=CFG.vacation_budget[e]!=null?CFG.vacation_budget[e]:0;
+    const p=bud?Math.round(used/bud*100):0;
+    h+=`<tr><th>${esc(e)}</th><td>${used}</td><td>${bud}</td><td>${p}%</td><td>${Math.max(bud-used,0)}</td>
+      <td><div class="bar"><i style="width:${Math.min(p,100)}%"></i></div></td></tr>`; });
+  h+=`</table></div></div>`;
+  /* fields */
+  h+=`<div class="card"><h3>📋 ${t("st_fields")}</h3>`;
+  for(const f in st.fieldC){
+    const counts=st.fieldC[f]; const total=Object.values(counts).reduce((a,b)=>a+b,0);
+    if(!total) continue;
+    h+=`<h3 style="font-size:.9rem">${esc(rowLabel(f))}</h3><div class="tbl-wrap"><table class="stats"><tr>`;
+    const vals=Object.keys(counts).sort();
+    vals.forEach(v=>h+=`<th>${esc(v)}</th>`); h+=`</tr><tr>`;
+    vals.forEach(v=>{ const p=Math.round(counts[v]/total*100);
+      h+=`<td>${counts[v]} <small>(${p}%)</small><div class="bar"><i style="width:${p}%"></i></div></td>`; });
+    h+=`</tr></table></div>`;
+  }
+  return h+`</div>`;
+}
+
+/* ═══════════════ export & print ═══════════════ */
+function scheduleCsv(days){
+  const keys=Object.keys(days).sort();
+  const BOM="﻿"; const q=v=>`"${String(v==null?"":v).replace(/"/g,'""')}"`;
+  let rows=[[t("row_dates"),...keys.map(fmtDM)],[t("row_days"),...keys.map(dayName)]];
+  for(const rk of reorderableKeys()){
+    if(rk==="vacation"){
+      rows.push([rowLabel(rk),...keys.map(k=>[days[k].vacation_il,days[k].vacation_pe].filter(Boolean).join(" / "))]);
+    } else rows.push([rowLabel(rk),...keys.map(k=>days[k][rk]||"")]);
+  }
+  return BOM+rows.map(r=>r.map(q).join(",")).join("\r\n");
+}
+function downloadCsv(days,weekStart){
+  const blob=new Blob([scheduleCsv(days)],{type:"text/csv;charset=utf-8"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download=`schedule_${weekStart}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+}
+function doPrint(){
+  if(!S.days) return;
+  const keys=Object.keys(S.days).sort();
+  const VS=CFG.special_values.vehicle_special;
+  let h=`<h2>📅 ${esc(t("app_title"))} — ${keys[0]} → ${keys[4]}</h2><table><tr><th></th>`;
+  keys.forEach((dk,i)=>h+=`<th>${dayName(dk)}<br>${fmtDM(dk)}</th>`);
+  h+=`</tr>`;
+  for(const rk of reorderableKeys()){
+    if(rk==="vacation"){
+      h+=`<tr><td class="label">${esc(rowLabel(rk))}</td>${keys.map(k=>`<td>${esc([S.days[k].vacation_il,S.days[k].vacation_pe].filter(Boolean).join(" / "))}</td>`).join("")}</tr>`;
+    } else {
+      h+=`<tr><td class="label">${esc(rowLabel(rk))}</td>${keys.map(k=>{
+        const v=S.days[k][rk]||"";
+        const y=(rk==="vehicle_morning"||rk==="vehicle_noon")&&v===VS;
+        return `<td class="${y?"y":""}">${esc(v)}</td>`; }).join("")}</tr>`;
+    }
+  }
+  document.getElementById("printArea").innerHTML=h+"</table>";
+  window.print();
+}
+
+/* ═══════════════ wiring ═══════════════ */
+function wire(){
+  const $=id=>document.getElementById(id);
+  document.querySelectorAll("[data-cancel-confirm]").forEach(b=>b.onclick=()=>{S.pendingConfirm=null;render();});
+  if(S.screen==="sched"){
+    $("weekPick").onchange=e=>{ S.weekStart=snapMonday(e.target.value); e.target.value=S.weekStart; };
+    $("btnGen").onclick=()=>{
+      const target=snapMonday($("weekPick").value||S.weekStart);
+      if(loadArchive()[target]||(S.days&&Object.keys(S.days)[0]===target)){ S.pendingConfirm="gen"; S.weekStart=target; render(); }
+      else { S.weekStart=target; S.days=emptyWeek(target); saveDraft(); render(); }
+    };
+    const gy=$("genYes"); if(gy) gy.onclick=()=>{ S.pendingConfirm=null; S.days=emptyWeek(S.weekStart); saveDraft(); render(); };
+    const gn=$("genNo"); if(gn) gn.onclick=()=>{ S.pendingConfirm=null; render(); };
+    if($("btnAuto")) $("btnAuto").onclick=autoAssign;
+    if($("btnSave")) $("btnSave").onclick=()=>{ const a=loadArchive();
+      a[Object.keys(S.days).sort()[0]]=S.days; saveArchive(a); toast("✅ "+t("saved")); };
+    if($("btnCsv")) $("btnCsv").onclick=()=>downloadCsv(S.days,Object.keys(S.days).sort()[0]);
+    if($("btnPrint")) $("btnPrint").onclick=doPrint;
+    document.querySelectorAll("table.sched select,table.sched input").forEach(el=>{
+      el.onchange=()=>{ S.days[el.dataset.dk][el.dataset.f]=el.value; saveDraft();
+        if(["vacation_il","vacation_pe","vehicle_morning","vehicle_noon","udex","theater","emb_il","other_empl"].includes(el.dataset.f)) render(); };
+    });
+  }
+  else if(S.screen==="settings"){ wireSettings(); }
+  else if(S.screen==="archive"){
+    document.querySelectorAll("[data-load]").forEach(b=>b.onclick=()=>{
+      const wk=b.dataset.load; S.days=JSON.parse(JSON.stringify(loadArchive()[wk])); S.weekStart=wk;
+      saveDraft(); S.screen="sched"; toast("✅ "+t("loaded")); render(); });
+    document.querySelectorAll("[data-csv]").forEach(b=>b.onclick=()=>downloadCsv(loadArchive()[b.dataset.csv],b.dataset.csv));
+    document.querySelectorAll("[data-delarch]").forEach(b=>b.onclick=()=>{S.pendingConfirm="delarch_"+b.dataset.delarch;render();});
+    document.querySelectorAll("[data-delarch-yes]").forEach(b=>b.onclick=()=>{
+      const a=loadArchive(); delete a[b.dataset.delarchYes]; saveArchive(a);
+      S.pendingConfirm=null; toast("🗑 "+t("deleted")); render(); });
+  }
+  else if(S.screen==="stats"){
+    $("statsTab").onchange=e=>{S.statsTab=e.target.value;render();};
+    const sm=$("statsMonth"); if(sm) sm.onchange=e=>{S.statsMonth=e.target.value;render();};
+    const sy=$("statsYear"); if(sy) sy.onchange=e=>{S.statsYear=e.target.value;render();};
+  }
+  $("langSel").value=S.lang;
+  $("langSel").onchange=e=>{ S.lang=e.target.value; localStorage.setItem(LS.lang,S.lang); render(); };
+}
+function wireSettings(){
+  const $=id=>document.getElementById(id);
+  $("saveEmps").onclick=()=>{
+    const il=$("empIL").value.split("\n").map(s=>s.trim()).filter(Boolean);
+    const pe=$("empPE").value.split("\n").map(s=>s.trim()).filter(Boolean);
+    const vb={};
+    il.concat(pe).forEach(e=>{ const inp=$("vb_"+e);
+      vb[e]=inp?parseInt(inp.value||0,10):(il.includes(e)?14:30); });
+    CFG.employees.il=il; CFG.employees.pe=pe; CFG.vacation_budget=vb;
+    saveConfig(); render();
+  };
+  /* row order: up/down buttons */
+  document.querySelectorAll("[data-up],[data-dn]").forEach(b=>b.onclick=()=>{
+    const order=reorderableKeys();
+    const i=parseInt(b.dataset.up!=null?b.dataset.up:b.dataset.dn,10);
+    const j=b.dataset.up!=null?i-1:i+1;
+    if(j<0||j>=order.length) return;
+    [order[i],order[j]]=[order[j],order[i]];
+    CFG.row_order=order; saveConfig(); render();
+    document.querySelectorAll("details.sect")[1].open=true;
+  });
+  /* row order: pointer drag (move/up listeners live on document so the drop
+     is caught wherever the finger/cursor is released) */
+  const list=document.getElementById("orderList");
+  if(list){
+    list.querySelectorAll(".handle").forEach(hd=>{
+      hd.addEventListener("pointerdown",ev=>{
+        ev.preventDefault();
+        window.__dragEl=hd.closest("li");
+        window.__dragEl.classList.add("dragging");
+      });
+    });
+    if(!window.__orderDragWired){
+      window.__orderDragWired=true;
+      document.addEventListener("pointermove",ev=>{
+        const el=window.__dragEl, lst=document.getElementById("orderList");
+        if(!el||!lst) return;
+        ev.preventDefault();
+        const els=[...lst.querySelectorAll("li:not(.dragging)")];
+        const after=els.find(x=>{ const r=x.getBoundingClientRect(); return ev.clientY<r.top+r.height/2; });
+        if(after) lst.insertBefore(el,after); else lst.appendChild(el);
+      },{passive:false});
+      const finish=()=>{
+        const el=window.__dragEl, lst=document.getElementById("orderList");
+        if(!el) return;
+        window.__dragEl=null; el.classList.remove("dragging");
+        if(!lst) return;
+        CFG.row_order=[...lst.querySelectorAll("li")].map(li=>li.dataset.key);
+        saveConfig(); render();
+        const sect=document.querySelectorAll("details.sect")[1]; if(sect) sect.open=true;
+      };
+      document.addEventListener("pointerup",finish);
+      document.addEventListener("pointercancel",finish);
+    }
+  }
+  $("saveLabels").onclick=()=>{
+    CFG.row_labels=CFG.row_labels||{};
+    document.querySelectorAll("[data-lbl]").forEach(inp=>{
+      const k=inp.dataset.lbl, lg=inp.dataset.lang;
+      CFG.row_labels[k]=CFG.row_labels[k]||{};
+      CFG.row_labels[k][lg]=inp.value.trim();
+    });
+    saveConfig(); render();
+  };
+  $("saveOpts").onclick=()=>{
+    document.querySelectorAll("[data-opt]").forEach(ta=>{
+      CFG.options[ta.dataset.opt]=ta.value.split("\n").map(s=>s.trim()).filter(Boolean);
+    });
+    CFG.special_values={
+      holiday:$("svHoliday").value.trim(),
+      vehicle_special:$("svVehicle").value.trim(),
+      udex_morning:$("svUdexM").value.split(",").map(s=>s.trim()).filter(Boolean),
+      udex_noon:$("svUdexT").value.split(",").map(s=>s.trim()).filter(Boolean)
+    };
+    saveConfig(); render();
+  };
+  $("saveTargets").onclick=()=>{
+    CFG.targets={ yellow_per_week:+$("tgY").value||0, udex_m:+$("tgM").value||0,
+      udex_t:+$("tgT").value||0, theater_per_week:+$("tgTh").value||0 };
+    saveConfig(); render();
+  };
+  $("addRow").onclick=()=>{
+    const he=$("crHe").value.trim();
+    if(!he){ toast("⚠️ "+t("name_required")); return; }
+    const nums=customRows().map(r=>/^custom_(\d+)$/.exec(r.key)).filter(Boolean).map(m=>+m[1]);
+    const key="custom_"+((nums.length?Math.max(...nums):0)+1);
+    CFG.custom_rows.push({ key,
+      labels:{he, en:$("crEn").value.trim()||he, es:$("crEs").value.trim()||he},
+      input:$("crType").value,
+      options:$("crOpts").value.split("\n").map(s=>s.trim()).filter(Boolean) });
+    if(S.days) Object.values(S.days).forEach(d=>{ if(d[key]==null) d[key]=""; });
+    saveConfig(); saveDraft(); toast("✅ "+t("row_added")); render();
+    document.querySelectorAll("details.sect")[5].open=true;
+  };
+  document.querySelectorAll("[data-delrow]").forEach(b=>b.onclick=()=>{S.pendingConfirm="delrow_"+b.dataset.delrow;render();
+    document.querySelectorAll("details.sect")[5].open=true;});
+  document.querySelectorAll("[data-delrow-yes]").forEach(b=>b.onclick=()=>{
+    CFG.custom_rows=customRows().filter(r=>r.key!==b.dataset.delrowYes);
+    S.pendingConfirm=null; saveConfig(); toast("🗑 "+t("row_deleted")); render();
+    document.querySelectorAll("details.sect")[5].open=true;});
+}
+
+/* ═══════════════ boot ═══════════════ */
+render();
+if("serviceWorker" in navigator && location.protocol.startsWith("http")){
+  navigator.serviceWorker.register("service-worker.js").then(()=>{
+    if(!localStorage.getItem("agenda_sw_toasted")){
+      localStorage.setItem("agenda_sw_toasted","1"); toast("✅ "+t("offline_ready"));
+    }
+  }).catch(()=>{});
+}
+</script>
+</body>
+</html>
