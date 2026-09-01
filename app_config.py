@@ -29,16 +29,17 @@ BASE_ROW_KEYS = [
 DEFAULTS = {
     "schema_version": 1,
     "employees": {
-        "il": ["LEON", "CUY"],
+        "il": ["LEON", "TORO"],
         "pe": ["HALCON", "CHCHORRO", "BUHO"],
     },
     "vacation_budget": {
-        "LEON": 14, "CUY": 14,
+        "LEON": 14, "TORO": 14,
         "HALCON": 30, "CHCHORRO": 30, "BUHO": 30,
     },
     "options": {
         "work_hours_weekday": ["7:30-16:00", "8:00-16:30", "8:30-17:00"],
-        "work_hours_friday":  ["7:30-13:30", "8:00-14:00", "8:30-14:30"],
+        "work_hours_friday":  ["7:30-13:30", "8:00-14:00", "8:30-14:30",
+                               "7:30-13:00", "8:00-13:30"],
         "entry":         ["10", "13", "10-T", "13-D", "SPLIT", "חג"],
         "exit":          ["10", "13", "13-T", "10-D", "SPLIT", "חג"],
         "escort":        ["200", "201", "300", "301", "400", "500"],
@@ -46,12 +47,12 @@ DEFAULTS = {
         "theater":       ["משקפת", "רדיו", "תמונות"],
         "udex":          ["EMB-M", "EMB-T", "R-M", "R-T"],
         "vehicle":       ["BLACK", "YELLOW"],
-        "axis":          [f"{c}{n}" for c in "ABCD" for n in range(1, 6)],
+        "axis":          ["A-U", "A-D", "B-U", "B-D", "C-U", "C-D", "D-U", "D-D"],
         "wait_spot":     ["1", "2", "3", "4", "5"],
-        "taxi_apt":          ["1", "2", "3", "4", "5"],
+        "taxi_apt":          ["ARRIBA", "ABAJO"],
         "taxi_arrival":      ["1", "2", "3", "4", "5"],
         "taxi_emb":          ["1", "2", "3", "4", "5"],
-        "taxi_arrival_noon": ["1", "2", "3", "4", "5"],
+        "taxi_arrival_noon": ["ARRIBA", "ABAJO"],
     },
     # Values with special meaning to auto-assign/validation. Editable so that
     # renaming an option in "options" doesn't silently break the logic.
