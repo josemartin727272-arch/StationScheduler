@@ -34,7 +34,7 @@ def export_to_excel(schedule: dict, week_start: date, lang: str = "he") -> bytes
     Build and return an Excel workbook as bytes.
     """
     from translations import t
-    from schedule_logic import ROW_KEYS, EMPLOYEES_IL, EMPLOYEES_PE
+    import app_config as cfg
 
     if not OPENPYXL_AVAILABLE:
         raise RuntimeError("openpyxl not installed. Run: pip install openpyxl")
@@ -93,8 +93,8 @@ def export_to_excel(schedule: dict, week_start: date, lang: str = "he") -> bytes
         c = ws.cell(row=2, column=col_idx, value=day_name)
         style_cell(c, bg=COLOR_SECTION_HEADER, fg=COLOR_HEADER_FG, bold=True, center=True)
 
-    # Rows 3-26: schedule rows
-    row_display_keys = [k for k in ROW_KEYS if k not in ("dates", "days")]
+    # Rows 3+: schedule rows (base + custom rows from config)
+    row_display_keys = [k for k in cfg.all_row_keys() if k not in ("dates", "days")]
 
     # Special formatting by row key
     row_bg_map = {
@@ -106,7 +106,7 @@ def export_to_excel(schedule: dict, week_start: date, lang: str = "he") -> bytes
 
     for excel_row, rk in enumerate(row_display_keys, start=3):
         ws.row_dimensions[excel_row].height = 16
-        label = t(f"row_{rk}", lang)
+        label = cfg.row_label(rk, lang)
         label_cell = ws.cell(row=excel_row, column=1, value=label)
         is_odd = (excel_row % 2 == 1)
         row_bg = COLOR_ROW_ODD if is_odd else COLOR_ROW_EVEN

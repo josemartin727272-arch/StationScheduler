@@ -86,7 +86,7 @@ set LAUNCHER=%DESKTOP%\StationScheduler.bat
     echo cd /d "%INSTALL_DIR%"
     echo echo Starting StationScheduler...
     echo taskkill /F /FI "WINDOWTITLE eq streamlit*" >nul 2>&1
-    echo start "" /MIN %PYTHON% -m streamlit run app.py --server.headless true
+    echo start "" /MIN %PYTHON% -m streamlit run app.py --server.headless true --server.port 8501 --browser.gatherUsageStats false
     echo timeout /t 5 /nobreak >nul
     echo start http://localhost:8501
     echo exit
@@ -114,13 +114,16 @@ set UPDATER=%DESKTOP%\Update_StationScheduler.bat
     echo pause
 ) > "%UPDATER%"
 
-:: ── Create shortcut with icon (PowerShell) ────
+:: ── Create shortcut with taxi icon (PowerShell) ────
+set ICON=%INSTALL_DIR%\assets\taxi.ico
+if not exist "%ICON%" set ICON=shell32.dll,13
 powershell -Command ^
   "$ws = New-Object -ComObject WScript.Shell; ^
    $s = $ws.CreateShortcut('%DESKTOP%\StationScheduler.lnk'); ^
    $s.TargetPath = '%LAUNCHER%'; ^
+   $s.WorkingDirectory = '%INSTALL_DIR%'; ^
    $s.Description = 'StationScheduler'; ^
-   $s.IconLocation = 'shell32.dll,13'; ^
+   $s.IconLocation = '%ICON%'; ^
    $s.Save()" >nul 2>&1
 
 :: ── Done ──────────────────────────────────────

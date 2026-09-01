@@ -7,18 +7,20 @@ from datetime import date, timedelta
 import streamlit as st
 
 from translations import t
+import app_config as cfg
 from schedule_logic import (
-    EMPLOYEES_IL, EMPLOYEES_PE, ALL_EMPLOYEES,
-    WORK_HOURS_WEEKDAY, WORK_HOURS_FRIDAY,
-    ENTRY_OPTIONS, EXIT_OPTIONS, ESCORT_OPTIONS,
-    ARRIVAL_POINT_OPTIONS, THEATER_OPTIONS, UDEX_OPTIONS,
-    VEHICLE_OPTIONS, AXIS_OPTIONS, WAIT_SPOT_OPTIONS,
-    ROW_KEYS, empty_week, validate_schedule,
+    empty_week, validate_schedule,
     auto_assign_day, auto_assign_week_vehicles_udex, update_history,
 )
 from excel_export import export_to_excel
 from archive_storage import save_schedule, load_schedule, list_archive, delete_schedule
-from stats import compute_stats, load_period_schedules, EMPLOYEE_ROLES, EMPLOYEE_ROLE_LABELS, VALUE_FIELDS, VACATION_BUDGET
+
+try:
+    from streamlit_sortables import sort_items
+    HAS_SORTABLES = True
+except ImportError:
+    HAS_SORTABLES = False  # settings page falls back to ↑/↓ buttons
+from stats import compute_stats, load_period_schedules, EMPLOYEE_ROLES, EMPLOYEE_ROLE_LABELS, VALUE_FIELDS, vacation_budget
 
 # ── Page config ────────────────────────────────────────────────────────────
 st.set_page_config(page_title="Schedule 🚕", layout="wide",
@@ -45,6 +47,26 @@ _init()
 
 lang = st.session_state.lang
 
+# ── Everything below re-reads config.json each rerun, so Settings-page
+#    edits apply immediately ─────────────────────────────────────────────────
+EMPLOYEES_IL = cfg.employees_il()
+EMPLOYEES_PE = cfg.employees_pe()
+ALL_EMPLOYEES = EMPLOYEES_IL + EMPLOYEES_PE
+WORK_HOURS_WEEKDAY = cfg.options_with_blank("work_hours_weekday")
+WORK_HOURS_FRIDAY  = cfg.options_with_blank("work_hours_friday")
+ENTRY_OPTIONS = cfg.options_with_blank("entry")
+EXIT_OPTIONS  = cfg.options_with_blank("exit")
+ESCORT_OPTIONS = cfg.options_with_blank("escort")
+ARRIVAL_POINT_OPTIONS = cfg.options_with_blank("arrival_point")
+THEATER_OPTIONS = cfg.options_with_blank("theater")
+UDEX_OPTIONS = cfg.options_with_blank("udex")
+VEHICLE_OPTIONS = cfg.options_with_blank("vehicle")
+AXIS_OPTIONS = cfg.options_with_blank("axis")
+WAIT_SPOT_OPTIONS = cfg.options_with_blank("wait_spot")
+CUSTOM_ROWS = cfg.custom_rows()
+CUSTOM_ROW_MAP = {r["key"]: r for r in CUSTOM_ROWS}
+VACATION_BUDGET = vacation_budget()
+
 # Fields that auto-assign fills (need session-state sync on assign)
 AUTO_FIELDS = [
     "entry", "exit",
@@ -66,7 +88,7 @@ with st.sidebar:
         st.session_state.sheets_creds = creds_text
 
 # ── Header row ─────────────────────────────────────────────────────────────
-h1, h2, h3, h4, h5 = st.columns([3, 1, 1, 1, 1])
+h1, h2, h3, h4, h5, h6 = st.columns([3, 1, 1, 1, 1, 1])
 h1.title(t("app_title", lang))
 
 lang_map = {"עברית": "he", "English": "en", "Español": "es"}
@@ -89,7 +111,269 @@ if h5.button("📋 " + t("schedule_tab", lang), use_container_width=True):
     st.session_state.page = "schedule"
     st.rerun()
 
+if h6.button("⚙️ " + t("settings", lang), use_container_width=True):
+    st.session_state.page = "settings"
+    st.rerun()
+
 st.divider()
+
+# ══════════════════════════════════════════════════════════════════════════
+# PAGE: SETTINGS — everything here reads/writes config.json
+# ══════════════════════════════════════════════════════════════════════════
+if st.session_state.page == "settings":
+    st.subheader("⚙️ " + t("settings", lang))
+    config = cfg.get_config()
+
+    tab_emp, tab_rows, tab_opts, tab_targets = st.tabs([
+        "👤 " + t("tab_employees", lang),
+        "📋 " + t("tab_rows", lang),
+        "📝 " + t("tab_options", lang),
+        "🎯 " + t("tab_targets", lang),
+    ])
+
+    # ── Tab 1: Employees + vacation budgets ────────────────────────────────
+    with tab_emp:
+        with st.form("emp_form"):
+            ce1, ce2 = st.columns(2)
+            il_text = ce1.text_area(
+                t("employees_il_label", lang),
+                value="\n".join(config["employees"]["il"]),
+                help=t("one_per_line", lang), height=120)
+            pe_text = ce2.text_area(
+                t("employees_pe_label", lang),
+                value="\n".join(config["employees"]["pe"]),
+                help=t("one_per_line", lang), height=120)
+            st.caption("⚠️ " + t("rename_warning", lang))
+
+            st.markdown("**🏖 " + t("vacation_budget_label", lang) + "**")
+            budget_cols = st.columns(max(len(ALL_EMPLOYEES), 1))
+            for col, emp in zip(budget_cols, ALL_EMPLOYEES):
+                col.number_input(emp, min_value=0, max_value=365,
+                    value=int(VACATION_BUDGET.get(emp, 14 if emp in EMPLOYEES_IL else 30)),
+                    key=f"vb_{emp}")
+
+            if st.form_submit_button("💾 " + t("save_settings", lang), type="primary"):
+                new_il = [l.strip() for l in il_text.splitlines() if l.strip()]
+                new_pe = [l.strip() for l in pe_text.splitlines() if l.strip()]
+                config["employees"]["il"] = new_il
+                config["employees"]["pe"] = new_pe
+                vb = {}
+                for emp in new_il:
+                    vb[emp] = int(st.session_state.get(f"vb_{emp}",
+                                  config["vacation_budget"].get(emp, 14)))
+                for emp in new_pe:
+                    vb[emp] = int(st.session_state.get(f"vb_{emp}",
+                                  config["vacation_budget"].get(emp, 30)))
+                config["vacation_budget"] = vb
+                cfg.save_config(config)
+                st.success("✅ " + t("settings_saved", lang))
+                st.rerun()
+
+    # ── Tab 2: Row order + row labels + custom rows ────────────────────────
+    with tab_rows:
+        st.markdown("**↕️ " + t("row_order_title", lang) + "**")
+        order_keys = cfg.reorderable_row_keys()
+        if HAS_SORTABLES:
+            st.caption(t("row_order_hint_drag", lang))
+            item_to_key, items = {}, []
+            for k in order_keys:
+                lbl = f"⠿ {cfg.row_label(k, lang)}"
+                while lbl in item_to_key:   # duplicate labels → disambiguate
+                    lbl += " ·"
+                item_to_key[lbl] = k
+                items.append(lbl)
+            sorted_items = sort_items(items, direction="vertical",
+                                      key="row_order_sort")
+            if st.button("💾 " + t("save_settings", lang), type="primary",
+                         key="row_order_save"):
+                config["row_order"] = [item_to_key[i] for i in sorted_items]
+                cfg.save_config(config)
+                st.success("✅ " + t("settings_saved", lang))
+                st.rerun()
+        else:
+            st.caption(t("row_order_hint_buttons", lang))
+            for idx, k in enumerate(order_keys):
+                c_lbl, c_up, c_dn = st.columns([8, 1, 1])
+                c_lbl.write(f"⠿ {cfg.row_label(k, lang)}")
+                if c_up.button("↑", key=f"ro_up_{k}", disabled=(idx == 0)):
+                    order_keys[idx - 1], order_keys[idx] = order_keys[idx], order_keys[idx - 1]
+                    config["row_order"] = order_keys
+                    cfg.save_config(config)
+                    st.rerun()
+                if c_dn.button("↓", key=f"ro_dn_{k}",
+                               disabled=(idx == len(order_keys) - 1)):
+                    order_keys[idx + 1], order_keys[idx] = order_keys[idx], order_keys[idx + 1]
+                    config["row_order"] = order_keys
+                    cfg.save_config(config)
+                    st.rerun()
+
+        st.divider()
+        st.markdown("**" + t("row_labels_title", lang) + "**")
+        editable_rows = [k for k in cfg.BASE_ROW_KEYS if k not in ("dates", "days")]
+        with st.form("labels_form"):
+            lh, le, ls_ = st.columns(3)
+            lh.markdown("**עברית**"); le.markdown("**English**"); ls_.markdown("**Español**")
+            for rk in editable_rows:
+                c1, c2, c3 = st.columns(3)
+                c1.text_input("he", value=cfg.row_label(rk, "he"),
+                    key=f"lbl_{rk}_he", label_visibility="collapsed")
+                c2.text_input("en", value=cfg.row_label(rk, "en"),
+                    key=f"lbl_{rk}_en", label_visibility="collapsed")
+                c3.text_input("es", value=cfg.row_label(rk, "es"),
+                    key=f"lbl_{rk}_es", label_visibility="collapsed")
+            if st.form_submit_button("💾 " + t("save_settings", lang), type="primary"):
+                for rk in editable_rows:
+                    config["row_labels"][rk] = {
+                        "he": st.session_state.get(f"lbl_{rk}_he", "").strip(),
+                        "en": st.session_state.get(f"lbl_{rk}_en", "").strip(),
+                        "es": st.session_state.get(f"lbl_{rk}_es", "").strip(),
+                    }
+                cfg.save_config(config)
+                st.success("✅ " + t("settings_saved", lang))
+                st.rerun()
+
+        st.divider()
+        st.markdown("**➕ " + t("add_custom_row", lang) + "**")
+        with st.form("add_row_form"):
+            n1, n2, n3 = st.columns(3)
+            new_he = n1.text_input(t("row_name_he", lang))
+            new_en = n2.text_input(t("row_name_en", lang))
+            new_es = n3.text_input(t("row_name_es", lang))
+            it1, it2 = st.columns(2)
+            input_labels = {
+                "select": t("input_select", lang),
+                "text": t("input_text", lang),
+            }
+            new_type = it1.selectbox(t("row_input_type", lang),
+                list(input_labels.keys()), format_func=lambda k: input_labels[k])
+            new_opts = it2.text_area(t("row_options_label", lang),
+                help=t("one_per_line", lang), height=80)
+            if st.form_submit_button("➕ " + t("add_row_btn", lang)):
+                if not new_he.strip():
+                    st.error(t("row_name_required", lang))
+                else:
+                    existing_nums = [
+                        int(r["key"].split("_")[1])
+                        for r in config["custom_rows"]
+                        if r.get("key", "").startswith("custom_")
+                        and r["key"].split("_")[1].isdigit()
+                    ]
+                    next_num = max(existing_nums, default=0) + 1
+                    config["custom_rows"].append({
+                        "key": f"custom_{next_num}",
+                        "labels": {"he": new_he.strip(),
+                                   "en": new_en.strip() or new_he.strip(),
+                                   "es": new_es.strip() or new_he.strip()},
+                        "input": new_type,
+                        "options": [l.strip() for l in new_opts.splitlines() if l.strip()],
+                    })
+                    cfg.save_config(config)
+                    st.success("✅ " + t("row_added", lang))
+                    st.rerun()
+
+        st.markdown("**" + t("custom_rows_title", lang) + "**")
+        if not config["custom_rows"]:
+            st.info(t("no_custom_rows", lang))
+        for i, crow in enumerate(config["custom_rows"]):
+            key = crow["key"]
+            with st.expander(f"📌 {crow.get('labels', {}).get(lang) or crow.get('labels', {}).get('he') or key}"):
+                e1, e2, e3 = st.columns(3)
+                u_he = e1.text_input(t("row_name_he", lang),
+                    value=crow.get("labels", {}).get("he", ""), key=f"cr_{key}_he")
+                u_en = e2.text_input(t("row_name_en", lang),
+                    value=crow.get("labels", {}).get("en", ""), key=f"cr_{key}_en")
+                u_es = e3.text_input(t("row_name_es", lang),
+                    value=crow.get("labels", {}).get("es", ""), key=f"cr_{key}_es")
+                u_opts = st.text_area(t("row_options_label", lang),
+                    value="\n".join(crow.get("options", [])),
+                    help=t("one_per_line", lang), key=f"cr_{key}_opts", height=80)
+                b1, b2 = st.columns(2)
+                if b1.button("💾 " + t("save_settings", lang), key=f"cr_{key}_save"):
+                    crow["labels"] = {"he": u_he.strip(), "en": u_en.strip(), "es": u_es.strip()}
+                    crow["options"] = [l.strip() for l in u_opts.splitlines() if l.strip()]
+                    cfg.save_config(config)
+                    st.success("✅ " + t("settings_saved", lang))
+                    st.rerun()
+                if b2.button("🗑 " + t("delete_row_btn", lang), key=f"cr_{key}_del"):
+                    config["custom_rows"] = [
+                        r for r in config["custom_rows"] if r.get("key") != key]
+                    cfg.save_config(config)
+                    st.success("✅ " + t("row_deleted", lang))
+                    st.rerun()
+
+    # ── Tab 3: Dropdown options ────────────────────────────────────────────
+    with tab_opts:
+        weekday_lbl = ("א'-ה'" if lang == "he" else "Mon-Thu")
+        OPTION_GROUPS = [
+            ("entry",         t("row_entry", lang)),
+            ("exit",          t("row_exit", lang)),
+            ("escort",        t("row_escort_morning", lang) + " / " + t("row_escort_noon", lang)),
+            ("arrival_point", t("row_arrival_point", lang)),
+            ("theater",       t("row_theater", lang)),
+            ("udex",          t("row_udex", lang)),
+            ("vehicle",       t("row_vehicle_morning", lang) + " / " + t("row_vehicle_noon", lang)),
+            ("axis",          t("row_axis_morning", lang) + " / " + t("row_axis_noon", lang)),
+            ("wait_spot",     t("row_wait_morning", lang) + " / " + t("row_wait_noon", lang)),
+            ("work_hours_weekday", t("row_work_hours", lang) + f" ({weekday_lbl})"),
+            ("work_hours_friday",  t("row_work_hours", lang) + f" ({t('friday', lang)})"),
+        ]
+        with st.form("opts_form"):
+            grid = st.columns(3)
+            for i, (opt_key, opt_label) in enumerate(OPTION_GROUPS):
+                grid[i % 3].text_area(opt_label,
+                    value="\n".join(config["options"].get(opt_key, [])),
+                    help=t("one_per_line", lang), key=f"opt_{opt_key}",
+                    height=140)
+
+            st.divider()
+            st.caption("⚠️ " + t("special_values_note", lang))
+            sv = config["special_values"]
+            s1, s2, s3, s4 = st.columns(4)
+            sv_holiday = s1.text_input("Holiday", value=sv["holiday"], key="sv_holiday")
+            sv_vehicle = s2.text_input("Special vehicle", value=sv["vehicle_special"], key="sv_vehicle")
+            sv_udex_m = s3.text_input("UDEX morning (,)", value=",".join(sv["udex_morning"]), key="sv_udex_m")
+            sv_udex_t = s4.text_input("UDEX noon (,)", value=",".join(sv["udex_noon"]), key="sv_udex_t")
+
+            if st.form_submit_button("💾 " + t("save_settings", lang), type="primary"):
+                for opt_key, _ in OPTION_GROUPS:
+                    raw = st.session_state.get(f"opt_{opt_key}", "")
+                    config["options"][opt_key] = [
+                        l.strip() for l in raw.splitlines() if l.strip()]
+                config["special_values"] = {
+                    "holiday": sv_holiday.strip(),
+                    "vehicle_special": sv_vehicle.strip(),
+                    "udex_morning": [v.strip() for v in sv_udex_m.split(",") if v.strip()],
+                    "udex_noon":    [v.strip() for v in sv_udex_t.split(",") if v.strip()],
+                }
+                cfg.save_config(config)
+                st.success("✅ " + t("settings_saved", lang))
+                st.rerun()
+
+    # ── Tab 4: Weekly targets ──────────────────────────────────────────────
+    with tab_targets:
+        with st.form("targets_form"):
+            tg = config["targets"]
+            g1, g2 = st.columns(2)
+            v_yellow = g1.number_input(t("targets_yellow", lang),
+                min_value=0, max_value=10, value=int(tg["yellow_per_week"]))
+            v_theater = g2.number_input(t("targets_theater", lang),
+                min_value=0, max_value=5, value=int(tg["theater_per_week"]))
+            v_udex_m = g1.number_input(t("targets_udex_m", lang),
+                min_value=0, max_value=5, value=int(tg["udex_m"]))
+            v_udex_t = g2.number_input(t("targets_udex_t", lang),
+                min_value=0, max_value=5, value=int(tg["udex_t"]))
+            if st.form_submit_button("💾 " + t("save_settings", lang), type="primary"):
+                config["targets"] = {
+                    "yellow_per_week": int(v_yellow),
+                    "udex_m": int(v_udex_m),
+                    "udex_t": int(v_udex_t),
+                    "theater_per_week": int(v_theater),
+                }
+                cfg.save_config(config)
+                st.success("✅ " + t("settings_saved", lang))
+                st.rerun()
+
+    st.stop()
 
 # ══════════════════════════════════════════════════════════════════════════
 # PAGE: ARCHIVE
@@ -140,7 +424,7 @@ def _render_stats(schedules: list, title: str):
     # ── Employee table with % and vacation ─────────────────────────────
     st.markdown("##### 👤 " + ("חלוקת עובדים" if lang=="he" else "Employee Distribution"))
     rows = {}
-    for emp in ["LEON", "CUY", "HALCON", "CHCHORRO", "BUHO"]:
+    for emp in ALL_EMPLOYEES:
         row = {}
         for r in EMPLOYEE_ROLES:
             cnt = emp_counts[emp][r]
@@ -164,7 +448,7 @@ def _render_stats(schedules: list, title: str):
         fig, ax = plt.subplots(figsize=(5, 4))
         fig.patch.set_alpha(0.0); ax.set_facecolor("none")
         labels, values = [], []
-        for emp in ["LEON", "CUY"]:
+        for emp in EMPLOYEES_IL:
             for r in ["emb_il", "apt_il"]:
                 cnt = emp_counts[emp][r]
                 if cnt:
@@ -180,7 +464,7 @@ def _render_stats(schedules: list, title: str):
         fig, ax = plt.subplots(figsize=(5, 4))
         fig.patch.set_alpha(0.0); ax.set_facecolor("none")
         labels, values = [], []
-        for emp in ["HALCON", "CHCHORRO", "BUHO"]:
+        for emp in EMPLOYEES_PE:
             for r in ["emb_pe", "apt_pe"]:
                 cnt = emp_counts[emp][r]
                 if cnt:
@@ -195,9 +479,9 @@ def _render_stats(schedules: list, title: str):
     # ── Vacation breakdown with annual budget ──────────────────────────
     st.markdown("##### 🏖 " + ("חופשות" if lang == "he" else "Vacations"))
     vac_rows = {}
-    for emp in ["LEON", "CUY", "HALCON", "CHCHORRO", "BUHO"]:
+    for emp in ALL_EMPLOYEES:
         vac = vacation_counts.get(emp, 0)
-        budget = VACATION_BUDGET[emp]
+        budget = VACATION_BUDGET.get(emp, 0)
         pct_used = (vac / budget * 100) if budget else 0
         vac_rows[emp] = {
             "Days Used": vac,
@@ -208,11 +492,11 @@ def _render_stats(schedules: list, title: str):
     vac_df = pd.DataFrame(vac_rows).T
     vac_df.index.name = ""
     st.dataframe(vac_df, use_container_width=True)
-    # 5 individual pies — one per employee showing % utilization of annual budget
-    pie_cols = st.columns(5)
-    for col, emp in zip(pie_cols, ["LEON", "CUY", "HALCON", "CHCHORRO", "BUHO"]):
+    # Individual pies — one per employee showing % utilization of annual budget
+    pie_cols = st.columns(max(len(ALL_EMPLOYEES), 1))
+    for col, emp in zip(pie_cols, ALL_EMPLOYEES):
         vac = vacation_counts.get(emp, 0)
-        budget = VACATION_BUDGET[emp]
+        budget = VACATION_BUDGET.get(emp, 0)
         remaining = max(budget - vac, 0)
         with col:
             fig, ax = plt.subplots(figsize=(2.2, 2.2))
@@ -484,29 +768,37 @@ py_to_key = ["monday","tuesday","wednesday","thursday","friday","saturday","sund
 def generate_print_html(sched: dict, dk_list: list, lng: str) -> str:
     """Generate a self-contained, printable HTML table of the schedule."""
     PRINT_ROWS = [
-        ("work_hours",        t("row_work_hours",   lng)),
-        ("entry",             t("row_entry",        lng)),
-        ("exit",              t("row_exit",         lng)),
-        ("escort_morning",    t("row_escort_morning", lng)),
-        ("school",            t("row_school",       lng)),
-        ("escort_noon",       t("row_escort_noon",  lng)),
-        ("emb_il",            t("row_emb_il",       lng)),
-        ("emb_pe",            t("row_emb_pe",       lng)),
-        ("other_empl",        t("row_other_empl",   lng)),
-        ("arrival_point",     t("row_arrival_point",lng)),
-        ("theater",           t("row_theater",      lng)),
-        ("udex",              t("row_udex",         lng)),
-        ("apt_il",            t("row_apt_il",       lng)),
-        ("apt_pe",            t("row_apt_pe",       lng)),
-        ("vehicle_morning",   t("row_vehicle_morning", lng)),
-        ("axis_morning",      t("row_axis_morning", lng)),
-        ("wait_morning",      t("row_wait_morning", lng)),
-        ("vehicle_noon",      t("row_vehicle_noon", lng)),
-        ("axis_noon",         t("row_axis_noon",    lng)),
-        ("wait_noon",         t("row_wait_noon",    lng)),
-        ("vacation_il",       t("row_vacation",     lng) + " IL"),
-        ("vacation_pe",       t("row_vacation",     lng) + " PE"),
-    ]
+        ("work_hours",        cfg.row_label("work_hours",   lng)),
+        ("entry",             cfg.row_label("entry",        lng)),
+        ("exit",              cfg.row_label("exit",         lng)),
+        ("escort_morning",    cfg.row_label("escort_morning", lng)),
+        ("school",            cfg.row_label("school",       lng)),
+        ("escort_noon",       cfg.row_label("escort_noon",  lng)),
+        ("emb_il",            cfg.row_label("emb_il",       lng)),
+        ("emb_pe",            cfg.row_label("emb_pe",       lng)),
+        ("other_empl",        cfg.row_label("other_empl",   lng)),
+        ("arrival_point",     cfg.row_label("arrival_point",lng)),
+        ("theater",           cfg.row_label("theater",      lng)),
+        ("udex",              cfg.row_label("udex",         lng)),
+        ("apt_il",            cfg.row_label("apt_il",       lng)),
+        ("apt_pe",            cfg.row_label("apt_pe",       lng)),
+        ("vehicle_morning",   cfg.row_label("vehicle_morning", lng)),
+        ("axis_morning",      cfg.row_label("axis_morning", lng)),
+        ("wait_morning",      cfg.row_label("wait_morning", lng)),
+        ("vehicle_noon",      cfg.row_label("vehicle_noon", lng)),
+        ("axis_noon",         cfg.row_label("axis_noon",    lng)),
+        ("wait_noon",         cfg.row_label("wait_noon",    lng)),
+        ("vacation_il",       cfg.row_label("vacation",     lng) + " IL"),
+        ("vacation_pe",       cfg.row_label("vacation",     lng) + " PE"),
+    ] + [(r["key"], cfg.row_label(r["key"], lng)) for r in CUSTOM_ROWS]
+
+    # Apply the configured row order (vacation_il/pe follow the "vacation" slot)
+    _order = {k: i for i, k in enumerate(cfg.reorderable_row_keys())}
+    PRINT_ROWS.sort(key=lambda item: (
+        _order.get("vacation" if item[0] in ("vacation_il", "vacation_pe") else item[0],
+                   len(_order)),
+        1 if item[0] == "vacation_pe" else 0,
+    ))
 
     py_keys = ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"]
 
@@ -520,11 +812,11 @@ def generate_print_html(sched: dict, dk_list: list, lng: str) -> str:
     # Section dividers (before these row keys insert a divider row)
     SECTION_DIVIDERS = {
         "emb_il":          "― EMB ―",
-        "arrival_point":   "― " + t("row_arrival_point",lng) + " / " + t("row_theater",lng) + " / UDEX ―",
-        "apt_il":          "― " + t("row_apt_il",lng) + " / " + t("row_apt_pe",lng) + " ―",
-        "vehicle_morning": "― " + t("row_vehicle_morning",lng) + " ―",
-        "vehicle_noon":    "― " + t("row_vehicle_noon",lng) + " ―",
-        "vacation_il":     "― " + t("row_vacation",lng) + " ―",
+        "arrival_point":   "― " + cfg.row_label("arrival_point",lng) + " / " + cfg.row_label("theater",lng) + " / UDEX ―",
+        "apt_il":          "― " + cfg.row_label("apt_il",lng) + " / " + cfg.row_label("apt_pe",lng) + " ―",
+        "vehicle_morning": "― " + cfg.row_label("vehicle_morning",lng) + " ―",
+        "vehicle_noon":    "― " + cfg.row_label("vehicle_noon",lng) + " ―",
+        "vacation_il":     "― " + cfg.row_label("vacation",lng) + " ―",
     }
 
     body_rows = ""
@@ -790,7 +1082,7 @@ if st.session_state.get("auto_assigned"):
         ("taxi_arrival_noon", "Taxi Arrival Noon"),
         ("vacation_il",       "Vacation IL"),
         ("vacation_pe",       "Vacation PE"),
-    ]
+    ] + [(r["key"], cfg.row_label(r["key"], lang)) for r in CUSTOM_ROWS]
 
     import pandas as pd
     day_labels_en = [schedule[dk]["date"].strftime("%a %d/%m") for dk in day_keys]
@@ -820,7 +1112,7 @@ for i, dk in enumerate(day_keys):
 # ── Row renderer ───────────────────────────────────────────────────────────
 def render_row(rk: str):
     cols = st.columns([2] + [1.5] * num_days)
-    label = t(f"row_{rk}", lang)
+    label = cfg.row_label(rk, lang)
     if rk in ("entry", "exit"):
         cols[0].markdown(f"**🕐 {label}**")
     elif rk == "work_hours":
@@ -941,6 +1233,18 @@ def render_row(rk: str):
                     index=WAIT_SPOT_OPTIONS.index(cur) if cur in WAIT_SPOT_OPTIONS else 0,
                     key=ck, label_visibility="collapsed")
 
+            elif rk in CUSTOM_ROW_MAP:
+                rdef = CUSTOM_ROW_MAP[rk]
+                if rdef["input"] == "select" and rdef["options"]:
+                    copts = [""] + rdef["options"]
+                    cur = day.get(rk, "")
+                    day[rk] = st.selectbox("", copts,
+                        index=copts.index(cur) if cur in copts else 0,
+                        key=ck, label_visibility="collapsed")
+                else:
+                    day[rk] = st.text_input("", value=day.get(rk, ""),
+                        key=ck, label_visibility="collapsed")
+
             elif rk == "vacation":
                 avail_il = [""] + EMPLOYEES_IL
                 avail_pe = [""] + EMPLOYEES_PE
@@ -958,14 +1262,14 @@ def render_row(rk: str):
 # ── Section dividers ───────────────────────────────────────────────────────
 SECTIONS = {
     "emb_il":         "― EMB ―",
-    "arrival_point":  "― " + t("row_arrival_point",lang) + " / " + t("row_theater",lang) + " / UDEX ―",
-    "apt_il":         "― " + t("row_apt_il",lang) + " / " + t("row_apt_pe",lang) + " ―",
-    "vehicle_morning":"― " + t("row_vehicle_morning",lang) + " ―",
-    "vehicle_noon":   "― " + t("row_vehicle_noon",lang) + " ―",
-    "vacation":       "― " + t("row_vacation",lang) + " ―",
+    "arrival_point":  "― " + cfg.row_label("arrival_point",lang) + " / " + cfg.row_label("theater",lang) + " / UDEX ―",
+    "apt_il":         "― " + cfg.row_label("apt_il",lang) + " / " + cfg.row_label("apt_pe",lang) + " ―",
+    "vehicle_morning":"― " + cfg.row_label("vehicle_morning",lang) + " ―",
+    "vehicle_noon":   "― " + cfg.row_label("vehicle_noon",lang) + " ―",
+    "vacation":       "― " + cfg.row_label("vacation",lang) + " ―",
 }
 
-render_rows = [k for k in ROW_KEYS if k not in ("dates","days")]
+render_rows = [k for k in cfg.all_row_keys() if k not in ("dates","days")]
 for rk in render_rows:
     if rk in SECTIONS:
         st.markdown(f"<div style='color:#999;font-size:0.75rem;margin:8px 0 2px'>{SECTIONS[rk]}</div>",
@@ -982,7 +1286,7 @@ with st.expander("📊 " + ("סיכום שוויון שבועי" if lang=="he" e
 
     st.markdown("**👤 " + ("חלוקת עובדים" if lang=="he" else "Employee Distribution") + "**")
     emp_rows = {}
-    for emp in ["LEON","CUY","HALCON","CHCHORRO","BUHO"]:
+    for emp in ALL_EMPLOYEES:
         row = {}
         for r in EMPLOYEE_ROLES:
             cnt = emp_counts[emp][r]

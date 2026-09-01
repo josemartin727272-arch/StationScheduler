@@ -1,7 +1,7 @@
 """
 Statistics computation: per-employee and per-field distributions.
 """
-from schedule_logic import EMPLOYEES_IL, EMPLOYEES_PE, ALL_EMPLOYEES
+import app_config as cfg
 from archive_storage import list_archive, load_schedule
 from datetime import date
 
@@ -13,11 +13,10 @@ EMPLOYEE_ROLE_LABELS = {
     "apt_pe": "R PE",
 }
 
-# Annual vacation budget per employee
-VACATION_BUDGET = {
-    "LEON": 14, "CUY": 14,
-    "HALCON": 30, "CHCHORRO": 30, "BUHO": 30,
-}
+
+def vacation_budget() -> dict:
+    """Annual vacation budget per employee (from config.json)."""
+    return cfg.vacation_budget()
 
 VALUE_FIELDS = [
     ("entry",           "Entry"),
@@ -56,10 +55,11 @@ def compute_stats(schedules: list) -> tuple:
         num_days        total number of working days across all schedules
         vacation_counts {employee: days_on_vacation}
     """
-    emp_counts = {e: {r: 0 for r in EMPLOYEE_ROLES} for e in ALL_EMPLOYEES}
+    all_employees = cfg.all_employees()
+    emp_counts = {e: {r: 0 for r in EMPLOYEE_ROLES} for e in all_employees}
     field_counts = {f: {} for f, _ in VALUE_FIELDS}
-    vacation_counts = {e: 0 for e in ALL_EMPLOYEES}
-    other_counts = {e: 0 for e in ALL_EMPLOYEES}
+    vacation_counts = {e: 0 for e in all_employees}
+    other_counts = {e: 0 for e in all_employees}
     num_days = 0
 
     for schedule in schedules:
