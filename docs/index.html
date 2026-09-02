@@ -28,7 +28,11 @@ nav{display:flex;gap:6px;flex-wrap:wrap}
 nav button{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.25);
   color:#fff;border-radius:10px;padding:10px 14px;cursor:pointer;font-size:.95rem;min-height:44px}
 nav button.active{background:var(--accent);color:#222;border-color:var(--accent);font-weight:700}
-#langSel{border-radius:10px;padding:8px;border:none;min-height:44px}
+#langBtns{display:flex;gap:6px}
+.lang-btn{background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.25);
+  border-radius:10px;min-height:44px;min-width:50px;font-size:1.35rem;cursor:pointer;
+  line-height:1;padding:4px 8px}
+.lang-btn.active{background:var(--accent);border-color:#fff}
 main{padding:12px;max-width:1200px;margin:0 auto}
 .card{background:var(--card);border:1px solid var(--border);border-radius:14px;
   padding:14px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
@@ -47,13 +51,14 @@ h2{font-size:1.1rem;margin:6px 0 12px}
 h3{font-size:1rem;margin:14px 0 8px;color:var(--primary)}
 .hint{color:var(--muted);font-size:.85rem;margin:4px 0 10px}
 /* schedule table */
-.tbl-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:12px;background:#fff}
+.tbl-wrap{overflow:auto;max-height:calc(100vh - 215px);border:1px solid var(--border);border-radius:12px;background:#fff}
 table.sched{border-collapse:collapse;width:100%;min-width:720px}
 table.sched th,table.sched td{border:1px solid var(--border);padding:4px;text-align:center}
 table.sched thead th{background:var(--primary);color:#fff;font-size:.85rem;padding:8px 4px;
-  position:sticky;top:0}
+  position:sticky;top:0;z-index:3}
+table.sched thead th:first-child{inset-inline-start:0;z-index:4}
 table.sched td.label{background:#eef2f7;font-weight:600;font-size:.83rem;
-  text-align:start;padding:4px 8px;white-space:nowrap;position:sticky;inset-inline-start:0}
+  text-align:start;padding:4px 8px;white-space:nowrap;position:sticky;inset-inline-start:0;z-index:2}
 table.sched select,table.sched input[type=text]{width:100%;min-width:92px;min-height:44px;
   border:1px solid #e3e8ee;background:#fbfcfe}
 tr.section td{background:#dde5ee;color:#4a5a6d;font-size:.75rem;padding:3px;font-weight:600}
@@ -73,8 +78,16 @@ details.sect>.inner{padding:0 14px 14px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 @media(max-width:700px){.grid2,.grid3{grid-template-columns:1fr}}
-.lbl-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px}
+.lbl-row{display:grid;grid-template-columns:.8fr 1fr 1fr 1fr;gap:6px;margin-bottom:6px}
 .lbl-row input{min-height:40px;font-size:.88rem}
+.orig-lbl{color:var(--muted);font-weight:700;font-size:.85rem;align-self:center;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.badge{border-radius:10px;padding:8px 14px;font-weight:700;min-height:44px;
+  display:inline-flex;align-items:center;cursor:pointer;border:1px solid transparent}
+.badge.good{background:#eafaf1;color:var(--ok);border-color:#a9dfbf}
+.badge.bad{background:#fdecea;color:var(--danger);border-color:#f5b7b1}
+.dot{width:10px;height:10px;background:#e67e22;border-radius:50%;
+  display:inline-block;margin-inline-start:6px;vertical-align:middle}
 /* drag list */
 #orderList{list-style:none;margin:0;padding:0;user-select:none}
 #orderList li{display:flex;align-items:center;gap:10px;background:#fff;
@@ -119,9 +132,7 @@ table.stats th{background:#eef2f7}
 <header>
   <h1>🚕 <span id="hTitle"></span></h1>
   <nav id="nav"></nav>
-  <select id="langSel">
-    <option value="he">עברית</option><option value="en">English</option><option value="es">Español</option>
-  </select>
+  <span id="langBtns"></span>
 </header>
 <main id="app"></main>
 <div id="printArea"></div>
@@ -167,7 +178,12 @@ st_period:"תקופה",st_week:"שבוע נוכחי",st_month:"חודשי",st_ye
 st_employees:"חלוקת עובדים",st_vacation:"ניצול תקציב חופשה",st_fields:"חלוקת ערכים",st_weeks:"שבועות",st_days:"ימים",
 st_used:"נוצל",st_budget:"תקציב",st_left:"נותר",st_other:"אחר",st_role_emb_il:"EMB IL",st_role_apt_il:"דירה IL",
 st_role_emb_pe:"EMB PE",st_role_apt_pe:"דירה PE",st_vac_col:"חופשה",
-fri6:"‏6ש",offline_ready:"האפליקציה מוכנה לעבודה ללא אינטרנט"},
+fri6:"‏6ש",offline_ready:"האפליקציה מוכנה לעבודה ללא אינטרנט",
+backup_all:"📤 גיבוי הכול",restore_backup:"📥 שחזור מגיבוי",
+restore_confirm:"השחזור ידרוס את כל הנתונים במכשיר — להמשיך?",restore_done:"השחזור הושלם",
+invalid_file:"קובץ לא תקין",export_settings:"📤 ייצוא הגדרות",import_settings:"📥 ייבוא הגדרות",
+import_confirm:"הייבוא ידרוס את ההגדרות הנוכחיות — להמשיך?",import_done:"ההגדרות יובאו",
+clear_week:"נקה",valid_short:"תקין",total_col:"סה״כ שיבוצים",export_csv:"ייצוא CSV",orig_name:"שם מקורי"},
 en:{app_title:"Weekly Work Schedule",nav_sched:"📋 Schedule",nav_settings:"⚙️ Settings",nav_archive:"📁 Archive",nav_stats:"📊 Statistics",
 week_start:"Week start",generate:"New Schedule",auto_assign:"⚡ Auto Assign",save:"💾 Save",export_excel:"📤 Export Excel",print:"🖨️ Print",
 saved:"Schedule saved to archive",valid:"Schedule is valid ✓",replace_q:"A schedule exists for this week — replace?",yes:"Yes",no:"Cancel",
@@ -204,7 +220,12 @@ st_period:"Period",st_week:"Current week",st_month:"Monthly",st_year:"Yearly",st
 st_employees:"Employee distribution",st_vacation:"Vacation budget usage",st_fields:"Value distribution",st_weeks:"weeks",st_days:"days",
 st_used:"Used",st_budget:"Budget",st_left:"Left",st_other:"Other",st_role_emb_il:"EMB IL",st_role_apt_il:"Apt IL",
 st_role_emb_pe:"EMB PE",st_role_apt_pe:"Apt PE",st_vac_col:"Vacation",
-fri6:"6h",offline_ready:"App is ready for offline use"},
+fri6:"6h",offline_ready:"App is ready for offline use",
+backup_all:"📤 Back up everything",restore_backup:"📥 Restore from backup",
+restore_confirm:"Restore will overwrite all data on this device — continue?",restore_done:"Restore complete",
+invalid_file:"Invalid file",export_settings:"📤 Export settings",import_settings:"📥 Import settings",
+import_confirm:"Import will overwrite current settings — continue?",import_done:"Settings imported",
+clear_week:"Clear",valid_short:"Valid",total_col:"Total assignments",export_csv:"Export CSV",orig_name:"Original name"},
 es:{app_title:"Horario Semanal de Trabajo",nav_sched:"📋 Horario",nav_settings:"⚙️ Configuración",nav_archive:"📁 Archivo",nav_stats:"📊 Estadísticas",
 week_start:"Inicio de semana",generate:"Nuevo Horario",auto_assign:"⚡ Asignación Automática",save:"💾 Guardar",export_excel:"📤 Exportar Excel",print:"🖨️ Imprimir",
 saved:"Horario guardado en archivo",valid:"El horario es válido ✓",replace_q:"Existe un horario para esta semana — ¿reemplazar?",yes:"Sí",no:"Cancelar",
@@ -241,7 +262,12 @@ st_period:"Período",st_week:"Semana actual",st_month:"Mensual",st_year:"Anual",
 st_employees:"Distribución de empleados",st_vacation:"Uso de vacaciones",st_fields:"Distribución de valores",st_weeks:"semanas",st_days:"días",
 st_used:"Usado",st_budget:"Presupuesto",st_left:"Restante",st_other:"Otro",st_role_emb_il:"EMB IL",st_role_apt_il:"R IL",
 st_role_emb_pe:"EMB PE",st_role_apt_pe:"R PE",st_vac_col:"Vacaciones",
-fri6:"6h",offline_ready:"La aplicación está lista para uso sin conexión"}
+fri6:"6h",offline_ready:"La aplicación está lista para uso sin conexión",
+backup_all:"📤 Respaldar todo",restore_backup:"📥 Restaurar respaldo",
+restore_confirm:"La restauración sobrescribirá todos los datos del dispositivo — ¿continuar?",restore_done:"Restauración completa",
+invalid_file:"Archivo inválido",export_settings:"📤 Exportar configuración",import_settings:"📥 Importar configuración",
+import_confirm:"La importación sobrescribirá la configuración actual — ¿continuar?",import_done:"Configuración importada",
+clear_week:"Limpiar",valid_short:"Válido",total_col:"Total asignaciones",export_csv:"Exportar CSV",orig_name:"Nombre original"}
 };
 
 /* ═══════════════ default config (mirrors ~/Agenda app_config.py) ═══════════════ */
@@ -318,15 +344,47 @@ let S = {
   weekStart: nextMonday(new Date()),
   days: null,          // {iso: {field:value}}
   statsTab: "week", statsMonth:"", statsYear:"",
+  dirty: false,        // current schedule has changes not saved to archive
   pendingConfirm: null // key for inline confirms
 };
 (function restoreDraft(){
   try{
     const d = JSON.parse(localStorage.getItem(LS.draft)||"null");
-    if (d && d.weekStart && d.days){ S.weekStart=d.weekStart; S.days=d.days; }
+    if (d && d.weekStart && d.days){ S.weekStart=d.weekStart; S.days=d.days; S.dirty=!!d.dirty; }
   }catch(e){}
 })();
-function saveDraft(){ localStorage.setItem(LS.draft, JSON.stringify({weekStart:S.weekStart, days:S.days})); }
+function saveDraft(){ localStorage.setItem(LS.draft, JSON.stringify({weekStart:S.weekStart, days:S.days, dirty:S.dirty})); }
+
+/* ═══════════════ backup / restore / export helpers ═══════════════ */
+function downloadJson(obj, filename){
+  const blob=new Blob([JSON.stringify(obj,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download=filename;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+}
+function backupData(){
+  return { app:"agenda-pwa", kind:"full-backup", version:1,
+    exported_at:new Date().toISOString(),
+    config:JSON.parse(localStorage.getItem(LS.config)||"null"),
+    archive:loadArchive(), lang:S.lang };
+}
+function applyRestore(d){
+  if(d.config) localStorage.setItem(LS.config, JSON.stringify(d.config));
+  else localStorage.removeItem(LS.config);
+  saveArchive(d.archive||{});
+  if(d.lang){ localStorage.setItem(LS.lang, d.lang); S.lang=d.lang; }
+  CFG=loadConfig();
+}
+function cfgSnapshot(){
+  try{ const u=JSON.parse(localStorage.getItem(LS.config)||"null"); if(u) return u; }catch(e){}
+  return CFG;
+}
+function readJsonFile(file, cb){
+  const r=new FileReader();
+  r.onload=()=>{ try{ cb(JSON.parse(r.result)); }catch(e){ toast("⚠️ "+t("invalid_file")); } };
+  r.readAsText(file);
+}
 
 /* ═══════════════ helpers ═══════════════ */
 function t(key,vars){ let s=(I18N[S.lang]&&I18N[S.lang][key])||I18N.he[key]||key;
@@ -509,7 +567,7 @@ function autoAssign(){
     ["taxi_apt","taxi_arrival"].forEach(f=>{ day[f]=ym?(day[f]||leastUsed(opts(f),hist[f]||{})):""; });
     ["taxi_emb","taxi_arrival_noon"].forEach(f=>{ day[f]=yn?(day[f]||leastUsed(opts(f),hist[f]||{})):""; });
   });
-  saveDraft(); render(); toast("⚡ ✓");
+  S.dirty=true; saveDraft(); render(); toast("⚡ ✓");
 }
 
 /* ═══════════════ validation (port of validate_schedule) ═══════════════ */
@@ -565,18 +623,28 @@ function render(){
 
 /* ═══════════════ screen 1: schedule ═══════════════ */
 function viewSched(){
+  const errs=S.days?validate():[];
+  const badge=S.days?(errs.length
+    ?`<span class="badge bad" id="statusBadge">⚠️ ${errs.length}</span>`
+    :`<span class="badge good" id="statusBadge">✓ ${t("valid_short")}</span>`):"";
   let h=`<div class="card row-flex">
     <label>${t("week_start")} <input type="date" id="weekPick" value="${S.weekStart}"></label>
     <button class="btn primary" id="btnGen">🔄 ${t("generate")}</button>
+    <button class="btn" id="btnClear" ${S.days?"":"disabled"}>🗑 ${t("clear_week")}</button>
     <button class="btn primary" id="btnAuto" ${S.days?"":"disabled"}>${t("auto_assign")}</button>
-    <button class="btn" id="btnSave" ${S.days?"":"disabled"}>${t("save")}</button>
+    <button class="btn" id="btnSave" ${S.days?"":"disabled"}>${t("save")}<span id="saveDot" class="dot" style="display:${S.dirty?"inline-block":"none"}"></span></button>
     <button class="btn" id="btnCsv" ${S.days?"":"disabled"}>${t("export_excel")}</button>
     <button class="btn" id="btnPrint" ${S.days?"":"disabled"}>${t("print")}</button>
+    ${badge}
   </div>`;
   if(S.pendingConfirm==="gen")
     h+=`<div class="msg warn">${t("replace_q")}
       <button class="btn small primary" id="genYes">${t("yes")}</button>
       <button class="btn small" id="genNo">${t("no")}</button></div>`;
+  if(S.pendingConfirm==="clear")
+    h+=`<div class="msg warn">${t("confirm_q")}
+      <button class="btn small warn" id="clearYes">✓</button>
+      <button class="btn small" id="clearNo">✗</button></div>`;
   if(!S.days) return h;
   const keys=Object.keys(S.days).sort();
   h+=`<div class="tbl-wrap"><table class="sched"><thead><tr><th>${esc(t("row_dates"))}</th>`;
@@ -587,10 +655,27 @@ function viewSched(){
     h+=renderRow(rk,keys);
   }
   h+=`</tbody></table></div>`;
-  const errs=validate();
+  h+=`<div id="errList">`;
   if(errs.length) errs.forEach(e=>{ h+=`<div class="msg ${e.lvl}">${esc(e.msg)}</div>`; });
   else h+=`<div class="msg ok">${t("valid")}</div>`;
+  h+=`</div>`;
   return h;
+}
+
+/* live refresh of badge / error list / save-dot without a full re-render */
+function updateStatus(){
+  const b=document.getElementById("statusBadge");
+  if(b&&S.days){
+    const errs=validate();
+    b.className="badge "+(errs.length?"bad":"good");
+    b.textContent=errs.length?`⚠️ ${errs.length}`:`✓ ${t("valid_short")}`;
+    const el=document.getElementById("errList");
+    if(el) el.innerHTML=errs.length
+      ?errs.map(e=>`<div class="msg ${e.lvl}">${esc(e.msg)}</div>`).join("")
+      :`<div class="msg ok">${t("valid")}</div>`;
+  }
+  const dot=document.getElementById("saveDot");
+  if(dot) dot.style.display=S.dirty?"inline-block":"none";
 }
 function selCell(dk,field,options,val,cls){
   let o=`<option value=""></option>`;
@@ -640,6 +725,15 @@ function renderRow(rk,keys){
 function viewSettings(){
   const emps=allEmps();
   let h=`<h2>${t("nav_settings")}</h2>`;
+  h+=`<div class="card row-flex">
+    <button class="btn primary" id="btnCfgExport">${t("export_settings")}</button>
+    <button class="btn" id="btnCfgImport">${t("import_settings")}</button>
+    <input type="file" id="importCfgFile" accept="application/json,.json" style="display:none">
+  </div>`;
+  if(S.pendingConfirm==="importcfg")
+    h+=`<div class="msg warn">⚠️ ${t("import_confirm")}
+      <button class="btn small warn" id="importCfgYes">✓ ${t("yes")}</button>
+      <button class="btn small" id="importCfgNo">✗ ${t("no")}</button></div>`;
   /* employees */
   h+=`<details class="sect" open><summary>${t("s_employees")}</summary><div class="inner">
     <div class="grid2">
@@ -660,8 +754,9 @@ function viewSettings(){
   h+=`</ul></div></details>`;
   /* labels */
   h+=`<details class="sect"><summary>${t("s_labels")}</summary><div class="inner">
-    <div class="lbl-row"><b>${t("lbl_he")}</b><b>${t("lbl_en")}</b><b>${t("lbl_es")}</b></div>`;
+    <div class="lbl-row"><b class="orig-lbl">${t("orig_name")}</b><b>${t("lbl_he")}</b><b>${t("lbl_en")}</b><b>${t("lbl_es")}</b></div>`;
   BASE_ROW_KEYS.forEach(k=>{ h+=`<div class="lbl-row">
+    <span class="orig-lbl">${esc(I18N.he["row_"+k]||k)}</span>
     <input data-lbl="${k}" data-lang="he" value="${esc(rowLabel(k,"he"))}">
     <input data-lbl="${k}" data-lang="en" value="${esc(rowLabel(k,"en"))}">
     <input data-lbl="${k}" data-lang="es" value="${esc(rowLabel(k,"es"))}"></div>`; });
@@ -731,21 +826,34 @@ function viewSettings(){
 function viewArchive(){
   const arch=loadArchive();
   const weeks=Object.keys(arch).sort().reverse();
-  let h=`<h2>📁 ${t("arch_title")}</h2><div class="card">`;
+  let h=`<h2>📁 ${t("arch_title")}</h2>`;
+  h+=`<div class="card row-flex">
+    <button class="btn primary" id="btnBackup">${t("backup_all")}</button>
+    <button class="btn" id="btnRestore">${t("restore_backup")}</button>
+    <input type="file" id="restoreFile" accept="application/json,.json" style="display:none">
+  </div>`;
+  if(S.pendingConfirm==="restore")
+    h+=`<div class="msg warn">⚠️ ${t("restore_confirm")}
+      <button class="btn small warn" id="restoreYes">✓ ${t("yes")}</button>
+      <button class="btn small" id="restoreNo">✗ ${t("no")}</button></div>`;
+  h+=`<div class="card">`;
   if(!weeks.length) h+=`<div class="hint">${t("arch_empty")}</div>`;
-  let curYm="";
-  weeks.forEach(wk=>{
-    const ym=wk.slice(0,7);
-    if(ym!==curYm){ curYm=ym; h+=`<h3>📅 ${ym}</h3>`; }
-    const conf=S.pendingConfirm==="delarch_"+wk;
-    h+=`<div class="arch-item"><span class="wk">${wk}</span>
-      <button class="btn small primary" data-load="${wk}">${t("load")}</button>
-      <button class="btn small" data-csv="${wk}">CSV</button>
-      ${conf?`<span class="inline-confirm">${t("confirm_q")}
-        <button class="btn small warn" data-delarch-yes="${wk}">✓</button>
-        <button class="btn small" data-cancel-confirm="1">✗</button></span>`
-      :`<button class="btn small warn" data-delarch="${wk}">🗑</button>`}
-    </div>`;
+  const months=[...new Set(weeks.map(w=>w.slice(0,7)))];
+  months.forEach((ym,mi)=>{
+    const mWeeks=weeks.filter(w=>w.startsWith(ym));
+    h+=`<details ${mi===0?"open":""}><summary style="cursor:pointer;padding:8px 0;font-weight:700;color:var(--primary)">📅 ${ym} (${mWeeks.length} ${t("st_weeks")})</summary>`;
+    mWeeks.forEach(wk=>{
+      const conf=S.pendingConfirm==="delarch_"+wk;
+      h+=`<div class="arch-item"><span class="wk">${wk}</span>
+        <button class="btn small primary" data-load="${wk}">${t("load")}</button>
+        <button class="btn small" data-csv="${wk}">CSV</button>
+        ${conf?`<span class="inline-confirm">${t("confirm_q")}
+          <button class="btn small warn" data-delarch-yes="${wk}">✓</button>
+          <button class="btn small" data-cancel-confirm="1">✗</button></span>`
+        :`<button class="btn small warn" data-delarch="${wk}">🗑</button>`}
+      </div>`;
+    });
+    h+=`</details>`;
   });
   return h+"</div>";
 }
@@ -756,8 +864,9 @@ function computeStats(schedules){
   const emps=allEmps();
   const empC={}; emps.forEach(e=>{ empC[e]={emb_il:0,apt_il:0,emb_pe:0,apt_pe:0}; });
   const vac={}, oth={}; emps.forEach(e=>{vac[e]=0;oth[e]=0;});
-  const fields=["entry","exit","arrival_point","theater","udex","vehicle_morning","axis_morning",
-    "wait_morning","vehicle_noon","axis_noon","wait_noon"]
+  const fields=["entry","exit","escort_morning","escort_noon","arrival_point","theater","udex",
+    "vehicle_morning","axis_morning","wait_morning","taxi_apt","taxi_arrival",
+    "vehicle_noon","axis_noon","wait_noon","taxi_emb","taxi_arrival_noon"]
     .concat(customRows().filter(r=>r.input==="select").map(r=>r.key));
   const fieldC={}; fields.forEach(f=>fieldC[f]={});
   let nd=0;
@@ -793,14 +902,21 @@ function viewStats(){
   else { schedules=weeks.filter(w=>w.startsWith(S.statsYear)).map(w=>arch[w]); label=S.statsYear; }
   if(!schedules.length) return h+`<div class="msg warn">${t("st_no_data")}</div>`;
   const st=computeStats(schedules);
-  h+=`<div class="hint"><b>${esc(label)}</b> — ${schedules.length} ${t("st_weeks")} · ${st.nd} ${t("st_days")}</div>`;
-  /* employees */
+  window.__statsExport={label,st};
+  h+=`<div class="hint row-flex"><b>${esc(label)}</b> — ${schedules.length} ${t("st_weeks")} · ${st.nd} ${t("st_days")}
+    <button class="btn small" id="btnStatsCsv">📤 ${t("export_csv")}</button></div>`;
+  /* employees — totals column highlights anyone >20% away from the average */
+  const totals={}; let sumTot=0;
+  allEmps().forEach(e=>{ totals[e]=st.roles.reduce((s,r)=>s+(st.empC[e]?st.empC[e][r]:0),0); sumTot+=totals[e]; });
+  const avgTot=allEmps().length?sumTot/allEmps().length:0;
   h+=`<div class="card"><h3>👤 ${t("st_employees")}</h3><div class="tbl-wrap"><table class="stats"><tr><th></th>`;
   st.roles.forEach(r=>h+=`<th>${t("st_role_"+r)}</th>`);
-  h+=`<th>${t("st_vac_col")}</th><th>${t("st_other")}</th></tr>`;
+  h+=`<th>${t("total_col")}</th><th>${t("st_vac_col")}</th><th>${t("st_other")}</th></tr>`;
   allEmps().forEach(e=>{ h+=`<tr><th>${esc(e)}</th>`;
     st.roles.forEach(r=>{ const c=st.empC[e]?st.empC[e][r]:0; const p=st.nd?Math.round(c/st.nd*100):0;
       h+=`<td>${c} <small>(${p}%)</small></td>`; });
+    const off=avgTot&&Math.abs(totals[e]-avgTot)>0.2*avgTot;
+    h+=`<td style="${off?"color:var(--danger);font-weight:700":""}">${totals[e]}</td>`;
     h+=`<td>${st.vac[e]||0}</td><td>${st.oth[e]||0}</td></tr>`; });
   h+=`</table></div></div>`;
   /* vacation budget */
@@ -838,6 +954,26 @@ function scheduleCsv(days){
     } else rows.push([rowLabel(rk),...keys.map(k=>days[k][rk]||"")]);
   }
   return BOM+rows.map(r=>r.map(q).join(",")).join("\r\n");
+}
+function statsCsv(st,label){
+  const q=v=>`"${String(v==null?"":v).replace(/"/g,'""')}"`;
+  const lines=[[label],[],
+    [t("st_employees")],
+    ["",...st.roles.map(r=>t("st_role_"+r)),t("total_col"),t("st_vac_col"),t("st_other")]];
+  allEmps().forEach(e=>{
+    const tot=st.roles.reduce((s,r)=>s+(st.empC[e]?st.empC[e][r]:0),0);
+    lines.push([e,...st.roles.map(r=>st.empC[e]?st.empC[e][r]:0),tot,st.vac[e]||0,st.oth[e]||0]);
+  });
+  lines.push([]);
+  lines.push([t("st_fields")]);
+  for(const f in st.fieldC){
+    const c=st.fieldC[f]; const tt=Object.values(c).reduce((a,b)=>a+b,0);
+    if(!tt) continue;
+    const vs=Object.keys(c).sort();
+    lines.push([rowLabel(f),...vs]);
+    lines.push(["",...vs.map(v=>c[v])]);
+  }
+  return "﻿"+lines.map(r=>r.map(q).join(",")).join("\r\n");
 }
 function downloadCsv(days,weekStart){
   const blob=new Blob([scheduleCsv(days)],{type:"text/csv;charset=utf-8"});
@@ -878,23 +1014,49 @@ function wire(){
       if(loadArchive()[target]||(S.days&&Object.keys(S.days)[0]===target)){ S.pendingConfirm="gen"; S.weekStart=target; render(); }
       else { S.weekStart=target; S.days=emptyWeek(target); saveDraft(); render(); }
     };
-    const gy=$("genYes"); if(gy) gy.onclick=()=>{ S.pendingConfirm=null; S.days=emptyWeek(S.weekStart); saveDraft(); render(); };
+    const gy=$("genYes"); if(gy) gy.onclick=()=>{ S.pendingConfirm=null; S.days=emptyWeek(S.weekStart); S.dirty=true; saveDraft(); render(); };
     const gn=$("genNo"); if(gn) gn.onclick=()=>{ S.pendingConfirm=null; render(); };
+    if($("btnClear")) $("btnClear").onclick=()=>{ S.pendingConfirm="clear"; render(); };
+    const cy=$("clearYes"); if(cy) cy.onclick=()=>{ S.pendingConfirm=null;
+      S.days=emptyWeek(Object.keys(S.days).sort()[0]); S.dirty=true; saveDraft(); render(); };
+    const cn=$("clearNo"); if(cn) cn.onclick=()=>{ S.pendingConfirm=null; render(); };
     if($("btnAuto")) $("btnAuto").onclick=autoAssign;
     if($("btnSave")) $("btnSave").onclick=()=>{ const a=loadArchive();
-      a[Object.keys(S.days).sort()[0]]=S.days; saveArchive(a); toast("✅ "+t("saved")); };
+      a[Object.keys(S.days).sort()[0]]=S.days; saveArchive(a);
+      S.dirty=false; saveDraft(); updateStatus(); toast("✅ "+t("saved")); };
     if($("btnCsv")) $("btnCsv").onclick=()=>downloadCsv(S.days,Object.keys(S.days).sort()[0]);
     if($("btnPrint")) $("btnPrint").onclick=doPrint;
+    const sb=$("statusBadge"); if(sb) sb.onclick=()=>{ const el=$("errList");
+      if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); };
     document.querySelectorAll("table.sched select,table.sched input").forEach(el=>{
-      el.onchange=()=>{ S.days[el.dataset.dk][el.dataset.f]=el.value; saveDraft();
-        if(["vacation_il","vacation_pe","vehicle_morning","vehicle_noon","udex","theater","emb_il","other_empl"].includes(el.dataset.f)) render(); };
+      el.onchange=()=>{ S.days[el.dataset.dk][el.dataset.f]=el.value; S.dirty=true; saveDraft();
+        if(["vacation_il","vacation_pe","vehicle_morning","vehicle_noon","udex","theater","emb_il","other_empl"].includes(el.dataset.f)) render();
+        else updateStatus(); };
     });
   }
   else if(S.screen==="settings"){ wireSettings(); }
   else if(S.screen==="archive"){
+    $("btnBackup").onclick=()=>downloadJson(backupData(),
+      `agenda_backup_${new Date().toISOString().slice(0,10)}.json`);
+    $("btnRestore").onclick=()=>$("restoreFile").click();
+    $("restoreFile").onchange=e=>{
+      const f=e.target.files[0]; if(!f) return;
+      readJsonFile(f,d=>{
+        if(!d||(!d.config&&!d.archive)){ toast("⚠️ "+t("invalid_file")); return; }
+        window.__restoreData=d; S.pendingConfirm="restore"; render();
+      });
+      e.target.value="";
+    };
+    const ry=$("restoreYes"); if(ry) ry.onclick=()=>{
+      applyRestore(window.__restoreData||{}); window.__restoreData=null;
+      S.pendingConfirm=null; S.days=null; S.dirty=false;
+      localStorage.removeItem(LS.draft);
+      toast("✅ "+t("restore_done")); render(); };
+    const rn=$("restoreNo"); if(rn) rn.onclick=()=>{
+      window.__restoreData=null; S.pendingConfirm=null; render(); };
     document.querySelectorAll("[data-load]").forEach(b=>b.onclick=()=>{
       const wk=b.dataset.load; S.days=JSON.parse(JSON.stringify(loadArchive()[wk])); S.weekStart=wk;
-      saveDraft(); S.screen="sched"; toast("✅ "+t("loaded")); render(); });
+      S.dirty=false; saveDraft(); S.screen="sched"; toast("✅ "+t("loaded")); render(); });
     document.querySelectorAll("[data-csv]").forEach(b=>b.onclick=()=>downloadCsv(loadArchive()[b.dataset.csv],b.dataset.csv));
     document.querySelectorAll("[data-delarch]").forEach(b=>b.onclick=()=>{S.pendingConfirm="delarch_"+b.dataset.delarch;render();});
     document.querySelectorAll("[data-delarch-yes]").forEach(b=>b.onclick=()=>{
@@ -905,12 +1067,41 @@ function wire(){
     $("statsTab").onchange=e=>{S.statsTab=e.target.value;render();};
     const sm=$("statsMonth"); if(sm) sm.onchange=e=>{S.statsMonth=e.target.value;render();};
     const sy=$("statsYear"); if(sy) sy.onchange=e=>{S.statsYear=e.target.value;render();};
+    const sc=$("btnStatsCsv"); if(sc) sc.onclick=()=>{
+      const x=window.__statsExport; if(!x) return;
+      const blob=new Blob([statsCsv(x.st,x.label)],{type:"text/csv;charset=utf-8"});
+      const a=document.createElement("a");
+      a.href=URL.createObjectURL(blob); a.download=`stats_${x.label.replace(/[^\w-]/g,"_")}.csv`;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+    };
   }
-  $("langSel").value=S.lang;
-  $("langSel").onchange=e=>{ S.lang=e.target.value; localStorage.setItem(LS.lang,S.lang); render(); };
+  const lb=$("langBtns");
+  lb.innerHTML=[["he","🇮🇱","עברית"],["en","🇺🇸","English"],["es","🇪🇸","Español"]]
+    .map(([lg,fl,name])=>`<button class="lang-btn ${S.lang===lg?"active":""}" data-lang-btn="${lg}" title="${name}" aria-label="${name}">${fl}</button>`).join("");
+  lb.querySelectorAll("button").forEach(b=>b.onclick=()=>{
+    S.lang=b.dataset.langBtn; localStorage.setItem(LS.lang,S.lang); render(); });
 }
 function wireSettings(){
   const $=id=>document.getElementById(id);
+  $("btnCfgExport").onclick=()=>downloadJson(cfgSnapshot(),
+    `agenda_settings_${new Date().toISOString().slice(0,10)}.json`);
+  $("btnCfgImport").onclick=()=>$("importCfgFile").click();
+  $("importCfgFile").onchange=e=>{
+    const f=e.target.files[0]; if(!f) return;
+    readJsonFile(f,d=>{
+      const cfgObj=d&&d.config?d.config:d;   // accepts a full backup too
+      if(!cfgObj||typeof cfgObj!=="object"||!cfgObj.options){ toast("⚠️ "+t("invalid_file")); return; }
+      window.__importCfg=cfgObj; S.pendingConfirm="importcfg"; render();
+    });
+    e.target.value="";
+  };
+  const icy=$("importCfgYes"); if(icy) icy.onclick=()=>{
+    localStorage.setItem(LS.config, JSON.stringify(window.__importCfg));
+    window.__importCfg=null; S.pendingConfirm=null;
+    CFG=loadConfig(); toast("✅ "+t("import_done")); render(); };
+  const icn=$("importCfgNo"); if(icn) icn.onclick=()=>{
+    window.__importCfg=null; S.pendingConfirm=null; render(); };
   $("saveEmps").onclick=()=>{
     const il=$("empIL").value.split("\n").map(s=>s.trim()).filter(Boolean);
     const pe=$("empPE").value.split("\n").map(s=>s.trim()).filter(Boolean);
