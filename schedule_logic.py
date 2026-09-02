@@ -16,27 +16,24 @@ MANUAL_ROWS = {"escort_morning", "escort_noon", "other_empl", "vacation"}
 # Which rows are optional (can be blank)
 OPTIONAL_ROWS = {"escort_morning", "escort_noon"}
 
-# ── Axis ↔ entry hard compatibility (letter of the axis value decides) ─────
+# ── Two independent hard-compatibility pairs (axis letter decides):
+#    axis_morning ↔ entry, axis_noon ↔ exit ─────────────────────────────────
 AXIS_ENTRY_MORNING = {"A": ["13"], "B": ["10", "13-D"], "C": ["13"], "D": ["10"]}
-AXIS_ENTRY_NOON    = {"A": ["13"], "B": ["10"], "C": ["10"], "D": ["13"]}
+AXIS_EXIT_NOON     = {"A": ["13"], "B": ["10"], "C": ["10"], "D": ["13"]}
 
 
 def _axis_letter(a: str) -> str:
     return (a or "")[:1].upper()
 
 
-def allowed_entries(axis_morning: str, axis_noon: str) -> list:
-    """Entry values allowed by both axes; empty intersection ⇒ morning priority."""
-    allowed = cfg.options("entry")
+def allowed_entries(axis_morning: str) -> list:
     m = AXIS_ENTRY_MORNING.get(_axis_letter(axis_morning)) if axis_morning else None
-    n = AXIS_ENTRY_NOON.get(_axis_letter(axis_noon)) if axis_noon else None
-    if m:
-        allowed = [e for e in allowed if e in m]
-    if n:
-        inter = [e for e in allowed if e in n]
-        if inter:
-            allowed = inter
-    return allowed
+    return [e for e in cfg.options("entry") if e in m] if m else cfg.options("entry")
+
+
+def allowed_exits(axis_noon: str) -> list:
+    n = AXIS_EXIT_NOON.get(_axis_letter(axis_noon)) if axis_noon else None
+    return [e for e in cfg.options("exit") if e in n] if n else cfg.options("exit")
 
 
 def allowed_axes_morning(entry: str) -> list:
@@ -44,9 +41,9 @@ def allowed_axes_morning(entry: str) -> list:
             if entry in AXIS_ENTRY_MORNING.get(_axis_letter(a), [])]
 
 
-def allowed_axes_noon(entry: str) -> list:
+def allowed_axes_noon(exit_val: str) -> list:
     return [a for a in cfg.options("axis")
-            if entry in AXIS_ENTRY_NOON.get(_axis_letter(a), [])]
+            if exit_val in AXIS_EXIT_NOON.get(_axis_letter(a), [])]
 
 
 def entry_auto_options() -> list:
@@ -128,17 +125,16 @@ def validate_schedule(schedule: dict, lang: str = "he") -> list:
         vac_pe = day.get("vacation_pe", "")
         other_empl = day.get("other_empl", "")
         d_str = day.get("date").strftime("%d/%m") if day.get("date") else day_key
-        am, an, en = day.get("axis_morning", ""), day.get("axis_noon", ""), day.get("entry", "")
+        am, an = day.get("axis_morning", ""), day.get("axis_noon", "")
+        en, ex = day.get("entry", ""), day.get("exit", "")
         if am and en:
             alw = AXIS_ENTRY_MORNING.get(_axis_letter(am))
             if alw and en not in alw:
-                errs_msg = t("err_axis_entry", lang, a=am, e=en)
-                errors.append(f"❌ {d_str}: {errs_msg}")
-        if an and en:
-            alw = AXIS_ENTRY_NOON.get(_axis_letter(an))
-            if alw and en not in alw:
-                errs_msg = t("err_axis_noon_entry", lang, a=an, e=en)
-                errors.append(f"❌ {d_str}: {errs_msg}")
+                errors.append(f"❌ {d_str}: " + t("err_axis_entry", lang, a=am, e=en))
+        if an and ex:
+            alw = AXIS_EXIT_NOON.get(_axis_letter(an))
+            if alw and ex not in alw:
+                errors.append(f"❌ {d_str}: " + t("err_axis_noon_exit", lang, a=an, e=ex))
         if vac_il and "," in vac_il:
             errors.append(f"{day_key}: {t('error_two_il_vacation', lang)}")
         if vac_pe and "," in vac_pe:
@@ -193,7 +189,7 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
     holiday = cfg.special("holiday")
     axis_vals = cfg.options("axis")
 
-    # ── axis_morning ↔ entry pair first (hard compatibility) ───────────────
+    # ── two independent pairs: axis_morning↔entry, axis_noon↔exit ───────────
     if not day.get("axis_morning"):
         if day.get("entry"):
             ax = allowed_axes_morning(day["entry"])
@@ -202,16 +198,18 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
         elif axis_vals:
             day["axis_morning"] = _least_used(axis_vals, history.get("axis_morning", {}))
     if not day.get("entry"):
-        allowed = [e for e in allowed_entries(day.get("axis_morning", ""),
-                                             day.get("axis_noon", ""))
-                   if e != holiday]
+        allowed = [e for e in allowed_entries(day.get("axis_morning", "")) if e != holiday]
         day["entry"] = _least_used(allowed, history.get("entry", {}))
     if not day.get("axis_noon"):
-        axn = allowed_axes_noon(day["entry"]) if day.get("entry") else axis_vals
-        if axn:
-            day["axis_noon"] = _least_used(axn, history.get("axis_noon", {}))
+        if day.get("exit"):
+            ax = allowed_axes_noon(day["exit"])
+            if ax:
+                day["axis_noon"] = _least_used(ax, history.get("axis_noon", {}))
+        elif axis_vals:
+            day["axis_noon"] = _least_used(axis_vals, history.get("axis_noon", {}))
     if not day.get("exit"):
-        day["exit"] = _least_used(exit_auto_options(), history.get("exit", {}))
+        allowed = [e for e in allowed_exits(day.get("axis_noon", "")) if e != holiday]
+        day["exit"] = _least_used(allowed, history.get("exit", {}))
 
     # ── Step 1: EMB IL ──────────────────────────────────────────────────────
     if not day.get("emb_il"):
