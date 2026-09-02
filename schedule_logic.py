@@ -214,11 +214,13 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
     return day
 
 
-def auto_assign_week_vehicles_udex(schedule: dict, history: dict = None) -> dict:
+def auto_assign_week_vehicles_udex(schedule: dict, history: dict = None,
+                                   monthly_history: dict = None) -> dict:
     """
-    Assign VEHICLE (yellow_per_week special vehicles across morning+noon),
-    UDEX (udex_m morning-type + udex_t noon-type), Theater (theater_per_week
-    days), and Taxis (only on special-vehicle slots).
+    Assign VEHICLE (yellow_per_week special vehicles across morning+noon,
+    default 3 of 10 = 70/30; the morning/noon split is chosen to best balance
+    the last-month history), UDEX (udex_m + udex_t), Theater
+    (theater_per_week days), and Taxis (only on special-vehicle slots).
     """
     if history is None:
         history = {}
@@ -231,21 +233,40 @@ def auto_assign_week_vehicles_udex(schedule: dict, history: dict = None) -> dict
     udex_m_vals = list(cfg.special("udex_morning"))
     udex_t_vals = list(cfg.special("udex_noon"))
 
-    # Special vehicle: N slots total across morning+noon for the week
-    slots = [(k, "vehicle_morning") for k in keys] + [(k, "vehicle_noon") for k in keys]
-    unassigned = [(k, f) for k, f in slots if not schedule[k].get(f)]
-    yellow_needed = targets["yellow_per_week"] - sum(
-        1 for k in keys
-        for f in ("vehicle_morning", "vehicle_noon")
-        if schedule[k].get(f) == vehicle_special
-    )
-    if yellow_needed > 0 and len(unassigned) >= yellow_needed:
-        chosen = random.sample(unassigned, yellow_needed)
-        for k, f in chosen:
-            schedule[k][f] = vehicle_special
-    for k, f in unassigned:
-        if not schedule[k].get(f):
-            schedule[k][f] = vehicle_regular
+    # Special vehicle: choose the morning/noon split that best balances the
+    # monthly history (falls back to the cumulative history if not provided)
+    mh = monthly_history if monthly_history is not None else history
+    y_m_hist = mh.get("vehicle_morning", {}).get(vehicle_special, 0)
+    y_n_hist = mh.get("vehicle_noon", {}).get(vehicle_special, 0)
+    cur_m = sum(1 for k in keys if schedule[k].get("vehicle_morning") == vehicle_special)
+    cur_n = sum(1 for k in keys if schedule[k].get("vehicle_noon") == vehicle_special)
+    free_m = [k for k in keys if not schedule[k].get("vehicle_morning")]
+    free_n = [k for k in keys if not schedule[k].get("vehicle_noon")]
+    random.shuffle(free_m)
+    random.shuffle(free_n)
+    need = max(0, targets["yellow_per_week"] - cur_m - cur_n)
+    # Allowed splits: each period gets at least one special vehicle when the
+    # week has 2+ to place (e.g. for 3 → only 2+1 or 1+2, never 3+0)
+    if need >= 2 and cur_m == 0 and cur_n == 0:
+        candidates = list(range(1, need))
+    else:
+        candidates = list(range(need + 1))
+    best_x, best_diff = 0 if 0 in candidates else (candidates[0] if candidates else 0), None
+    random.shuffle(candidates)  # random tie-break between equal splits
+    for x in candidates:
+        if x > len(free_m) or need - x > len(free_n):
+            continue
+        diff = abs((y_m_hist + cur_m + x) - (y_n_hist + cur_n + need - x))
+        if best_diff is None or diff < best_diff:
+            best_diff, best_x = diff, x
+    for k in free_m[:best_x]:
+        schedule[k]["vehicle_morning"] = vehicle_special
+    for k in free_n[:need - best_x]:
+        schedule[k]["vehicle_noon"] = vehicle_special
+    for k in keys:
+        for f in ("vehicle_morning", "vehicle_noon"):
+            if not schedule[k].get(f):
+                schedule[k][f] = vehicle_regular
 
     # UDEX: balance within each type via history
     udex_unassigned = [k for k in keys if not schedule[k].get("udex")]

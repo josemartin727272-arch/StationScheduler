@@ -183,7 +183,10 @@ backup_all:"📤 גיבוי הכול",restore_backup:"📥 שחזור מגיבו
 restore_confirm:"השחזור ידרוס את כל הנתונים במכשיר — להמשיך?",restore_done:"השחזור הושלם",
 invalid_file:"קובץ לא תקין",export_settings:"📤 ייצוא הגדרות",import_settings:"📥 ייבוא הגדרות",
 import_confirm:"הייבוא ידרוס את ההגדרות הנוכחיות — להמשיך?",import_done:"ההגדרות יובאו",
-clear_week:"נקה",valid_short:"תקין",total_col:"סה״כ שיבוצים",export_csv:"ייצוא CSV",orig_name:"שם מקורי"},
+clear_week:"נקה",valid_short:"תקין",total_col:"סה״כ שיבוצים",export_csv:"ייצוא CSV",orig_name:"שם מקורי",
+rules_title:"📋 חוקי השיבוץ האוטומטי",rules_field:"שדה",rules_options:"אפשרויות",rules_target:"יעד",
+rule_equal:"איזון שווה",rule_25:"25% כל אחד",rule_7030:"70% / 30%",rule_5050:"50% / 50%",
+rules_manual_note:"חג = ידני בלבד, המערכת לא נוגעת בו"},
 en:{app_title:"Weekly Work Schedule",nav_sched:"📋 Schedule",nav_settings:"⚙️ Settings",nav_archive:"📁 Archive",nav_stats:"📊 Statistics",
 week_start:"Week start",generate:"New Schedule",auto_assign:"⚡ Auto Assign",save:"💾 Save",export_excel:"📤 Export Excel",print:"🖨️ Print",
 saved:"Schedule saved to archive",valid:"Schedule is valid ✓",replace_q:"A schedule exists for this week — replace?",yes:"Yes",no:"Cancel",
@@ -225,7 +228,10 @@ backup_all:"📤 Back up everything",restore_backup:"📥 Restore from backup",
 restore_confirm:"Restore will overwrite all data on this device — continue?",restore_done:"Restore complete",
 invalid_file:"Invalid file",export_settings:"📤 Export settings",import_settings:"📥 Import settings",
 import_confirm:"Import will overwrite current settings — continue?",import_done:"Settings imported",
-clear_week:"Clear",valid_short:"Valid",total_col:"Total assignments",export_csv:"Export CSV",orig_name:"Original name"},
+clear_week:"Clear",valid_short:"Valid",total_col:"Total assignments",export_csv:"Export CSV",orig_name:"Original name",
+rules_title:"📋 Auto-assign balancing rules",rules_field:"Field",rules_options:"Options",rules_target:"Target",
+rule_equal:"Equal balance",rule_25:"25% each",rule_7030:"70% / 30%",rule_5050:"50% / 50%",
+rules_manual_note:"חג (holiday) is manual only — never auto-assigned"},
 es:{app_title:"Horario Semanal de Trabajo",nav_sched:"📋 Horario",nav_settings:"⚙️ Configuración",nav_archive:"📁 Archivo",nav_stats:"📊 Estadísticas",
 week_start:"Inicio de semana",generate:"Nuevo Horario",auto_assign:"⚡ Asignación Automática",save:"💾 Guardar",export_excel:"📤 Exportar Excel",print:"🖨️ Imprimir",
 saved:"Horario guardado en archivo",valid:"El horario es válido ✓",replace_q:"Existe un horario para esta semana — ¿reemplazar?",yes:"Sí",no:"Cancelar",
@@ -267,7 +273,10 @@ backup_all:"📤 Respaldar todo",restore_backup:"📥 Restaurar respaldo",
 restore_confirm:"La restauración sobrescribirá todos los datos del dispositivo — ¿continuar?",restore_done:"Restauración completa",
 invalid_file:"Archivo inválido",export_settings:"📤 Exportar configuración",import_settings:"📥 Importar configuración",
 import_confirm:"La importación sobrescribirá la configuración actual — ¿continuar?",import_done:"Configuración importada",
-clear_week:"Limpiar",valid_short:"Válido",total_col:"Total asignaciones",export_csv:"Exportar CSV",orig_name:"Nombre original"}
+clear_week:"Limpiar",valid_short:"Válido",total_col:"Total asignaciones",export_csv:"Exportar CSV",orig_name:"Nombre original",
+rules_title:"📋 Reglas de asignación automática",rules_field:"Campo",rules_options:"Opciones",rules_target:"Meta",
+rule_equal:"Balance igual",rule_25:"25% cada uno",rule_7030:"70% / 30%",rule_5050:"50% / 50%",
+rules_manual_note:"חג (feriado) es solo manual — nunca se asigna automáticamente"}
 };
 
 /* ═══════════════ default config (mirrors ~/Agenda app_config.py) ═══════════════ */
@@ -286,17 +295,17 @@ const DEFAULT_CONFIG = {
     udex:["EMB-M","EMB-T","R-M","R-T"],
     vehicle:["BLACK","YELLOW"],
     axis:["A-U","A-D","B-U","B-D","C-U","C-D","D-U","D-D"],
-    wait_spot:["1","2","3","4","5"],
+    wait_spot:["2","3","4","5"],
     taxi_apt:["ARRIBA","ABAJO"],
-    taxi_arrival:["1","2","3","4","5"],
-    taxi_emb:["1","2","3","4","5"],
-    taxi_arrival_noon:["ARRIBA","ABAJO"]
+    taxi_arrival:["2","3","4","5"],
+    taxi_emb:["ARRIBA","ABAJO"],
+    taxi_arrival_noon:["2","3","4","5"]
   },
   special_values: {
     holiday:"חג", vehicle_special:"YELLOW",
     udex_morning:["EMB-M","R-M"], udex_noon:["EMB-T","R-T"]
   },
-  targets: { yellow_per_week:4, udex_m:3, udex_t:2, theater_per_week:3 },
+  targets: { yellow_per_week:3, udex_m:3, udex_t:2, theater_per_week:3 },
   row_order: [],
   row_labels: {},
   custom_rows: []
@@ -431,9 +440,9 @@ function emptyWeek(weekStart){
 }
 
 /* ═══════════════ history & auto-assign (port of schedule_logic.py) ═══════════════ */
-function buildHistory(){
+function buildHistory(sinceIso){
   const hist={}; const arch=loadArchive();
-  for(const wk in arch){ const days=arch[wk];
+  for(const wk in arch){ if(sinceIso&&wk<sinceIso) continue; const days=arch[wk];
     for(const d in days){ const day=days[d];
       for(const f of HISTORY_FIELDS){ const v=day[f];
         if(v){ hist[f]=hist[f]||{}; hist[f][v]=(hist[f][v]||0)+1; } } } }
@@ -471,17 +480,9 @@ function autoAssign(){
   else if(sortedPE.length) aptPePlan=keys.map((_,i)=>sortedPE[i%sortedPE.length]);
   shuffle(aptPePlan);
 
-  /* pre-plan axis: 5 least-used morning, next 5 noon; wait: round-robin */
+  /* axis + wait: straight least-used vs cumulative history (weekly counts added per-day) */
   const axisVals=opts("axis");
-  const am=axisVals.slice().sort((a,b)=>((hist.axis_morning||{})[a]||0)-((hist.axis_morning||{})[b]||0)||a.localeCompare(b)).slice(0,5);
-  let an=axisVals.filter(x=>!am.includes(x))
-        .sort((a,b)=>((hist.axis_noon||{})[a]||0)-((hist.axis_noon||{})[b]||0)||a.localeCompare(b)).slice(0,5);
-  while(an.length<5&&axisVals.length) an.push(axisVals[an.length%axisVals.length]);
-  shuffle(am); shuffle(an);
   const waitVals=opts("wait_spot");
-  const wm=waitVals.slice().sort((a,b)=>((hist.wait_morning||{})[a]||0)-((hist.wait_morning||{})[b]||0)).slice(0,5);
-  const wn=waitVals.slice().sort((a,b)=>((hist.wait_noon||{})[a]||0)-((hist.wait_noon||{})[b]||0)).slice(0,5);
-  shuffle(wm); shuffle(wn);
 
   const weekly={};                    // in-week usage so days differ
   const H=f=>{ const c={...(hist[f]||{})}; const w=weekly[f]||{};
@@ -529,22 +530,40 @@ function autoAssign(){
       } else if(avail.length===1) day.emb_pe=avail[0];
     }
     if(!day.arrival_point) day.arrival_point=leastUsed(opts("arrival_point"),H("arrival_point"));
-    if(!day.axis_morning) day.axis_morning=am[i]||leastUsed(axisVals,H("axis_morning"));
-    if(!day.axis_noon)    day.axis_noon   =an[i]||leastUsed(axisVals,H("axis_noon"));
-    if(!day.wait_morning) day.wait_morning=wm[i]||leastUsed(waitVals,H("wait_morning"));
-    if(!day.wait_noon)    day.wait_noon   =wn[i]||leastUsed(waitVals,H("wait_noon"));
+    if(!day.axis_morning) day.axis_morning=leastUsed(axisVals,H("axis_morning"));
+    if(!day.axis_noon)    day.axis_noon   =leastUsed(axisVals,H("axis_noon"));
+    if(!day.wait_morning) day.wait_morning=leastUsed(waitVals,H("wait_morning"));
+    if(!day.wait_noon)    day.wait_noon   =leastUsed(waitVals,H("wait_noon"));
 
     for(const f of HISTORY_FIELDS) bump(weekly,f,day[f]);
   });
 
-  /* vehicles: N special slots over morning+noon; rest regular */
+  /* vehicles: N special slots over morning+noon (default 3 of 10 = 70/30).
+     The morning/noon split is chosen to best balance the LAST-MONTH history. */
   const vehRegular=opts("vehicle").find(v=>v!==VS)||"";
-  const slots=[];
-  keys.forEach(k=>{ slots.push([k,"vehicle_morning"]); slots.push([k,"vehicle_noon"]); });
-  const unass=slots.filter(([k,f])=>!S.days[k][f]);
-  let need=tg.yellow_per_week - slots.filter(([k,f])=>S.days[k][f]===VS).length;
-  shuffle(unass);
-  unass.forEach(([k,f])=>{ if(need>0){ S.days[k][f]=VS; need--; } else if(!S.days[k][f]) S.days[k][f]=vehRegular; });
+  const monthHist=buildHistory(addDays(keys[0],-35));
+  const yM=(monthHist.vehicle_morning||{})[VS]||0;
+  const yN=(monthHist.vehicle_noon||{})[VS]||0;
+  const curM=keys.filter(k=>S.days[k].vehicle_morning===VS).length;
+  const curN=keys.filter(k=>S.days[k].vehicle_noon===VS).length;
+  const freeM=shuffle(keys.filter(k=>!S.days[k].vehicle_morning));
+  const freeN=shuffle(keys.filter(k=>!S.days[k].vehicle_noon));
+  const need=Math.max(0,tg.yellow_per_week-curM-curN);
+  /* each period gets at least one special vehicle when placing 2+ (3 → 2+1 or 1+2) */
+  let cand=(need>=2&&curM===0&&curN===0)
+    ?[...Array(need-1).keys()].map(x=>x+1)
+    :[...Array(need+1).keys()];
+  let bestX=cand.length?cand[0]:0,bestDiff=Infinity;
+  cand=shuffle(cand);
+  for(const x of cand){
+    if(x>freeM.length||need-x>freeN.length) continue;
+    const diff=Math.abs((yM+curM+x)-(yN+curN+need-x));
+    if(diff<bestDiff){ bestDiff=diff; bestX=x; }
+  }
+  freeM.slice(0,bestX).forEach(k=>S.days[k].vehicle_morning=VS);
+  freeN.slice(0,need-bestX).forEach(k=>S.days[k].vehicle_noon=VS);
+  keys.forEach(k=>{ ["vehicle_morning","vehicle_noon"].forEach(f=>{
+    if(!S.days[k][f]) S.days[k][f]=vehRegular; }); });
 
   /* UDEX: m-type + t-type targets, balanced within type */
   const mVals=sv.udex_morning.slice(), tVals=sv.udex_noon.slice();
@@ -783,7 +802,8 @@ function viewSettings(){
     <label>${t("tg_theater")}<br><input type="number" id="tgTh" min="0" max="5" value="${CFG.targets.theater_per_week}"></label>
     <label>${t("tg_udex_m")}<br><input type="number" id="tgM" min="0" max="5" value="${CFG.targets.udex_m}"></label>
     <label>${t("tg_udex_t")}<br><input type="number" id="tgT" min="0" max="5" value="${CFG.targets.udex_t}"></label>
-  </div><p><button class="btn primary" id="saveTargets">${t("save_settings")}</button></p></div></details>`;
+  </div><p><button class="btn primary" id="saveTargets">${t("save_settings")}</button></p>
+  ${rulesTable()}</div></details>`;
   /* custom rows */
   h+=`<details class="sect"><summary>${t("s_custom")}</summary><div class="inner">
     <div class="grid3">
@@ -819,6 +839,26 @@ function viewSettings(){
     </div>`;
   });
   h+=`</div></details>`;
+  return h;
+}
+
+/* read-only table of the auto-assign balancing rules, shown under Targets */
+function rulesTable(){
+  const holiday=CFG.special_values.holiday;
+  const rows=[
+    [rowLabel("entry"), opts("entry").filter(o=>o!==holiday).join(", "), t("rule_equal")],
+    [rowLabel("exit"), opts("exit").filter(o=>o!==holiday).join(", "), t("rule_equal")],
+    [rowLabel("arrival_point"), opts("arrival_point").join(", "), t("rule_25")],
+    [rowLabel("axis_morning")+" / "+rowLabel("axis_noon"), opts("axis").join(", "), t("rule_equal")],
+    [rowLabel("vehicle_morning")+" / "+rowLabel("vehicle_noon"), opts("vehicle").join(" / "), t("rule_7030")],
+    [rowLabel("wait_morning")+" / "+rowLabel("wait_noon"), opts("wait_spot").join(", "), t("rule_equal")],
+    [rowLabel("taxi_apt")+" / "+rowLabel("taxi_emb"), opts("taxi_apt").join(", "), t("rule_5050")],
+    [rowLabel("taxi_arrival")+" / "+rowLabel("taxi_arrival_noon"), opts("taxi_arrival").join(", "), t("rule_equal")],
+  ];
+  let h=`<h3>${t("rules_title")}</h3><div class="tbl-wrap" style="max-height:none"><table class="stats">
+    <tr><th>${t("rules_field")}</th><th>${t("rules_options")}</th><th>${t("rules_target")}</th></tr>`;
+  rows.forEach(r=>{ h+=`<tr><td style="font-weight:600">${esc(r[0])}</td><td>${esc(r[1])}</td><td>${esc(r[2])}</td></tr>`; });
+  h+=`</table></div><div class="hint">⚠️ ${t("rules_manual_note")}</div>`;
   return h;
 }
 

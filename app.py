@@ -950,40 +950,8 @@ with ac1:
                 ordered = [e for e in EMPLOYEES_PE if e in pair]
                 schedule[dk]["emb_pe"] = "+".join(ordered) if len(ordered) >= 2 else (ordered[0] if ordered else "")
 
-        # ── Pre-plan Axis: always pick the 5 LEAST-USED axes (compensates imbalance)
-        # History is rebuilt from archive at session start, so this reads true
-        # cumulative usage and always corrects any existing imbalance.
-        all_axes = [v for v in AXIS_OPTIONS if v]   # A1-D5, 20 values
-        axis_hist_m = global_hist.get("axis_morning", {})
-        axis_hist_n = global_hist.get("axis_noon", {})
-        sorted_axes_m = sorted(all_axes, key=lambda x: (axis_hist_m.get(x, 0), x))
-        axis_morning_plan = sorted_axes_m[:5]
-        _rnd.shuffle(axis_morning_plan)
-        sorted_axes_n = sorted(all_axes, key=lambda x: (axis_hist_n.get(x, 0), x))
-        axis_noon_plan = [x for x in sorted_axes_n if x not in axis_morning_plan][:5]
-        if len(axis_noon_plan) < 5:
-            axis_noon_plan += [x for x in sorted_axes_n if x in axis_morning_plan][:5 - len(axis_noon_plan)]
-        _rnd.shuffle(axis_noon_plan)
-
-        # ── Pre-plan Wait spots: strict round-robin (all 5 values once each) ──
-        wait_vals = [v for v in WAIT_SPOT_OPTIONS if v]
-        wait_hist_m = global_hist.get("wait_morning", {})
-        wait_hist_n = global_hist.get("wait_noon", {})
-        wait_morning_plan = sorted(wait_vals, key=lambda x: wait_hist_m.get(x, 0))[:5]
-        _rnd.shuffle(wait_morning_plan)
-        wait_noon_plan = sorted(wait_vals, key=lambda x: wait_hist_n.get(x, 0))[:5]
-        _rnd.shuffle(wait_noon_plan)
-
-        # ── Pre-populate axis and wait ────────────────────────────────────────
-        for i, dk in enumerate(day_keys):
-            if not schedule[dk].get("axis_morning"):
-                schedule[dk]["axis_morning"] = axis_morning_plan[i]
-            if not schedule[dk].get("axis_noon"):
-                schedule[dk]["axis_noon"] = axis_noon_plan[i]
-            if not schedule[dk].get("wait_morning"):
-                schedule[dk]["wait_morning"] = wait_morning_plan[i]
-            if not schedule[dk].get("wait_noon"):
-                schedule[dk]["wait_noon"] = wait_noon_plan[i]
+        # Axis and wait spots are filled per-day by auto_assign_day via
+        # least-used against cumulative+weekly history (equal balance rule).
 
         # ── Day-by-day fill for remaining fields (entry, exit, arrival, etc.) ─
         weekly_hist = {}
@@ -1002,7 +970,15 @@ with ac1:
                     weekly_hist.setdefault(field, {})
                     weekly_hist[field][val] = weekly_hist[field].get(val, 0) + 1
 
-        schedule = auto_assign_week_vehicles_udex(schedule, global_hist)
+        # Monthly history (last ~35 days of archive) drives the YELLOW
+        # morning/noon split decision
+        month_floor = (week_start - timedelta(days=35)).isoformat()
+        monthly_hist = {}
+        for _s in load_period_schedules():
+            wk_keys = sorted(_s.keys())
+            if wk_keys and wk_keys[0] >= month_floor:
+                update_history(monthly_hist, _s)
+        schedule = auto_assign_week_vehicles_udex(schedule, global_hist, monthly_hist)
         st.session_state.schedule = schedule
         # Clear widget keys so they re-init from index= (avoids session-state conflict warning)
         for dk in day_keys:

@@ -48,11 +48,11 @@ DEFAULTS = {
         "udex":          ["EMB-M", "EMB-T", "R-M", "R-T"],
         "vehicle":       ["BLACK", "YELLOW"],
         "axis":          ["A-U", "A-D", "B-U", "B-D", "C-U", "C-D", "D-U", "D-D"],
-        "wait_spot":     ["1", "2", "3", "4", "5"],
+        "wait_spot":     ["2", "3", "4", "5"],
         "taxi_apt":          ["ARRIBA", "ABAJO"],
-        "taxi_arrival":      ["1", "2", "3", "4", "5"],
-        "taxi_emb":          ["1", "2", "3", "4", "5"],
-        "taxi_arrival_noon": ["ARRIBA", "ABAJO"],
+        "taxi_arrival":      ["2", "3", "4", "5"],
+        "taxi_emb":          ["ARRIBA", "ABAJO"],
+        "taxi_arrival_noon": ["2", "3", "4", "5"],
     },
     # Values with special meaning to auto-assign/validation. Editable so that
     # renaming an option in "options" doesn't silently break the logic.
@@ -63,7 +63,7 @@ DEFAULTS = {
         "udex_noon":    ["EMB-T", "R-T"],
     },
     "targets": {
-        "yellow_per_week": 4,
+        "yellow_per_week": 3,
         "udex_m": 3,
         "udex_t": 2,
         "theater_per_week": 3,
