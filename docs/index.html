@@ -186,7 +186,10 @@ import_confirm:"הייבוא ידרוס את ההגדרות הנוכחיות —
 clear_week:"נקה",valid_short:"תקין",total_col:"סה״כ שיבוצים",export_csv:"ייצוא CSV",orig_name:"שם מקורי",
 rules_title:"📋 חוקי השיבוץ האוטומטי",rules_field:"שדה",rules_options:"אפשרויות",rules_target:"יעד",
 rule_equal:"איזון שווה",rule_25:"25% כל אחד",rule_7030:"70% / 30%",rule_5050:"50% / 50%",
-rules_manual_note:"חג = ידני בלבד, המערכת לא נוגעת בו"},
+rules_manual_note:"חג = ידני בלבד, המערכת לא נוגעת בו",
+err_axis_entry:"ציר {a} לא תואם כניסה {e}",err_axis_noon_entry:"ציר צהריים {a} לא תואם כניסה {e}",
+rules_axis_entry_m:"ציר בוקר A,C → כניסה 13 | ציר B → 10 או 13-D | ציר D → 10",
+rules_axis_entry_n:"ציר צהריים A,D → כניסה 13 | ציר B,C → כניסה 10",rule_hard:"אילוץ קשיח"},
 en:{app_title:"Weekly Work Schedule",nav_sched:"📋 Schedule",nav_settings:"⚙️ Settings",nav_archive:"📁 Archive",nav_stats:"📊 Statistics",
 week_start:"Week start",generate:"New Schedule",auto_assign:"⚡ Auto Assign",save:"💾 Save",export_excel:"📤 Export Excel",print:"🖨️ Print",
 saved:"Schedule saved to archive",valid:"Schedule is valid ✓",replace_q:"A schedule exists for this week — replace?",yes:"Yes",no:"Cancel",
@@ -231,7 +234,10 @@ import_confirm:"Import will overwrite current settings — continue?",import_don
 clear_week:"Clear",valid_short:"Valid",total_col:"Total assignments",export_csv:"Export CSV",orig_name:"Original name",
 rules_title:"📋 Auto-assign balancing rules",rules_field:"Field",rules_options:"Options",rules_target:"Target",
 rule_equal:"Equal balance",rule_25:"25% each",rule_7030:"70% / 30%",rule_5050:"50% / 50%",
-rules_manual_note:"חג (holiday) is manual only — never auto-assigned"},
+rules_manual_note:"חג (holiday) is manual only — never auto-assigned",
+err_axis_entry:"Axis {a} incompatible with entry {e}",err_axis_noon_entry:"Noon axis {a} incompatible with entry {e}",
+rules_axis_entry_m:"Morning axis A,C → entry 13 | axis B → 10 or 13-D | axis D → 10",
+rules_axis_entry_n:"Noon axis A,D → entry 13 | axis B,C → entry 10",rule_hard:"Hard constraint"},
 es:{app_title:"Horario Semanal de Trabajo",nav_sched:"📋 Horario",nav_settings:"⚙️ Configuración",nav_archive:"📁 Archivo",nav_stats:"📊 Estadísticas",
 week_start:"Inicio de semana",generate:"Nuevo Horario",auto_assign:"⚡ Asignación Automática",save:"💾 Guardar",export_excel:"📤 Exportar Excel",print:"🖨️ Imprimir",
 saved:"Horario guardado en archivo",valid:"El horario es válido ✓",replace_q:"Existe un horario para esta semana — ¿reemplazar?",yes:"Sí",no:"Cancelar",
@@ -276,7 +282,10 @@ import_confirm:"La importación sobrescribirá la configuración actual — ¿co
 clear_week:"Limpiar",valid_short:"Válido",total_col:"Total asignaciones",export_csv:"Exportar CSV",orig_name:"Nombre original",
 rules_title:"📋 Reglas de asignación automática",rules_field:"Campo",rules_options:"Opciones",rules_target:"Meta",
 rule_equal:"Balance igual",rule_25:"25% cada uno",rule_7030:"70% / 30%",rule_5050:"50% / 50%",
-rules_manual_note:"חג (feriado) es solo manual — nunca se asigna automáticamente"}
+rules_manual_note:"חג (feriado) es solo manual — nunca se asigna automáticamente",
+err_axis_entry:"Ruta {a} incompatible con ingreso {e}",err_axis_noon_entry:"Ruta mediodía {a} incompatible con ingreso {e}",
+rules_axis_entry_m:"Ruta mañana A,C → ingreso 13 | ruta B → 10 o 13-D | ruta D → 10",
+rules_axis_entry_n:"Ruta mediodía A,D → ingreso 13 | ruta B,C → ingreso 10",rule_hard:"Restricción dura"}
 };
 
 /* ═══════════════ default config (mirrors ~/Agenda app_config.py) ═══════════════ */
@@ -439,6 +448,26 @@ function emptyWeek(weekStart){
   return days;
 }
 
+/* ═══════════════ axis ↔ entry hard compatibility ═══════════════ */
+const AXIS_ENTRY_MORNING={A:["13"],B:["10","13-D"],C:["13"],D:["10"]};
+const AXIS_ENTRY_NOON   ={A:["13"],B:["10"],C:["10"],D:["13"]};
+function axisLetter(a){ return (a||"").charAt(0).toUpperCase(); }
+function allowedEntries(axisMorning,axisNoon){
+  let allowed=opts("entry");
+  const m=axisMorning?AXIS_ENTRY_MORNING[axisLetter(axisMorning)]:null;
+  const n=axisNoon?AXIS_ENTRY_NOON[axisLetter(axisNoon)]:null;
+  if(m) allowed=allowed.filter(e=>m.includes(e));
+  if(n){ const inter=allowed.filter(e=>n.includes(e));
+    if(inter.length) allowed=inter; }        // empty intersection ⇒ morning priority
+  return allowed;
+}
+function allowedAxesMorning(entry){
+  return opts("axis").filter(a=>(AXIS_ENTRY_MORNING[axisLetter(a)]||[]).includes(entry));
+}
+function allowedAxesNoon(entry){
+  return opts("axis").filter(a=>(AXIS_ENTRY_NOON[axisLetter(a)]||[]).includes(entry));
+}
+
 /* ═══════════════ history & auto-assign (port of schedule_logic.py) ═══════════════ */
 function buildHistory(sinceIso){
   const hist={}; const arch=loadArchive();
@@ -494,7 +523,23 @@ function autoAssign(){
     const actIL=IL.filter(e=>e!==vacIl&&e!==other);
     const actPE=PE.filter(e=>e!==vacPe&&e!==other);
 
-    if(!day.entry) day.entry=leastUsed(opts("entry").filter(o=>o!==holiday),H("entry"));
+    /* axis_morning ↔ entry pair first (hard compatibility), then exit */
+    if(!day.axis_morning){
+      if(day.entry){
+        const ax=allowedAxesMorning(day.entry);
+        if(ax.length) day.axis_morning=leastUsed(ax,H("axis_morning"));
+      } else if(axisVals.length){
+        day.axis_morning=leastUsed(axisVals,H("axis_morning"));
+      }
+    }
+    if(!day.entry){
+      const al=allowedEntries(day.axis_morning,day.axis_noon).filter(o=>o!==holiday);
+      day.entry=leastUsed(al,H("entry"));
+    }
+    if(!day.axis_noon){
+      const axn=day.entry?allowedAxesNoon(day.entry):axisVals;
+      if(axn.length) day.axis_noon=leastUsed(axn,H("axis_noon"));
+    }
     if(!day.exit)  day.exit =leastUsed(opts("exit").filter(o=>o!==holiday),H("exit"));
 
     if(!day.emb_il){
@@ -530,8 +575,6 @@ function autoAssign(){
       } else if(avail.length===1) day.emb_pe=avail[0];
     }
     if(!day.arrival_point) day.arrival_point=leastUsed(opts("arrival_point"),H("arrival_point"));
-    if(!day.axis_morning) day.axis_morning=leastUsed(axisVals,H("axis_morning"));
-    if(!day.axis_noon)    day.axis_noon   =leastUsed(axisVals,H("axis_noon"));
     if(!day.wait_morning) day.wait_morning=leastUsed(waitVals,H("wait_morning"));
     if(!day.wait_noon)    day.wait_noon   =leastUsed(waitVals,H("wait_noon"));
 
@@ -610,6 +653,11 @@ function validate(){
       if(emb===day.vacation_il) errs.push({lvl:"err",msg:"❌ "+d+": "+t("err_emb_vac",{e:emb})});
       else if(emb===day.other_empl) errs.push({lvl:"err",msg:"❌ "+d+": "+t("err_emb_other",{e:emb})});
     }
+    const _am=day.axis_morning,_an=day.axis_noon,_en=day.entry;
+    if(_am&&_en){ const alw=AXIS_ENTRY_MORNING[axisLetter(_am)];
+      if(alw&&!alw.includes(_en)) errs.push({lvl:"err",msg:"❌ "+d+": "+t("err_axis_entry",{a:_am,e:_en})}); }
+    if(_an&&_en){ const alw=AXIS_ENTRY_NOON[axisLetter(_an)];
+      if(alw&&!alw.includes(_en)) errs.push({lvl:"err",msg:"❌ "+d+": "+t("err_axis_noon_entry",{a:_an,e:_en})}); }
     const availIL=IL.filter(e=>e!==day.vacation_il&&e!==day.other_empl);
     if(!availIL.length&&!emb) errs.push({lvl:"err",msg:"❌ "+d+": "+t("err_no_il")});
     else if(!availIL.length&&emb&&!PE.includes(emb)&&IL.length)
@@ -854,6 +902,8 @@ function rulesTable(){
     [rowLabel("wait_morning")+" / "+rowLabel("wait_noon"), opts("wait_spot").join(", "), t("rule_equal")],
     [rowLabel("taxi_apt")+" / "+rowLabel("taxi_emb"), opts("taxi_apt").join(", "), t("rule_5050")],
     [rowLabel("taxi_arrival")+" / "+rowLabel("taxi_arrival_noon"), opts("taxi_arrival").join(", "), t("rule_equal")],
+    [rowLabel("axis_morning")+" ↔ "+rowLabel("entry"), t("rules_axis_entry_m"), t("rule_hard")],
+    [rowLabel("axis_noon")+" ↔ "+rowLabel("entry"), t("rules_axis_entry_n"), t("rule_hard")],
   ];
   let h=`<h3>${t("rules_title")}</h3><div class="tbl-wrap" style="max-height:none"><table class="stats">
     <tr><th>${t("rules_field")}</th><th>${t("rules_options")}</th><th>${t("rules_target")}</th></tr>`;

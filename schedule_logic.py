@@ -16,6 +16,38 @@ MANUAL_ROWS = {"escort_morning", "escort_noon", "other_empl", "vacation"}
 # Which rows are optional (can be blank)
 OPTIONAL_ROWS = {"escort_morning", "escort_noon"}
 
+# ── Axis ↔ entry hard compatibility (letter of the axis value decides) ─────
+AXIS_ENTRY_MORNING = {"A": ["13"], "B": ["10", "13-D"], "C": ["13"], "D": ["10"]}
+AXIS_ENTRY_NOON    = {"A": ["13"], "B": ["10"], "C": ["10"], "D": ["13"]}
+
+
+def _axis_letter(a: str) -> str:
+    return (a or "")[:1].upper()
+
+
+def allowed_entries(axis_morning: str, axis_noon: str) -> list:
+    """Entry values allowed by both axes; empty intersection ⇒ morning priority."""
+    allowed = cfg.options("entry")
+    m = AXIS_ENTRY_MORNING.get(_axis_letter(axis_morning)) if axis_morning else None
+    n = AXIS_ENTRY_NOON.get(_axis_letter(axis_noon)) if axis_noon else None
+    if m:
+        allowed = [e for e in allowed if e in m]
+    if n:
+        inter = [e for e in allowed if e in n]
+        if inter:
+            allowed = inter
+    return allowed
+
+
+def allowed_axes_morning(entry: str) -> list:
+    return [a for a in cfg.options("axis")
+            if entry in AXIS_ENTRY_MORNING.get(_axis_letter(a), [])]
+
+
+def allowed_axes_noon(entry: str) -> list:
+    return [a for a in cfg.options("axis")
+            if entry in AXIS_ENTRY_NOON.get(_axis_letter(a), [])]
+
 
 def entry_auto_options() -> list:
     holiday = cfg.special("holiday")
@@ -96,6 +128,17 @@ def validate_schedule(schedule: dict, lang: str = "he") -> list:
         vac_pe = day.get("vacation_pe", "")
         other_empl = day.get("other_empl", "")
         d_str = day.get("date").strftime("%d/%m") if day.get("date") else day_key
+        am, an, en = day.get("axis_morning", ""), day.get("axis_noon", ""), day.get("entry", "")
+        if am and en:
+            alw = AXIS_ENTRY_MORNING.get(_axis_letter(am))
+            if alw and en not in alw:
+                errs_msg = t("err_axis_entry", lang, a=am, e=en)
+                errors.append(f"❌ {d_str}: {errs_msg}")
+        if an and en:
+            alw = AXIS_ENTRY_NOON.get(_axis_letter(an))
+            if alw and en not in alw:
+                errs_msg = t("err_axis_noon_entry", lang, a=an, e=en)
+                errors.append(f"❌ {d_str}: {errs_msg}")
         if vac_il and "," in vac_il:
             errors.append(f"{day_key}: {t('error_two_il_vacation', lang)}")
         if vac_pe and "," in vac_pe:
@@ -147,8 +190,26 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
     active_il = [e for e in employees_il if e != vac_il and e != other_empl]
     active_pe = [e for e in employees_pe if e != vac_pe and e != other_empl]
 
+    holiday = cfg.special("holiday")
+    axis_vals = cfg.options("axis")
+
+    # ── axis_morning ↔ entry pair first (hard compatibility) ───────────────
+    if not day.get("axis_morning"):
+        if day.get("entry"):
+            ax = allowed_axes_morning(day["entry"])
+            if ax:
+                day["axis_morning"] = _least_used(ax, history.get("axis_morning", {}))
+        elif axis_vals:
+            day["axis_morning"] = _least_used(axis_vals, history.get("axis_morning", {}))
     if not day.get("entry"):
-        day["entry"] = _least_used(entry_auto_options(), history.get("entry", {}))
+        allowed = [e for e in allowed_entries(day.get("axis_morning", ""),
+                                             day.get("axis_noon", ""))
+                   if e != holiday]
+        day["entry"] = _least_used(allowed, history.get("entry", {}))
+    if not day.get("axis_noon"):
+        axn = allowed_axes_noon(day["entry"]) if day.get("entry") else axis_vals
+        if axn:
+            day["axis_noon"] = _least_used(axn, history.get("axis_noon", {}))
     if not day.get("exit"):
         day["exit"] = _least_used(exit_auto_options(), history.get("exit", {}))
 
@@ -195,13 +256,6 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
     if not day.get("arrival_point"):
         day["arrival_point"] = _least_used(
             cfg.options("arrival_point"), history.get("arrival_point", {}))
-
-    # ── Axis morning / noon ─────────────────────────────────────────────────
-    axis_vals = cfg.options("axis")
-    if not day.get("axis_morning") and axis_vals:
-        day["axis_morning"] = _least_used(axis_vals, history.get("axis_morning", {}))
-    if not day.get("axis_noon") and axis_vals:
-        day["axis_noon"] = _least_used(axis_vals, history.get("axis_noon", {}))
 
     # ── Wait spots ──────────────────────────────────────────────────────────
     wait_vals = cfg.options("wait_spot")
