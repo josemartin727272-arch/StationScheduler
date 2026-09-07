@@ -122,6 +122,35 @@ table.stats th{background:#eef2f7}
 .pct-tot.ok{color:#fff;background:var(--ok)}
 .pct-tot.bad{color:#fff;background:var(--danger)}
 .map-inp{width:100%;min-width:120px}
+/* guide — reuses the app's cards and accordions; the only additions are a
+   readable measure, a chapter scale, and the two callout colours */
+.guide-lead{color:var(--muted);font-size:.92rem;line-height:1.6}
+details.guide-ch>summary{font-size:1rem;gap:10px}
+.guide-ch .g-ico{font-size:1.15rem;line-height:1}
+.guide-body{max-width:68ch;font-size:.93rem;line-height:1.65}
+.guide-body h3{font-size:.95rem;margin:18px 0 6px;color:var(--text);
+  border-bottom:1px solid var(--border);padding-bottom:4px}
+.guide-body h3:first-child{margin-top:4px}
+.guide-body p{margin:0 0 10px}
+.guide-body ul{margin:0 0 12px;padding-inline-start:20px}
+.guide-body li{margin-bottom:6px}
+.g-steps{counter-reset:g;list-style:none;margin:0 0 12px;padding:0}
+.g-steps li{counter-increment:g;position:relative;padding-inline-start:34px;margin-bottom:10px}
+.g-steps li::before{content:counter(g);position:absolute;inset-inline-start:0;top:-1px;
+  width:24px;height:24px;border-radius:50%;background:var(--primary);color:#fff;
+  font-size:.8rem;font-weight:700;display:flex;align-items:center;justify-content:center}
+.g-tip,.g-warn{border-radius:10px;padding:10px 12px;margin:12px 0;
+  border-inline-start:4px solid}
+.g-tip{background:#eafaf1;border-color:var(--ok);color:#16603a}
+.g-warn{background:#fdf1e3;border-color:#d98324;color:#8a4b0b}
+.g-qa{margin-bottom:14px}
+.g-qa b{display:block;color:var(--primary);margin-bottom:4px}
+.g-qa p{margin:0}
+@media(max-width:700px){
+  .guide-body{font-size:.95rem}
+  details.guide-ch>summary{font-size:.95rem}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 .chk-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 /* group / workplace / work-day editors */
 .sec-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;
@@ -168,6 +197,7 @@ table.stats th{background:#eef2f7}
 /* ═══════════════ i18n ═══════════════ */
 const I18N = {
 he:{app_title:"סידור עבודה שבועי",nav_sched:"📋 סידור",nav_settings:"⚙️ הגדרות",nav_archive:"📁 ארכיון",nav_stats:"📊 סטטיסטיקה",
+nav_guide:"📖 מדריך",guide_lead:"מדריך קצר לכל מה שהמערכת יודעת לעשות. פתח פרק כדי לקרוא אותו.",
 week_start:"תחילת שבוע",generate:"צור סידור",auto_assign:"⚡ שיבוץ אוטומטי",save:"💾 שמור",export_excel:"📤 ייצוא Excel",print:"🖨️ הדפסה",
 saved:"הסידור נשמר בארכיון",valid:"הסידור תקין ✓",replace_q:"קיים סידור שמור לשבוע זה — להחליף?",yes:"כן",no:"ביטול",
 row_dates:"תאריכים",row_days:"ימים",row_work_hours:"שעות עבודה",row_entry:"כניסה",row_exit:"יציאה",
@@ -248,6 +278,7 @@ err_axis_ud:"ציר {a}: סכום U+D הוא {n}%, חייב 100%",
 err_axis_rule_pct:"{f} {v}: סכום אחוזי הצירים הוא {n}%, חייב 100%",
 warn_axis_rule:"{f} {a} לא מותר עבור {e} {v}"},
 en:{app_title:"Weekly Work Schedule",nav_sched:"📋 Schedule",nav_settings:"⚙️ Settings",nav_archive:"📁 Archive",nav_stats:"📊 Statistics",
+nav_guide:"📖 Guide",guide_lead:"A short guide to everything the app can do. Open a chapter to read it.",
 week_start:"Week start",generate:"New Schedule",auto_assign:"⚡ Auto Assign",save:"💾 Save",export_excel:"📤 Export Excel",print:"🖨️ Print",
 saved:"Schedule saved to archive",valid:"Schedule is valid ✓",replace_q:"A schedule exists for this week — replace?",yes:"Yes",no:"Cancel",
 row_dates:"Dates",row_days:"Days",row_work_hours:"Work Hours",row_entry:"Entry",row_exit:"Exit",
@@ -328,6 +359,7 @@ err_axis_ud:"Axis {a}: U+D totals {n}%, must be 100%",
 err_axis_rule_pct:"{f} {v}: axis shares total {n}%, must be 100%",
 warn_axis_rule:"{f} {a} is not allowed for {e} {v}"},
 es:{app_title:"Horario Semanal de Trabajo",nav_sched:"📋 Horario",nav_settings:"⚙️ Configuración",nav_archive:"📁 Archivo",nav_stats:"📊 Estadísticas",
+nav_guide:"📖 Guía",guide_lead:"Una guía breve de todo lo que hace la app. Abre un capítulo para leerlo.",
 week_start:"Inicio de semana",generate:"Nuevo Horario",auto_assign:"⚡ Asignación Automática",save:"💾 Guardar",export_excel:"📤 Exportar Excel",print:"🖨️ Imprimir",
 saved:"Horario guardado en archivo",valid:"El horario es válido ✓",replace_q:"Existe un horario para esta semana — ¿reemplazar?",yes:"Sí",no:"Cancelar",
 row_dates:"Fechas",row_days:"Días",row_work_hours:"Horas de Trabajo",row_entry:"Ingreso",row_exit:"Salida",
@@ -1383,13 +1415,15 @@ function render(){
   document.title=t("app_title")+" 🚕";
   document.getElementById("hTitle").textContent=t("app_title");
   const nav=document.getElementById("nav");
-  nav.innerHTML=[["sched","nav_sched"],["settings","nav_settings"],["archive","nav_archive"],["stats","nav_stats"]]
+  nav.innerHTML=[["sched","nav_sched"],["settings","nav_settings"],["archive","nav_archive"],
+    ["stats","nav_stats"],["guide","nav_guide"]]
     .map(([id,k])=>`<button data-nav="${id}" class="${S.screen===id?"active":""}">${t(k)}</button>`).join("");
   nav.querySelectorAll("button").forEach(b=>b.onclick=()=>{S.screen=b.dataset.nav;S.pendingConfirm=null;render();});
   const app=document.getElementById("app");
   if(S.screen==="sched") app.innerHTML=viewSched();
   else if(S.screen==="settings") app.innerHTML=viewSettings();
   else if(S.screen==="archive") app.innerHTML=viewArchive();
+  else if(S.screen==="guide") app.innerHTML=viewGuide();
   else app.innerHTML=viewStats();
   wire();
 }
@@ -1970,6 +2004,329 @@ function viewStats(){
   return h+`</div>`;
 }
 
+/* ═══════════════ screen 5: guide ═══════════════ */
+/* Written to be read by someone who has never opened the app, and kept free of
+   any one station's names or values. Block kinds: h (sub-heading), p, li,
+   steps (a real sequence, so it is numbered), tip, warn, qa. */
+const GUIDE = [
+{ id:"intro", icon:"📘",
+  title:{he:"מה המערכת עושה?", en:"What this app does", es:"Qué hace esta app"},
+  blocks:[
+  {p:{he:"המערכת בונה סידור עבודה שבועי. אתה מגדיר מי העובדים ומה המשימות, והיא ממלאת את השבוע.",
+      en:"The app builds a weekly work schedule. You define who works and what the tasks are, and it fills the week in.",
+      es:"La app arma el horario semanal. Tú defines quién trabaja y cuáles son las tareas, y ella completa la semana."}},
+  {p:{he:"היא זוכרת מה היה בשבועות הקודמים, וכך היא נמנעת מלתת לאותו אדם את אותה משימה שוב ושוב.",
+      en:"It remembers the previous weeks, so it avoids giving the same person the same task over and over.",
+      es:"Recuerda las semanas anteriores, así evita darle a la misma persona la misma tarea una y otra vez."}},
+  {h:{he:"שלושה עקרונות", en:"Three principles", es:"Tres principios"}},
+  {li:[
+    {he:"שוויון בין עובדים — כל אחד מקבל חלק דומה מהמשימות.",
+     en:"Fairness between people — everyone gets a similar share of the work.",
+     es:"Equidad entre personas — cada quien recibe una parte similar del trabajo."},
+    {he:"איזון בין משימות — כל ערך אפשרי חוזר בערך באותה תדירות.",
+     en:"Balance between tasks — every possible value comes up about as often.",
+     es:"Equilibrio entre tareas — cada valor posible aparece más o menos igual de seguido."},
+    {he:"זיכרון לאורך זמן — ההחלטה נשענת על שלושת החודשים האחרונים, לא על השבוע הזה בלבד.",
+     en:"Memory over time — decisions look back three months, not just this week.",
+     es:"Memoria en el tiempo — las decisiones miran tres meses atrás, no solo esta semana."}]},
+  {tip:{he:"אין צורך להבין הכול מראש. אפשר להתחיל עם ברירות המחדל ולשנות תוך כדי.",
+        en:"You do not need to understand everything first. Start with the defaults and adjust as you go.",
+        es:"No necesitas entenderlo todo primero. Empieza con los valores por defecto y ajusta sobre la marcha."}}]},
+
+{ id:"quick", icon:"🚀",
+  title:{he:"התחלה מהירה — חמישה צעדים", en:"Quick start — five steps", es:"Inicio rápido — cinco pasos"},
+  blocks:[
+  {steps:[
+    {he:"הגדר את העובדים שלך בדף ההגדרות, בטאב הראשון.",
+     en:"Add your people on the Settings page, in the first tab.",
+     es:"Agrega a tu personal en Configuración, en la primera pestaña."},
+    {he:"הגדר את המשימות ואת הערכים האפשריים לכל אחת.",
+     en:"Define the tasks and the values each one can take.",
+     es:"Define las tareas y los valores que puede tomar cada una."},
+    {he:"עבור לדף הסידור ופתח שבוע חדש.",
+     en:"Go to the Schedule page and open a new week.",
+     es:"Ve a la página Horario y abre una semana nueva."},
+    {he:"מלא ידנית מה שחשוב לך, ואז לחץ על שיבוץ אוטומטי לשאר.",
+     en:"Fill in by hand whatever matters to you, then run the automatic assignment for the rest.",
+     es:"Completa a mano lo que te importe y luego ejecuta la asignación automática para el resto."},
+    {he:"שמור את הסידור. הוא נכנס לארכיון ומצטרף להיסטוריה.",
+     en:"Save the schedule. It goes to the archive and joins the history.",
+     es:"Guarda el horario. Pasa al archivo y se suma al historial."}]},
+  {tip:{he:"השבוע הראשון ייראה אקראי — אין עדיין היסטוריה. מהשבוע השני והלאה האיזון מתחיל לעבוד.",
+        en:"The first week looks random — there is no history yet. From the second week on, the balancing kicks in.",
+        es:"La primera semana parece aleatoria — todavía no hay historial. Desde la segunda, el equilibrio empieza a actuar."}}]},
+
+{ id:"sched", icon:"📋",
+  title:{he:"דף הסידור", en:"The Schedule page", es:"La página Horario"},
+  blocks:[
+  {h:{he:"פתיחת שבוע חדש", en:"Opening a new week", es:"Abrir una semana nueva"}},
+  {p:{he:"בחר תאריך ולחץ על צור סידור. המערכת פותחת טבלה ריקה לימי העבודה שהגדרת.",
+      en:"Pick a date and press New Schedule. You get an empty table covering the working days you defined.",
+      es:"Elige una fecha y pulsa Nuevo Horario. Obtienes una tabla vacía con los días laborables que definiste."}},
+  {p:{he:"אם כבר קיים סידור שמור לאותו שבוע, המערכת תשאל לפני שהיא דורסת אותו.",
+      en:"If a schedule already exists for that week, the app asks before replacing it.",
+      es:"Si ya existe un horario para esa semana, la app pregunta antes de reemplazarlo."}},
+  {h:{he:"הזנה ידנית", en:"Filling in by hand", es:"Completar a mano"}},
+  {p:{he:"כל תא הוא רשימת בחירה. בחר ערך ישירות בטבלה, והוא נשמר מיד.",
+      en:"Every cell is a dropdown. Choose a value straight in the table and it is saved immediately.",
+      es:"Cada celda es una lista desplegable. Elige un valor en la tabla y se guarda al instante."}},
+  {p:{he:"מה שמילאת ידנית נשאר. השיבוץ האוטומטי ממלא רק תאים ריקים.",
+      en:"What you filled in stays put. The automatic assignment only fills empty cells.",
+      es:"Lo que completaste se queda. La asignación automática solo llena celdas vacías."}},
+  {h:{he:"שיבוץ אוטומטי", en:"Automatic assignment", es:"Asignación automática"}},
+  {p:{he:"לכל תא ריק המערכת בודקת מי או מה נבחר הכי מעט לאחרונה, ובוחרת בו.",
+      en:"For each empty cell the app checks which person or value has come up least lately, and picks that one.",
+      es:"Para cada celda vacía, la app mira qué persona o valor salió menos últimamente y elige ese."}},
+  {p:{he:"היא גם מכבדת את הכללים שהגדרת: יעדים שבועיים, אחוזי איזון, ומי בחופשה.",
+      en:"It also respects the rules you set: weekly quotas, balance percentages, and who is away.",
+      es:"También respeta tus reglas: metas semanales, porcentajes de equilibrio y quién está ausente."}},
+  {p:{he:"אף אחד לא משובץ לשתי משימות באותו יום.",
+      en:"Nobody is placed in two jobs on the same day.",
+      es:"Nadie queda asignado a dos trabajos el mismo día."}},
+  {h:{he:"כפתורי הפעולה", en:"The action buttons", es:"Los botones de acción"}},
+  {li:[
+    {he:"שמור — מכניס את הסידור לארכיון ומצרף אותו להיסטוריה.",
+     en:"Save — puts the schedule in the archive and adds it to the history.",
+     es:"Guardar — envía el horario al archivo y lo suma al historial."},
+    {he:"נקה — מרוקן את השבוע הנוכחי ומשאיר טבלה ריקה.",
+     en:"Clear — empties the current week and leaves a blank table.",
+     es:"Limpiar — vacía la semana actual y deja una tabla en blanco."},
+    {he:"ייצוא — מוריד קובץ Excel עם הסידור ועם גיליון סיכום.",
+     en:"Export — downloads an Excel file with the schedule and a summary sheet.",
+     es:"Exportar — descarga un archivo Excel con el horario y una hoja de resumen."},
+    {he:"הדפסה — מכין גרסה נקייה להדפסה או לשמירה כ-PDF.",
+     en:"Print — prepares a clean version to print or save as PDF.",
+     es:"Imprimir — prepara una versión limpia para imprimir o guardar como PDF."}]},
+  {h:{he:"צבעי השורות", en:"Row colours", es:"Colores de las filas"}},
+  {p:{he:"שורות של עובדים נצבעות בצבע הקבוצה שלהם, כדי שתזהה במבט מי שייך לאן.",
+      en:"Rows that hold people are tinted with their group colour, so you can see at a glance who belongs where.",
+      es:"Las filas con personas se tiñen con el color de su grupo, para ver de un vistazo quién es quién."}},
+  {p:{he:"ערך מיוחד שהגדרת, כמו רכב מסוג מסוים, מודגש בצבע נפרד.",
+      en:"A special value you defined, such as a particular vehicle type, is highlighted in its own colour.",
+      es:"Un valor especial que definiste, como cierto tipo de vehículo, se resalta con su propio color."}},
+  {h:{he:"אזהרות ובדיקת תקינות", en:"Warnings and checks", es:"Avisos y validación"}},
+  {p:{he:"מעל הטבלה מופיע סימן מצב. ירוק — הכול תקין. אדום עם מספר — יש מה לבדוק.",
+      en:"A status badge sits above the table. Green means all good. Red with a number means something needs a look.",
+      es:"Sobre la tabla hay una insignia de estado. Verde es correcto. Rojo con un número indica algo a revisar."}},
+  {p:{he:"לחיצה על הסימן מגלגלת לרשימת ההודעות מתחת לטבלה.",
+      en:"Clicking the badge scrolls to the list of messages below the table.",
+      es:"Al pulsar la insignia bajas a la lista de mensajes debajo de la tabla."}},
+  {p:{he:"אזהרה אינה חוסמת. אפשר לשמור סידור גם כשיש אזהרות — היא רק מסבה את תשומת ליבך.",
+      en:"A warning does not block you. You can save with warnings open — it only points something out.",
+      es:"Un aviso no te bloquea. Puedes guardar con avisos abiertos — solo señala algo."}}]},
+
+{ id:"settings", icon:"⚙️",
+  title:{he:"דף ההגדרות", en:"The Settings page", es:"La página Configuración"},
+  blocks:[
+  {p:{he:"כאן נקבע מה המערכת יודעת על התחנה שלך. כל טאב אחראי לחלק אחד.",
+      en:"This is where you tell the app about your station. Each tab covers one part.",
+      es:"Aquí le dices a la app cómo es tu estación. Cada pestaña cubre una parte."}},
+  {h:{he:"עובדים וקבוצות", en:"People and groups", es:"Personal y grupos"}},
+  {p:{he:"קבוצה היא אוסף עובדים עם צבע משלה. כותבים שם עובד בכל שורה בתיבת הטקסט.",
+      en:"A group is a set of people with its own colour. Write one name per line in the text box.",
+      es:"Un grupo es un conjunto de personas con su propio color. Escribe un nombre por línea."}},
+  {p:{he:"הסרת קבוצה מכבה אותה בלבד — רשימת העובדים שלה נשמרת אם תחזיר אותה.",
+      en:"Removing a group only switches it off — its roster is kept if you bring it back.",
+      es:"Quitar un grupo solo lo desactiva — su lista se conserva si lo reactivas."}},
+  {p:{he:"מתחת לקבוצות מופיע תקציב חופשה לכל עובד פעיל.",
+      en:"Below the groups you set a vacation budget for each active person.",
+      es:"Debajo de los grupos defines un presupuesto de vacaciones para cada persona activa."}},
+  {h:{he:"מקומות עבודה", en:"Workplaces", es:"Lugares de trabajo"}},
+  {p:{he:"מקום עבודה מכיל תפקידים. לכל תפקיד: מאיזו קבוצה לוקחים, וכמה עובדים צריך.",
+      en:"A workplace holds roles. Each role says which group it draws from and how many people it needs.",
+      es:"Un lugar de trabajo tiene puestos. Cada puesto indica de qué grupo toma y cuánta gente necesita."}},
+  {p:{he:"סדר העדיפות קובע מי מאויש קודם כשאין מספיק אנשים.",
+      en:"The priority number decides who gets staffed first when people are short.",
+      es:"La prioridad decide a quién se cubre primero cuando falta gente."}},
+  {p:{he:"תפקיד מסומן כחובה — אם אי אפשר לאייש אותו, כל המקום מדולג באותו יום.",
+      en:"If a role is marked required and cannot be filled, the whole workplace is skipped that day.",
+      es:"Si un puesto es obligatorio y no se puede cubrir, se omite todo el lugar ese día."}},
+  {h:{he:"ימי עבודה ושעות", en:"Working days and hours", es:"Días y horas"}},
+  {p:{he:"סמן אילו ימים בשבוע עובדים, ותן לכל יום את התווית שתופיע בטבלה.",
+      en:"Tick which days of the week you work, and give each the label shown in the table.",
+      es:"Marca qué días trabajas y dale a cada uno la etiqueta que aparece en la tabla."}},
+  {p:{he:"רשימת השעות משותפת לכל הימים ומופיעה כבחירה בשורת שעות העבודה.",
+      en:"One shared list of hours serves every day and appears as the choices in the work-hours row.",
+      es:"Una sola lista de horarios sirve para todos los días y aparece en la fila de horas."}},
+  {h:{he:"משימות נוספות", en:"Extra tasks", es:"Tareas extra"}},
+  {p:{he:"משימה נוספת היא שורה עצמאית עם ערכים משלה ועם יעד לבוקר ולצהריים.",
+      en:"An extra task is its own row, with its own values and a morning and a noon target.",
+      es:"Una tarea extra es una fila propia, con sus valores y una meta de mañana y de mediodía."}},
+  {p:{he:"אפשר להוסיף כמה משימות כאלה, ולמחוק מה שלא בשימוש.",
+      en:"You can add several of them and delete the ones you do not use.",
+      es:"Puedes agregar varias y eliminar las que no uses."}},
+  {h:{he:"שורות ותוויות", en:"Rows and labels", es:"Filas y etiquetas"}},
+  {p:{he:"כאן רואים את כל שורות הסידור. משנים את השם שלהן בשלוש השפות.",
+      en:"This lists every row in the schedule. You rename them here in all three languages.",
+      es:"Aquí ves todas las filas del horario. Las renombras en los tres idiomas."}},
+  {p:{he:"בתחתית אפשר להוסיף שורה חדשה משלך: מזהה באנגלית, שם, וסוג — רשימה או טקסט חופשי.",
+      en:"At the bottom you can add a row of your own: an English identifier, a name, and a type — list or free text.",
+      es:"Abajo puedes agregar tu propia fila: un identificador en inglés, un nombre y un tipo — lista o texto libre."}},
+  {h:{he:"אפשרויות בחירה", en:"Dropdown options", es:"Opciones de listas"}},
+  {p:{he:"לכל שורה מסוג רשימה יש כאן תיבה עם הערכים האפשריים, ערך אחד בכל שורה.",
+      en:"Each list row has a box here holding its possible values, one per line.",
+      es:"Cada fila de tipo lista tiene aquí una caja con sus valores posibles, uno por línea."}},
+  {h:{he:"סדר השורות", en:"Row order", es:"Orden de filas"}},
+  {p:{he:"גרור שורה בידית, או הזז אותה בחצים. הסדר נשמר מיד ומשפיע על הטבלה, הייצוא וההדפסה.",
+      en:"Drag a row by its handle, or move it with the arrows. The order saves at once and drives the table, the export and the printout.",
+      es:"Arrastra una fila por su asa o muévela con las flechas. El orden se guarda al instante y rige la tabla, la exportación y la impresión."}},
+  {h:{he:"צירים וכניסות/יציאות", en:"Axes and entry/exit rules", es:"Rutas y reglas"}},
+  {p:{he:"כאן מחברים בין ערך של שורה אחת לערכים המותרים בשורה אחרת.",
+      en:"This is where you tie a value in one row to the values allowed in another.",
+      es:"Aquí vinculas un valor de una fila con los valores permitidos en otra."}},
+  {p:{he:"סמן אילו אפשרויות מותרות לכל ערך, וכמה אחוז מהפעמים לבחור כל אחת. הסכום חייב להיות מאה.",
+      en:"Tick which options each value may use, and what share of the time to pick each. The shares must add up to one hundred.",
+      es:"Marca qué opciones puede usar cada valor y con qué porcentaje elegir cada una. Debe sumar cien."}},
+  {p:{he:"אלה חוקים אמיתיים — השיבוץ האוטומטי מציית להם, והמערכת מתריעה אם שינית ידנית משהו שלא תואם.",
+      en:"These are real rules — the automatic assignment obeys them, and you get a warning if a hand edit breaks one.",
+      es:"Son reglas reales — la asignación automática las obedece y avisa si una edición manual las rompe."}},
+  {h:{he:"יעדים שבועיים", en:"Weekly quotas", es:"Metas semanales"}},
+  {p:{he:"יעד אומר: השורה הזאת תקבל את הערך הזה בדיוק כך וכך פעמים בשבוע.",
+      en:"A quota says: this row gets this value exactly this many times a week.",
+      es:"Una meta dice: esta fila recibe este valor exactamente tantas veces por semana."}},
+  {p:{he:"אם משאירים את הערך ריק, היעד סופר כמה פעמים השורה מולאה בכלל.",
+      en:"Leave the value empty and the quota counts how many times the row is filled at all.",
+      es:"Si dejas el valor vacío, la meta cuenta cuántas veces se llena la fila en total."}},
+  {h:{he:"אחוזי איזון", en:"Balance percentages", es:"Porcentajes de equilibrio"}},
+  {p:{he:"לכל שורה אפשר לקבוע איזה אחוז מהשיבוצים יקבל כל ערך. ברירת המחדל היא חלוקה שווה.",
+      en:"For each row you can set what share of assignments each value gets. The default is an equal split.",
+      es:"Para cada fila puedes fijar qué parte de las asignaciones recibe cada valor. Por defecto se reparte igual."}},
+  {p:{he:"המערכת בוחרת בכל פעם את הערך שהכי רחוק מהאחוז שקבעת לו.",
+      en:"The app always picks the value sitting furthest below the share you gave it.",
+      es:"La app siempre elige el valor que está más lejos por debajo de su porcentaje."}}]},
+
+{ id:"archive", icon:"📁",
+  title:{he:"דף הארכיון", en:"The Archive page", es:"La página Archivo"},
+  blocks:[
+  {h:{he:"שמירת סידור", en:"Saving a schedule", es:"Guardar un horario"}},
+  {p:{he:"כפתור שמור בדף הסידור מכניס את השבוע לארכיון. נקודה כתומה ליד הכפתור אומרת שיש שינויים שלא נשמרו.",
+      en:"The Save button on the Schedule page files the week in the archive. An orange dot beside it means there are unsaved changes.",
+      es:"El botón Guardar archiva la semana. Un punto naranja al lado indica cambios sin guardar."}},
+  {h:{he:"פתיחת סידור ישן", en:"Opening an old schedule", es:"Abrir un horario anterior"}},
+  {p:{he:"הארכיון מסודר לפי חודשים. לחיצה על טען מחזירה את אותו שבוע לדף הסידור לעריכה.",
+      en:"The archive is grouped by month. Press Load and that week returns to the Schedule page for editing.",
+      es:"El archivo se agrupa por mes. Pulsa Cargar y esa semana vuelve al Horario para editarla."}},
+  {h:{he:"גיבוי — חשוב מאוד", en:"Backups — this matters", es:"Copias de seguridad — importante"}},
+  {p:{he:"כפתור גיבוי הכול מוריד קובץ אחד עם כל ההגדרות וכל הסידורים השמורים.",
+      en:"Back up everything downloads a single file holding all your settings and every saved schedule.",
+      es:"Respaldar todo descarga un único archivo con toda la configuración y los horarios guardados."}},
+  {warn:{he:"הנתונים חיים רק בדפדפן של המכשיר הזה. ניקוי היסטוריית הגלישה עלול למחוק אותם. גבה מדי פעם לקובץ.",
+         en:"Your data lives only in this device's browser. Clearing browsing data can erase it. Export a backup now and then.",
+         es:"Tus datos viven solo en el navegador de este dispositivo. Borrar los datos de navegación puede eliminarlos. Exporta un respaldo de vez en cuando."}},
+  {h:{he:"שחזור מגיבוי", en:"Restoring a backup", es:"Restaurar un respaldo"}},
+  {p:{he:"שחזור מגיבוי טוען קובץ כזה בחזרה. הוא דורס את כל מה שיש במכשיר, ולכן הוא מבקש אישור.",
+      en:"Restore from backup loads such a file back. It overwrites everything on the device, so it asks first.",
+      es:"Restaurar respaldo carga ese archivo. Sobrescribe todo en el dispositivo, por eso pregunta antes."}},
+  {tip:{he:"אפשר לייצא ולייבא הגדרות בלבד, בלי הסידורים — שימושי כשמעבירים תחנה למכשיר חדש.",
+        en:"You can export and import settings alone, without the schedules — handy when moving a station to a new device.",
+        es:"Puedes exportar e importar solo la configuración, sin los horarios — útil al pasar a un dispositivo nuevo."}}]},
+
+{ id:"stats", icon:"📊",
+  title:{he:"דף הסטטיסטיקה", en:"The Statistics page", es:"La página Estadísticas"},
+  blocks:[
+  {h:{he:"מה רואים", en:"What you see", es:"Qué ves"}},
+  {p:{he:"בוחרים תקופה — השבוע הנוכחי, חודש או שנה — והמערכת סופרת מה קרה בה.",
+      en:"Pick a period — the current week, a month or a year — and the app counts what happened in it.",
+      es:"Elige un período — la semana actual, un mes o un año — y la app cuenta lo ocurrido."}},
+  {p:{he:"טבלה ראשונה: כמה פעמים כל עובד מילא כל תפקיד. אחריה ניצול תקציב החופשה.",
+      en:"The first table: how many times each person filled each role. Then vacation budget usage.",
+      es:"La primera tabla: cuántas veces cada persona cubrió cada puesto. Luego el uso de vacaciones."}},
+  {h:{he:"איך לקרוא", en:"How to read it", es:"Cómo leerlo"}},
+  {p:{he:"כל ערך מוצג כמספר ולצידו אחוז, עם פס באורך יחסי. פס ארוך יותר — שובץ יותר.",
+      en:"Every value shows a count, a percentage, and a bar sized to match. A longer bar means it came up more.",
+      es:"Cada valor muestra un conteo, un porcentaje y una barra proporcional. Barra más larga, más veces."}},
+  {p:{he:"בעמודת הסיכום, מספר באדום מסמן עובד שרחוק ביותר מעשרים אחוז מהממוצע.",
+      en:"In the totals column, a red number marks someone more than twenty percent away from the average.",
+      es:"En la columna de totales, un número rojo marca a quien está a más del veinte por ciento del promedio."}},
+  {h:{he:"כשיש פערים גדולים", en:"When gaps are large", es:"Cuando hay diferencias grandes"}},
+  {p:{he:"פער בשבוע אחד הוא נורמלי. בדוק על פני חודש — שם האיזון אמור להתיישר.",
+      en:"A gap in a single week is normal. Check across a month — that is where the balance should even out.",
+      es:"Una diferencia en una sola semana es normal. Mira el mes — ahí debería nivelarse."}},
+  {p:{he:"אם הפער נשאר, בדרך כלל הסיבה היא חופשות, יעדים שבועיים, או אחוזי איזון שקבעת.",
+      en:"If it persists, the cause is usually time off, weekly quotas, or balance percentages you set.",
+      es:"Si persiste, suele deberse a ausencias, metas semanales o porcentajes que fijaste."}},
+  {p:{he:"אפשר לייצא את הסטטיסטיקה לקובץ CSV ולבדוק אותה בגיליון.",
+      en:"You can export the statistics to a CSV file and inspect them in a spreadsheet.",
+      es:"Puedes exportar las estadísticas a CSV y revisarlas en una hoja de cálculo."}}]},
+
+{ id:"faq", icon:"❓",
+  title:{he:"שאלות נפוצות", en:"Common questions", es:"Preguntas frecuentes"},
+  blocks:[
+  {qa:[
+   {q:{he:"מה קורה אם מחקתי שורה בטעות?",
+       en:"What if I delete a row by mistake?",
+       es:"¿Y si elimino una fila por error?"},
+    a:{he:"המחיקה בלתי הפיכה מהמסך. הדרך היחידה להחזיר היא לייבא גיבוי הגדרות שנשמר קודם.",
+       en:"Deletion cannot be undone from the screen. The only way back is importing a settings backup you saved earlier.",
+       es:"La eliminación no se deshace desde la pantalla. La única vía es importar un respaldo guardado antes."}},
+   {q:{he:"איך מעבירים הגדרות למכשיר אחר?",
+       en:"How do I move my settings to another device?",
+       es:"¿Cómo paso mi configuración a otro dispositivo?"},
+    a:{he:"ייצא הגדרות במכשיר הראשון, העבר את הקובץ, וייבא אותו בשני.",
+       en:"Export settings on the first device, move the file across, and import it on the second.",
+       es:"Exporta la configuración en el primero, pasa el archivo e impórtalo en el segundo."}},
+   {q:{he:"הנתונים שלי נשמרים בענן?",
+       en:"Is my data stored in the cloud?",
+       es:"¿Mis datos se guardan en la nube?"},
+    a:{he:"לא. הכול נשמר מקומית בדפדפן של המכשיר. שום דבר לא נשלח לשרת.",
+       en:"No. Everything is stored locally in the device's browser. Nothing is sent to a server.",
+       es:"No. Todo se guarda localmente en el navegador del dispositivo. Nada se envía a un servidor."}},
+   {q:{he:"מה קורה כשאין אינטרנט?",
+       en:"What happens with no internet?",
+       es:"¿Qué pasa sin internet?"},
+    a:{he:"הכול ממשיך לעבוד. האפליקציה נשמרת במכשיר אחרי הביקור הראשון.",
+       en:"Everything keeps working. The app is stored on the device after your first visit.",
+       es:"Todo sigue funcionando. La app queda guardada en el dispositivo tras la primera visita."}},
+   {q:{he:"איך מעדכנים את האפליקציה?",
+       en:"How do I update the app?",
+       es:"¿Cómo actualizo la app?"},
+    a:{he:"רענון הדף כשיש חיבור מביא את הגרסה החדשה. ההגדרות והסידורים שלך נשארים.",
+       en:"Refresh the page while online and the new version arrives. Your settings and schedules stay.",
+       es:"Recarga la página con conexión y llega la versión nueva. Tu configuración y horarios se mantienen."}}]}]},
+
+{ id:"tips", icon:"💡",
+  title:{he:"טיפים ומלכודות", en:"Tips and pitfalls", es:"Consejos y trampas"},
+  blocks:[
+  {tip:{he:"גבה לקובץ לפני כל שינוי גדול בהגדרות. זו הדרך היחידה לחזור אחורה.",
+        en:"Export a backup before any large settings change. It is the only way back.",
+        es:"Exporta un respaldo antes de cualquier cambio grande. Es la única forma de volver atrás."}},
+  {tip:{he:"הזנה ידנית תמיד גוברת. מלא קודם את מה שאתה יודע, ואז תן לשיבוץ להשלים.",
+        en:"A manual entry always wins. Fill in what you already know first, then let the assignment finish the rest.",
+        es:"Lo escrito a mano siempre manda. Completa primero lo que ya sabes y deja que la asignación termine."}},
+  {tip:{he:"שמור את הסידור בסוף השבוע לפני שאתה פותח חדש — אחרת הוא לא נכנס להיסטוריה.",
+        en:"Save the week before opening a new one — otherwise it never joins the history.",
+        es:"Guarda la semana antes de abrir otra — si no, nunca entra en el historial."}},
+  {warn:{he:"מחיקת שורה היא בלתי הפיכה. השורה נעלמת מהסידור, מהייצוא ומהסטטיסטיקה. גבה קודם.",
+         en:"Deleting a row cannot be undone. It leaves the schedule, the exports and the statistics. Back up first.",
+         es:"Eliminar una fila es irreversible. Desaparece del horario, las exportaciones y las estadísticas. Respalda antes."}},
+  {warn:{he:"שינוי שם עובד אינו מוחק היסטוריה, אבל יוצר רשומה חדשה. הסטטיסטיקה תראה את השם הישן והחדש בנפרד.",
+         en:"Renaming a person does not erase history, but it creates a new record. Statistics will show the old and new names separately.",
+         es:"Renombrar a alguien no borra el historial, pero crea un registro nuevo. Las estadísticas mostrarán ambos nombres por separado."}}]}
+];
+
+function gt(o){ return (o&&(o[S.lang]||o.he))||""; }
+function viewGuide(){
+  let h=`<h2>${t("nav_guide")}</h2>
+    <div class="card guide-lead">${t("guide_lead")}</div>`;
+  GUIDE.forEach((ch,i)=>{
+    h+=`<details class="sect guide-ch" data-guide="${esc(ch.id)}" ${i===0?"open":""}>
+      <summary><span class="g-ico">${ch.icon}</span>${esc(gt(ch.title))}</summary>
+      <div class="inner guide-body">`;
+    ch.blocks.forEach(b=>{
+      if(b.h) h+=`<h3>${esc(gt(b.h))}</h3>`;
+      else if(b.p) h+=`<p>${esc(gt(b.p))}</p>`;
+      else if(b.li) h+=`<ul>${b.li.map(x=>`<li>${esc(gt(x))}</li>`).join("")}</ul>`;
+      else if(b.steps) h+=`<ol class="g-steps">${b.steps.map(x=>`<li>${esc(gt(x))}</li>`).join("")}</ol>`;
+      else if(b.tip) h+=`<p class="g-tip">${esc(gt(b.tip))}</p>`;
+      else if(b.warn) h+=`<p class="g-warn">${esc(gt(b.warn))}</p>`;
+      else if(b.qa) h+=b.qa.map(x=>
+        `<div class="g-qa"><b>${esc(gt(x.q))}</b><p>${esc(gt(x.a))}</p></div>`).join("");
+    });
+    h+=`</div></details>`;
+  });
+  return h;
+}
+
 /* ═══════════════ export & print ═══════════════ */
 function scheduleCsv(days){
   const keys=Object.keys(days).sort();
@@ -2091,6 +2448,20 @@ function wire(){
     document.querySelectorAll("[data-delarch-yes]").forEach(b=>b.onclick=()=>{
       const a=loadArchive(); delete a[b.dataset.delarchYes]; saveArchive(a);
       S.pendingConfirm=null; toast("🗑 "+t("deleted")); render(); });
+  }
+  else if(S.screen==="guide"){
+    /* One chapter at a time. The open state is set here rather than left to
+       the native toggle, whose events fire asynchronously and race each other
+       when one chapter closes another. */
+    document.querySelectorAll("details.guide-ch").forEach(d=>{
+      d.querySelector("summary").onclick=ev=>{
+        ev.preventDefault();
+        const wasOpen=d.open;
+        document.querySelectorAll("details.guide-ch").forEach(o=>{ o.open=false; });
+        d.open=!wasOpen;
+        if(d.open) d.scrollIntoView({behavior:"smooth", block:"start"});
+      };
+    });
   }
   else if(S.screen==="stats"){
     $("statsTab").onchange=e=>{S.statsTab=e.target.value;render();};

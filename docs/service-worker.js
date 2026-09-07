@@ -1,6 +1,6 @@
 /* Offline-first shell. The page itself is fetched network-first so a shipped
    change shows up on the next visit; everything else is served from cache. */
-const CACHE = "agenda-pwa-v18";
+const CACHE = "agenda-pwa-v19";
 const ASSETS = [
   "./",
   "./index.html",
