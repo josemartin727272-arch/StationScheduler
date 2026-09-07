@@ -1,7 +1,7 @@
 {
-  "name": "סידור עבודה שבועי 🚕",
-  "short_name": "סידור 🚕",
-  "description": "Weekly work schedule for a taxi company — fully offline",
+  "name": "שאולי מוניות 🚕",
+  "short_name": "שאולי מוניות",
+  "description": "Taxi Scheduler — weekly work schedules, fully offline",
   "lang": "he",
   "dir": "rtl",
   "start_url": "./index.html",
