@@ -77,7 +77,13 @@ details.sect>.inner{padding:0 14px 14px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 @media(max-width:700px){.grid2,.grid3{grid-template-columns:1fr}}
-.lbl-row{display:grid;grid-template-columns:.8fr 1fr 1fr 1fr;gap:6px;margin-bottom:6px}
+.lbl-row{display:grid;grid-template-columns:.9fr 1fr 1fr 1fr 44px;gap:6px;
+  margin-bottom:6px;align-items:center}
+.lbl-row input:disabled{background:#f2f5f8;color:var(--muted)}
+.lbl-row .inline-confirm{padding:2px 4px}
+.cr-opts{display:block;margin:-2px 0 10px;padding-inline-start:8px;
+  border-inline-start:3px solid var(--border);font-size:.85rem;color:var(--muted)}
+.cr-opts textarea{min-height:56px}
 .lbl-row input{min-height:40px;font-size:.88rem}
 .orig-lbl{color:var(--muted);font-weight:700;font-size:.85rem;align-self:center;
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -177,8 +183,13 @@ err_sec_none:"אין עובד פנוי מקבוצת {g} עבור {s}",warn_sec_d
 edit:"עדכן",row_updated:"השורה עודכנה",
 s_employees:"👤 קבוצות עובדים ותקציבי חופשה",s_workplaces:"🏢 מקומות עבודה",s_workdays:"📆 ימי עבודה",
 s_extra:"➕ משימה נוספת",s_notes:"📝 הערות לוגיקת שיבוץ",
-s_order:"↕️ סדר השורות",s_labels:"🏷️ תוויות שורות",s_options:"📝 אפשרויות בחירה",
-s_targets:"🎯 יעדים שבועיים",s_custom:"➕ שורות מותאמות אישית",
+s_order:"↕️ סדר השורות",s_labels:"🏷️ שורות ותוויות",s_options:"📝 אפשרויות בחירה",
+s_targets:"🎯 יעדים שבועיים",
+row_key:"שם מקורי (מזהה)",row_key_hint:"אנגלית, בלי רווחים · קבוע — לא ניתן לשינוי אחר כך",
+builtin_row:"שורה מובנית — לא ניתנת למחיקה",
+named_in_wp:"השם נקבע בטאב מקומות עבודה",named_in_extra:"השם נקבע בטאב משימות נוספות",
+key_invalid:"מזהה לא תקין — אותיות אנגליות, ספרות וקו תחתון, מתחיל באות",
+key_taken:"המזהה כבר בשימוש",
 grp_name:"שם הקבוצה",grp_color:"צבע",grp_emps:"עובדים",grp_add:"➕ הוסף קבוצה",grp_remove:"🗑 הסר קבוצה",
 grp_max:"הגעת למספר הקבוצות המרבי (5)",grp_none:"אין קבוצות פעילות — הוסף קבוצה",
 grp_removed:"הקבוצה הוסרה (העובדים נשמרו)",grp_added:"קבוצה נוספה",
@@ -210,7 +221,7 @@ wt_any:"— כל ערך —",wt_add:"➕ הוסף יעד",wt_none:"אין יעד
 wp_sec_size:"מספר עובדים לשיבוץ",
 add_row:"הוסף שורה",row_name:"שם השורה",input_type:"סוג קלט",type_select:"רשימת בחירה",type_text:"טקסט חופשי",
 row_opts:"אפשרויות (שורה לכל ערך)",delete:"מחק",row_added:"השורה נוספה",row_deleted:"השורה נמחקה",name_required:"חובה שם בעברית",
-no_custom:"אין שורות מותאמות עדיין",confirm_q:"בטוח?",
+confirm_q:"בטוח?",
 arch_title:"סידורים שמורים",arch_empty:"אין סידורים שמורים עדיין",load:"טען",loaded:"הסידור נטען",deleted:"נמחק",
 st_period:"תקופה",st_week:"שבוע נוכחי",st_month:"חודשי",st_year:"שנתי",st_no_data:"אין נתונים לתקופה זו",
 st_employees:"חלוקת עובדים",st_vacation:"ניצול תקציב חופשה",st_fields:"חלוקת ערכים",st_weeks:"שבועות",st_days:"ימים",
@@ -250,8 +261,13 @@ err_sec_none:"No employee available from group {g} for {s}",warn_sec_dup:"{e} is
 edit:"Update",row_updated:"Row updated",
 s_employees:"👤 Employee groups & vacation budgets",s_workplaces:"🏢 Workplaces",s_workdays:"📆 Work days",
 s_extra:"➕ Extra task",s_notes:"📝 Assignment logic notes",
-s_order:"↕️ Row order",s_labels:"🏷️ Row labels",s_options:"📝 Dropdown options",
-s_targets:"🎯 Weekly targets",s_custom:"➕ Custom rows",
+s_order:"↕️ Row order",s_labels:"🏷️ Rows & labels",s_options:"📝 Dropdown options",
+s_targets:"🎯 Weekly targets",
+row_key:"Original name (identifier)",row_key_hint:"English, no spaces · permanent — it cannot be changed later",
+builtin_row:"Built-in row — cannot be deleted",
+named_in_wp:"Named on the Workplaces tab",named_in_extra:"Named on the Extra tasks tab",
+key_invalid:"Invalid identifier — letters, digits and underscore, starting with a letter",
+key_taken:"That identifier is already in use",
 grp_name:"Group name",grp_color:"Colour",grp_emps:"Employees",grp_add:"➕ Add group",grp_remove:"🗑 Remove group",
 grp_max:"Maximum number of groups reached (5)",grp_none:"No active groups — add one",
 grp_removed:"Group removed (its employees were kept)",grp_added:"Group added",
@@ -283,7 +299,7 @@ wt_any:"— any value —",wt_add:"➕ Add quota",wt_none:"No weekly quotas — 
 wp_sec_size:"Employees to assign",
 add_row:"Add row",row_name:"Row name",input_type:"Input type",type_select:"Dropdown",type_text:"Free text",
 row_opts:"Options (one per line)",delete:"Delete",row_added:"Row added",row_deleted:"Row deleted",name_required:"Hebrew name required",
-no_custom:"No custom rows yet",confirm_q:"Sure?",
+confirm_q:"Sure?",
 arch_title:"Saved schedules",arch_empty:"No saved schedules yet",load:"Load",loaded:"Schedule loaded",deleted:"Deleted",
 st_period:"Period",st_week:"Current week",st_month:"Monthly",st_year:"Yearly",st_no_data:"No data for this period",
 st_employees:"Employee distribution",st_vacation:"Vacation budget usage",st_fields:"Value distribution",st_weeks:"weeks",st_days:"days",
@@ -323,8 +339,13 @@ err_sec_none:"Ningún empleado disponible del grupo {g} para {s}",warn_sec_dup:"
 edit:"Actualizar",row_updated:"Fila actualizada",
 s_employees:"👤 Grupos de empleados y presupuestos",s_workplaces:"🏢 Lugares de trabajo",s_workdays:"📆 Días laborables",
 s_extra:"➕ Tarea extra",s_notes:"📝 Notas de lógica de asignación",
-s_order:"↕️ Orden de filas",s_labels:"🏷️ Etiquetas de filas",s_options:"📝 Opciones de listas",
-s_targets:"🎯 Metas semanales",s_custom:"➕ Filas personalizadas",
+s_order:"↕️ Orden de filas",s_labels:"🏷️ Filas y etiquetas",s_options:"📝 Opciones de listas",
+s_targets:"🎯 Metas semanales",
+row_key:"Nombre original (identificador)",row_key_hint:"Inglés, sin espacios · permanente — no se puede cambiar después",
+builtin_row:"Fila integrada — no se puede eliminar",
+named_in_wp:"El nombre se define en Lugares de trabajo",named_in_extra:"El nombre se define en Tareas extra",
+key_invalid:"Identificador inválido — letras, dígitos y guion bajo, empezando con letra",
+key_taken:"Ese identificador ya está en uso",
 grp_name:"Nombre del grupo",grp_color:"Color",grp_emps:"Empleados",grp_add:"➕ Agregar grupo",grp_remove:"🗑 Quitar grupo",
 grp_max:"Número máximo de grupos alcanzado (5)",grp_none:"No hay grupos activos — agrega uno",
 grp_removed:"Grupo quitado (sus empleados se conservaron)",grp_added:"Grupo agregado",
@@ -356,7 +377,7 @@ wt_any:"— cualquier valor —",wt_add:"➕ Agregar meta",wt_none:"No hay metas
 wp_sec_size:"Empleados a asignar",
 add_row:"Agregar fila",row_name:"Nombre de fila",input_type:"Tipo de entrada",type_select:"Lista",type_text:"Texto libre",
 row_opts:"Opciones (una por línea)",delete:"Eliminar",row_added:"Fila agregada",row_deleted:"Fila eliminada",name_required:"Nombre en hebreo obligatorio",
-no_custom:"Aún no hay filas personalizadas",confirm_q:"¿Seguro?",
+confirm_q:"¿Seguro?",
 arch_title:"Horarios guardados",arch_empty:"No hay horarios guardados",load:"Cargar",loaded:"Horario cargado",deleted:"Eliminado",
 st_period:"Período",st_week:"Semana actual",st_month:"Mensual",st_year:"Anual",st_no_data:"Sin datos para este período",
 st_employees:"Distribución de empleados",st_vacation:"Uso de vacaciones",st_fields:"Distribución de valores",st_weeks:"semanas",st_days:"días",
@@ -1610,14 +1631,54 @@ function viewSettings(){
     <span class="updown"><button class="btn small" data-up="${i}" ${i===0?"disabled":""}>↑</button>
     <button class="btn small" data-dn="${i}" ${i===rk.length-1?"disabled":""}>↓</button></span></li>`; });
   h+=sect("order",t("s_order"),ord+`</ul>`);
-  /* labels — only rows whose name has no other home */
-  let lab=`<div class="lbl-row"><b class="orig-lbl">${t("orig_name")}</b><b>${t("lbl_he")}</b><b>${t("lbl_en")}</b><b>${t("lbl_es")}</b></div>`;
-  labelledRowKeys().forEach(k=>{ lab+=`<div class="lbl-row">
-    <span class="orig-lbl">${esc(I18N.he["row_"+k]||k)}</span>
-    <input data-lbl="${k}" data-lang="he" value="${esc(rowLabel(k,"he"))}">
-    <input data-lbl="${k}" data-lang="en" value="${esc(rowLabel(k,"en"))}">
-    <input data-lbl="${k}" data-lang="es" value="${esc(rowLabel(k,"es"))}"></div>`; });
-  h+=sect("labels",t("s_labels"),lab+`<p><button class="btn primary" id="saveLabels">${t("save_settings")}</button></p>`);
+  /* every schedule row: its labels, and delete where it is allowed */
+  let lab=`<div class="lbl-row"><b class="orig-lbl">${t("orig_name")}</b>
+    <b>${t("lbl_he")}</b><b>${t("lbl_en")}</b><b>${t("lbl_es")}</b><b></b></div>`;
+  labelledRowKeys().forEach(k=>{
+    const kind=rowKind(k), own=kind==="custom";
+    const frozen=kind==="section"||kind==="extra";
+    const why=kind==="section"?t("named_in_wp"):kind==="extra"?t("named_in_extra"):t("builtin_row");
+    const orig=kind==="fixed"?(I18N.he["row_"+k]||k):k;
+    const cell=lg=>frozen
+      ? `<input value="${esc(rowLabel(k,lg))}" disabled title="${esc(why)}">`
+      : `<input data-lbl="${esc(k)}" data-lang="${lg}" value="${esc(rowLabel(k,lg))}">`;
+    const conf=S.pendingConfirm==="delrow_"+k;
+    lab+=`<div class="lbl-row">
+      <span class="orig-lbl" title="${esc(k)}">${esc(orig)}</span>
+      ${cell("he")}${cell("en")}${cell("es")}
+      ${own
+        ? (conf
+            ? `<span class="inline-confirm">
+                 <button class="btn small warn" data-delrow-yes="${esc(k)}">✓</button>
+                 <button class="btn small" data-cancel-confirm="1">✗</button></span>`
+            : `<button class="btn small warn" data-delrow="${esc(k)}" title="${t("delete")}">🗑</button>`)
+        : `<button class="btn small" disabled title="${esc(why)}">🗑</button>`}
+    </div>`;
+    /* a custom dropdown row keeps its option list right here */
+    if(own){
+      const r=customRows().find(x=>x.key===k);
+      if(r&&r.input==="select")
+        lab+=`<label class="cr-opts">${t("row_opts")}
+          <textarea data-cre-opts="${esc(k)}">${esc((r.options||[]).join("\n"))}</textarea></label>`;
+    }
+  });
+  lab+=`<p><button class="btn primary" id="saveLabels">${t("save_settings")}</button></p><hr>
+    <h3>➕ ${t("add_row")}</h3>
+    <div class="grid2">
+      <label>${t("row_key")}<br><input id="crKey" placeholder="night_shift">
+        <span class="hint">${t("row_key_hint")}</span></label>
+      <label>${t("input_type")}<br><select id="crType">
+        <option value="select">${t("type_select")}</option>
+        <option value="text">${t("type_text")}</option></select></label>
+    </div>
+    <div class="grid3">
+      <label>${t("row_name")} (${t("lbl_he")})<br><input id="crHe"></label>
+      <label>${t("row_name")} (${t("lbl_en")})<br><input id="crEn"></label>
+      <label>${t("row_name")} (${t("lbl_es")})<br><input id="crEs"></label>
+    </div>
+    <label>${t("row_opts")}<br><textarea id="crOpts" style="min-height:70px"></textarea></label>
+    <p><button class="btn primary" id="addRow">➕ ${t("add_row")}</button></p>`;
+  h+=sect("labels",t("s_labels"),lab);
   /* options */
   const groups=[["entry",rowLabel("entry")],["exit",rowLabel("exit")],["escort",t("opt_escort")],
     ["arrival_point",rowLabel("arrival_point")],["theater",rowLabel("theater")],
@@ -1637,47 +1698,34 @@ function viewSettings(){
   const tgt=`${targetsPanel()}${pctTables()}`;
   h+=sect("targets",t("s_targets"),tgt);
   h+=sect("notes",t("s_notes"),notesPanel());
-  /* custom rows */
-  let cus=`<div class="grid3">
-      <label>${t("row_name")} (${t("lbl_he")})<br><input id="crHe"></label>
-      <label>${t("row_name")} (${t("lbl_en")})<br><input id="crEn"></label>
-      <label>${t("row_name")} (${t("lbl_es")})<br><input id="crEs"></label>
-    </div><div class="grid2">
-      <label>${t("input_type")}<br><select id="crType"><option value="select">${t("type_select")}</option><option value="text">${t("type_text")}</option></select></label>
-      <label>${t("row_opts")}<br><textarea id="crOpts" style="min-height:70px"></textarea></label>
-    </div><p><button class="btn primary" id="addRow">➕ ${t("add_row")}</button></p><hr>`;
-  const crs=customRows();
-  if(!crs.length) cus+=`<div class="hint">${t("no_custom")}</div>`;
-  crs.forEach(r=>{
-    const conf=S.pendingConfirm==="delrow_"+r.key;
-    const lb=r.labels||{};
-    cus+=`<div style="padding:8px 0;border-bottom:1px solid var(--border)">
-      <div class="row-flex"><b>📌 ${esc(lb[S.lang]||lb.he||r.key)}</b>
-        <span class="chip">${r.input==="select"?t("type_select"):t("type_text")}</span></div>
-      <div class="grid3" style="margin-top:6px">
-        <input data-cre="${esc(r.key)}" data-fld="he" value="${esc(lb.he||"")}" placeholder="${t("lbl_he")}">
-        <input data-cre="${esc(r.key)}" data-fld="en" value="${esc(lb.en||"")}" placeholder="${t("lbl_en")}">
-        <input data-cre="${esc(r.key)}" data-fld="es" value="${esc(lb.es||"")}" placeholder="${t("lbl_es")}">
-      </div>
-      ${r.input==="select"?`<label style="display:block;margin-top:6px">${t("row_opts")}
-        <textarea data-cre-opts="${esc(r.key)}" style="min-height:60px">${esc((r.options||[]).join("\n"))}</textarea></label>`:""}
-      <div class="row-flex" style="margin-top:6px">
-        <button class="btn small primary" data-crsave="${esc(r.key)}">💾 ${t("edit")}</button>
-        ${conf?`<span class="inline-confirm">${t("confirm_q")}
-          <button class="btn small warn" data-delrow-yes="${esc(r.key)}">✓</button>
-          <button class="btn small" data-cancel-confirm="1">✗</button></span>`
-        :`<button class="btn small warn" data-delrow="${esc(r.key)}">🗑 ${t("delete")}</button>`}
-      </div>
-    </div>`;
-  });
-  h+=sect("custom",t("s_custom"),cus);
   return h;
 }
 /* rows renamed on the Labels tab: not sections (named by their workplace),
    not the extra task (its own tab), not custom rows (their own editor) */
-function labelledRowKeys(){
-  const skip=new Set(sectionRowKeys().concat(customKeys(), extraRowKeys()));
-  return naturalRowKeys().filter(k=>!skip.has(k));
+/* Every schedule row, and what the Rows tab may do with it:
+   "fixed"   — built in; labels editable, never deletable
+   "section" — named by its workplace, "extra" — named by its task: both
+               read-only here so the name keeps one home
+   "custom"  — added by the user; fully editable and deletable */
+function rowKind(k){
+  if(customKeys().includes(k)) return "custom";
+  if(sectionRowKeys().includes(k)) return "section";
+  if(extraRowKeys().includes(k)) return "extra";
+  return "fixed";
+}
+function labelledRowKeys(){ return naturalRowKeys(); }
+/* every identifier a new row must not collide with */
+function takenRowKeys(){
+  const out=new Set(naturalRowKeys().concat(vacFields(), ["dates","days","vacation","date"]));
+  Object.keys(I18N.he).forEach(k=>{ if(k.startsWith("row_")) out.add(k.slice(4)); });
+  (CFG.custom_rows||[]).forEach(r=>{ if(r&&r.key) out.add(r.key); });
+  return out;
+}
+function normalizeRowKey(v){
+  return String(v||"").trim().toLowerCase()
+    .replace(/[^a-z0-9_]+/g,"_")     // any run of stray characters becomes one _
+    .replace(/_+/g,"_")
+    .replace(/^_+|_+$/g,"");
 }
 
 /* weekly quotas: "this row shows this value N times a week" */
@@ -2271,10 +2319,17 @@ function wireSettings(){
     CFG.row_labels=CFG.row_labels||{};
     document.querySelectorAll("[data-lbl]").forEach(inp=>{
       const k=inp.dataset.lbl, lg=inp.dataset.lang;
+      /* a custom row owns its labels directly; everything else uses overrides */
+      const cr=customRows().find(r=>r.key===k);
+      if(cr){ cr.labels=cr.labels||{}; cr.labels[lg]=inp.value.trim(); return; }
       CFG.row_labels[k]=CFG.row_labels[k]||{};
       CFG.row_labels[k][lg]=inp.value.trim();
     });
-    saveConfig(); render();
+    document.querySelectorAll("[data-cre-opts]").forEach(ta=>{
+      const cr=customRows().find(r=>r.key===ta.dataset.creOpts);
+      if(cr) cr.options=ta.value.split("\n").map(x=>x.trim()).filter(Boolean);
+    });
+    saveConfig(); render(); reopen("labels");
   };
   $("saveOpts").onclick=()=>{
     document.querySelectorAll("[data-opt]").forEach(ta=>{
@@ -2434,38 +2489,35 @@ function wireSettings(){
     CFG[AXIS_RULE_KEY[kind]]=out;
     saveConfig(); render(); reopen("axes");
   });
-  $("addRow").onclick=()=>{
+  /* ── add a row ── */
+  if($("addRow")) $("addRow").onclick=()=>{
     const he=$("crHe").value.trim();
     if(!he){ toast("⚠️ "+t("name_required")); return; }
-    const nums=customRows().map(r=>/^custom_(\d+)$/.exec(r.key)).filter(Boolean).map(m=>+m[1]);
-    const key="custom_"+((nums.length?Math.max(...nums):0)+1);
-    CFG.custom_rows.push({ key,
+    const key=normalizeRowKey($("crKey").value);
+    if(!key||!/^[a-z][a-z0-9_]*$/.test(key)){ toast("⚠️ "+t("key_invalid")); return; }
+    if(takenRowKeys().has(key)){ toast("⚠️ "+t("key_taken")); return; }
+    const type=$("crType").value;
+    CFG.custom_rows=(CFG.custom_rows||[]).concat([{ key,
       labels:{he, en:$("crEn").value.trim()||he, es:$("crEs").value.trim()||he},
-      input:$("crType").value,
-      options:$("crOpts").value.split("\n").map(s=>s.trim()).filter(Boolean) });
+      input:type,
+      options:type==="select"
+        ? $("crOpts").value.split("\n").map(x=>x.trim()).filter(Boolean) : [] }]);
     if(S.days) Object.values(S.days).forEach(d=>{ if(d[key]==null) d[key]=""; });
     saveConfig(); saveDraft(); toast("✅ "+t("row_added")); render();
-    reopen("custom");
+    reopen("labels");
   };
-  document.querySelectorAll("[data-crsave]").forEach(b=>b.onclick=()=>{
-    const key=b.dataset.crsave;
-    const row=CFG.custom_rows.find(r=>r.key===key);
-    if(!row) return;
-    row.labels=row.labels||{};
-    document.querySelectorAll(`[data-cre="${key}"]`).forEach(inp=>{
-      row.labels[inp.dataset.fld]=inp.value.trim();
-    });
-    const ta=document.querySelector(`[data-cre-opts="${key}"]`);
-    if(ta) row.options=ta.value.split("\n").map(s=>s.trim()).filter(Boolean);
-    saveConfig(); toast("✅ "+t("row_updated")); render();
-    reopen("custom");
-  });
-  document.querySelectorAll("[data-delrow]").forEach(b=>b.onclick=()=>{S.pendingConfirm="delrow_"+b.dataset.delrow;render();
-    reopen("custom");});
+  document.querySelectorAll("[data-delrow]").forEach(b=>b.onclick=()=>{
+    S.pendingConfirm="delrow_"+b.dataset.delrow; render(); reopen("labels"); });
   document.querySelectorAll("[data-delrow-yes]").forEach(b=>b.onclick=()=>{
-    CFG.custom_rows=customRows().filter(r=>r.key!==b.dataset.delrowYes);
+    const key=b.dataset.delrowYes;
+    CFG.custom_rows=customRows().filter(r=>r.key!==key);
+    CFG.row_order=(CFG.row_order||[]).filter(k=>k!==key);
+    /* the row's quotas and saved labels go with it */
+    CFG.weekly_targets=(CFG.weekly_targets||[]).filter(q=>q.field!==key);
+    if(CFG.row_labels) delete CFG.row_labels[key];
+    if(S.days){ Object.values(S.days).forEach(d=>{ delete d[key]; }); saveDraft(); }
     S.pendingConfirm=null; saveConfig(); toast("🗑 "+t("row_deleted")); render();
-    reopen("custom");});
+    reopen("labels"); });
 }
 
 /* ═══════════════ boot ═══════════════ */
