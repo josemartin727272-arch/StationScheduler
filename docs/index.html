@@ -81,8 +81,6 @@ details.sect>.inner{padding:0 14px 14px}
   margin-bottom:6px;align-items:center}
 .lbl-row input:disabled{background:#f2f5f8;color:var(--muted)}
 .lbl-head b:last-child{text-align:center;font-size:.8rem;color:var(--muted)}
-/* a padlock, not a disabled button — a greyed button here reads as a checkbox */
-.lock{text-align:center;font-size:1rem;opacity:.45;cursor:help;user-select:none}
 .del-btn{width:100%;padding:6px 0;min-height:40px}
 .del-confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:2px 0 10px}
 .cr-opts{display:block;margin:-2px 0 10px;padding-inline-start:8px;
@@ -189,11 +187,10 @@ s_employees:"👤 קבוצות עובדים ותקציבי חופשה",s_workpla
 s_extra:"➕ משימה נוספת",s_notes:"📝 הערות לוגיקת שיבוץ",
 s_order:"↕️ סדר השורות",s_labels:"🏷️ שורות ותוויות",s_options:"📝 אפשרויות בחירה",
 s_targets:"🎯 יעדים שבועיים",
-del_col:"מחיקה",del_row_q:"האם למחוק את השורה \"{r}\"?",
-rows_hint:"שורות מובנות נעולות 🔒 ולא ניתנות למחיקה — אפשר רק לשנות את התוויות שלהן. שורות שהוספת ניתנות למחיקה ב-🗑.",
+del_col:"מחיקה",del_row_q:"האם למחוק את השורה \"{r}\"? פעולה זו בלתי הפיכה.",
+rows_hint:"כל שורה ניתנת למחיקה ב-🗑, כולל שורות מובנות. המחיקה בלתי הפיכה — השורה נעלמת מהסידור, מהייצוא ומהסטטיסטיקה.",
 add_row_new:"➕ הוסף שורה חדשה",
 row_key:"שם מקורי (מזהה)",row_key_hint:"אנגלית, בלי רווחים · קבוע — לא ניתן לשינוי אחר כך",
-builtin_row:"שורה מובנית — לא ניתנת למחיקה",
 named_in_wp:"השם נקבע בטאב מקומות עבודה",named_in_extra:"השם נקבע בטאב משימות נוספות",
 key_invalid:"מזהה לא תקין — אותיות אנגליות, ספרות וקו תחתון, מתחיל באות",
 key_taken:"המזהה כבר בשימוש",
@@ -270,11 +267,10 @@ s_employees:"👤 Employee groups & vacation budgets",s_workplaces:"🏢 Workpla
 s_extra:"➕ Extra task",s_notes:"📝 Assignment logic notes",
 s_order:"↕️ Row order",s_labels:"🏷️ Rows & labels",s_options:"📝 Dropdown options",
 s_targets:"🎯 Weekly targets",
-del_col:"Delete",del_row_q:"Delete the row \"{r}\"?",
-rows_hint:"Built-in rows are locked 🔒 and cannot be deleted — only their labels can change. Rows you added can be deleted with 🗑.",
+del_col:"Delete",del_row_q:"Delete the row \"{r}\"? This cannot be undone.",
+rows_hint:"Every row can be deleted with 🗑, built-in ones included. Deletion cannot be undone — the row leaves the schedule, the exports and the statistics.",
 add_row_new:"➕ Add a new row",
 row_key:"Original name (identifier)",row_key_hint:"English, no spaces · permanent — it cannot be changed later",
-builtin_row:"Built-in row — cannot be deleted",
 named_in_wp:"Named on the Workplaces tab",named_in_extra:"Named on the Extra tasks tab",
 key_invalid:"Invalid identifier — letters, digits and underscore, starting with a letter",
 key_taken:"That identifier is already in use",
@@ -351,11 +347,10 @@ s_employees:"👤 Grupos de empleados y presupuestos",s_workplaces:"🏢 Lugares
 s_extra:"➕ Tarea extra",s_notes:"📝 Notas de lógica de asignación",
 s_order:"↕️ Orden de filas",s_labels:"🏷️ Filas y etiquetas",s_options:"📝 Opciones de listas",
 s_targets:"🎯 Metas semanales",
-del_col:"Eliminar",del_row_q:"¿Eliminar la fila \"{r}\"?",
-rows_hint:"Las filas integradas están bloqueadas 🔒 y no se pueden eliminar — solo cambian sus etiquetas. Las filas que agregaste se eliminan con 🗑.",
+del_col:"Eliminar",del_row_q:"¿Eliminar la fila \"{r}\"? Esta acción no se puede deshacer.",
+rows_hint:"Toda fila se puede eliminar con 🗑, incluidas las integradas. La eliminación es irreversible — la fila desaparece del horario, de las exportaciones y de las estadísticas.",
 add_row_new:"➕ Agregar una fila nueva",
 row_key:"Nombre original (identificador)",row_key_hint:"Inglés, sin espacios · permanente — no se puede cambiar después",
-builtin_row:"Fila integrada — no se puede eliminar",
 named_in_wp:"El nombre se define en Lugares de trabajo",named_in_extra:"El nombre se define en Tareas extra",
 key_invalid:"Identificador inválido — letras, dígitos y guion bajo, empezando con letra",
 key_taken:"Ese identificador ya está en uso",
@@ -522,6 +517,9 @@ const DEFAULT_CONFIG = {
   assign_notes: "",
   row_order: [],
   row_labels: {},
+  /* built-in rows the user deleted; every row may be deleted, so this is the
+     only thing standing between naturalRowKeys and the shipped row list */
+  removed_rows: [],
   custom_rows: []
 };
 /* fields that carry a target-% table; opt = which option list feeds them */
@@ -712,6 +710,7 @@ function migrateConfig(cfg, raw){
       out.push({field:"theater", value:"", count:+tg.theater_per_week});
     if(out.length) cfg.weekly_targets=out;
   }
+  cfg.removed_rows=(cfg.removed_rows||[]).filter(Boolean);
   cfg.weekly_targets=(cfg.weekly_targets||[]).filter(x=>x&&x.field)
     .map(x=>({field:x.field, value:x.value||"", count:Math.max(0,parseInt(x.count,10)||0)}));
   if(cfg.targets){ delete cfg.targets.yellow_per_week; delete cfg.targets.theater_per_week; }
@@ -984,15 +983,16 @@ function opts(name){ return (CFG.options[name]||[]).filter(Boolean); }
 function customRows(){ return (CFG.custom_rows||[]).filter(r=>r&&r.key); }
 function customKeys(){ return customRows().map(r=>r.key); }
 /* fixed rows with workplace sections and custom rows spliced in at their anchors */
+function removedRows(){ return new Set(CFG.removed_rows||[]); }
 function naturalRowKeys(){
-  const out=[];
+  const out=[], gone=removedRows();
   FIXED_ROW_ORDER.forEach(k=>{
     if(k==="@workplaces") out.push(...sectionRowKeys());
     else if(k==="@extras") out.push(...extraRowKeys());
     else if(k==="@custom") out.push(...customKeys());
     else out.push(k);
   });
-  return out;
+  return out.filter(k=>!gone.has(k));
 }
 function reorderableKeys(){
   const natural = naturalRowKeys();
@@ -1001,7 +1001,11 @@ function reorderableKeys(){
 }
 /* every field a day object carries */
 function scheduleFields(){
-  return naturalRowKeys().filter(k=>k!=="vacation").concat(vacFields());
+  const keys=naturalRowKeys();
+  /* the vacation row is what renders the per-group columns; delete the row and
+     the columns go with it */
+  return keys.filter(k=>k!=="vacation")
+    .concat(keys.includes("vacation")?vacFields():[]);
 }
 /* the counters auto-assign balances against */
 function historyFields(){ return FIXED_HISTORY_FIELDS.concat(sectionRowKeys(), extraRowKeys()); }
@@ -1130,7 +1134,9 @@ function bump(h,f,v){ if(!v)return; h[f]=h[f]||{}; h[f][v]=(h[f][v]||0)+1; }
 function applyWeeklyTargets(keys, hist){
   const byField={}, holiday=CFG.special_values.holiday;
   weeklyTargets().forEach(t=>{ (byField[t.field]=byField[t.field]||[]).push(t); });
+  const present=new Set(naturalRowKeys());
   for(const f in byField){
+    if(!present.has(f)) continue;      // a quota left over from a deleted row
     const list=byField[f];
     /* the holiday value is manual-only, so it never fills a spare day —
        an explicit quota on it still places it */
@@ -1179,7 +1185,9 @@ function autoAssign(){
   const weekly={};                    // in-week usage so days differ
   const H=f=>{ const c={...(hist[f]||{})}; const w=weekly[f]||{};
     for(const v in w) c[v]=(c[v]||0)+w[v]; return c; };
-  const free=f=>!gov.has(f);          // quota-governed rows are already done
+  const present=new Set(naturalRowKeys());
+  /* skip rows a quota already filled, and rows the user deleted outright */
+  const free=f=>!gov.has(f)&&present.has(f);
 
   keys.forEach(dk=>{
     const day=S.days[dk];
@@ -1651,20 +1659,18 @@ function viewSettings(){
   labelledRowKeys().forEach(k=>{
     const kind=rowKind(k), own=kind==="custom";
     const frozen=kind==="section"||kind==="extra";
-    const why=kind==="section"?t("named_in_wp"):kind==="extra"?t("named_in_extra"):t("builtin_row");
+    const why=kind==="section"?t("named_in_wp"):t("named_in_extra");
     const orig=kind==="fixed"?(I18N.he["row_"+k]||k):k;
     const cell=lg=>frozen
       ? `<input value="${esc(rowLabel(k,lg))}" disabled title="${esc(why)}">`
       : `<input data-lbl="${esc(k)}" data-lang="${lg}" value="${esc(rowLabel(k,lg))}">`;
-    /* A built-in row shows a padlock, not a dead button: a greyed-out button
-       at the end of a row reads as an empty checkbox and invites clicking. */
+    /* Every row is deletable, with no exceptions — deleting one the schedule
+       leans on is the user's call, and the app neither guards nor prevents. */
     lab+=`<div class="lbl-row">
       <span class="orig-lbl" title="${esc(k)}">${esc(orig)}</span>
       ${cell("he")}${cell("en")}${cell("es")}
-      ${own
-        ? `<button class="btn small warn del-btn" data-delrow="${esc(k)}"
-             title="${esc(t("delete"))}">🗑</button>`
-        : `<span class="lock" title="${esc(why)}">🔒</span>`}
+      <button class="btn small warn del-btn" data-delrow="${esc(k)}"
+        title="${esc(t("delete"))}">🗑</button>
     </div>`;
     if(own){
       const r=customRows().find(x=>x.key===k);
@@ -1672,11 +1678,11 @@ function viewSettings(){
       if(r&&r.input==="select")
         lab+=`<label class="cr-opts">${t("row_opts")}
           <textarea data-cre-opts="${esc(k)}">${esc((r.options||[]).join("\n"))}</textarea></label>`;
-      if(S.pendingConfirm==="delrow_"+k)
-        lab+=`<div class="msg warn del-confirm">${t("del_row_q",{r:rowLabel(k)})}
-          <button class="btn small warn" data-delrow-yes="${esc(k)}">🗑 ${t("delete")}</button>
-          <button class="btn small" data-cancel-confirm="1">✗ ${t("no")}</button></div>`;
     }
+    if(S.pendingConfirm==="delrow_"+k)
+      lab+=`<div class="msg warn del-confirm">${t("del_row_q",{r:rowLabel(k)})}
+        <button class="btn small warn" data-delrow-yes="${esc(k)}">🗑 ${t("delete")}</button>
+        <button class="btn small" data-cancel-confirm="1">✗ ${t("no")}</button></div>`;
   });
   lab+=`<p><button class="btn primary" id="saveLabels">${t("save_settings")}</button></p><hr>
     <h3>${t("add_row_new")}</h3>
@@ -2531,12 +2537,25 @@ function wireSettings(){
   document.querySelectorAll("[data-delrow]").forEach(b=>b.onclick=()=>{
     S.pendingConfirm="delrow_"+b.dataset.delrow; render(); reopen("labels"); });
   document.querySelectorAll("[data-delrow-yes]").forEach(b=>b.onclick=()=>{
-    const key=b.dataset.delrowYes;
-    CFG.custom_rows=customRows().filter(r=>r.key!==key);
+    const key=b.dataset.delrowYes, kind=rowKind(key);
+    /* Remove the row at its source so the tab that owns it agrees:
+       a section leaves its workplace, an extra task is switched off, a custom
+       row is dropped, and a built-in is recorded in removed_rows. */
+    if(kind==="custom"){
+      CFG.custom_rows=customRows().filter(r=>r.key!==key);
+    } else if(kind==="section"){
+      workplacesAll().forEach(w=>{
+        w.sections=(w.sections||[]).filter(sec=>sec.row_key!==key); });
+    } else if(kind==="extra"){
+      const et=extraByRow(key); if(et) et.active=false;
+    } else {
+      CFG.removed_rows=(CFG.removed_rows||[]).concat([key]);
+    }
+    /* and everything that pointed at it goes too */
     CFG.row_order=(CFG.row_order||[]).filter(k=>k!==key);
-    /* the row's quotas and saved labels go with it */
     CFG.weekly_targets=(CFG.weekly_targets||[]).filter(q=>q.field!==key);
     if(CFG.row_labels) delete CFG.row_labels[key];
+    if(CFG.targets&&CFG.targets.field_pcts) delete CFG.targets.field_pcts[key];
     if(S.days){ Object.values(S.days).forEach(d=>{ delete d[key]; }); saveDraft(); }
     S.pendingConfirm=null; saveConfig(); toast("🗑 "+t("row_deleted")); render();
     reopen("labels"); });
