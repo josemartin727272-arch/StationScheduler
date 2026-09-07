@@ -77,10 +77,14 @@ details.sect>.inner{padding:0 14px 14px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
 @media(max-width:700px){.grid2,.grid3{grid-template-columns:1fr}}
-.lbl-row{display:grid;grid-template-columns:.9fr 1fr 1fr 1fr 44px;gap:6px;
+.lbl-row{display:grid;grid-template-columns:.9fr 1fr 1fr 1fr 52px;gap:6px;
   margin-bottom:6px;align-items:center}
 .lbl-row input:disabled{background:#f2f5f8;color:var(--muted)}
-.lbl-row .inline-confirm{padding:2px 4px}
+.lbl-head b:last-child{text-align:center;font-size:.8rem;color:var(--muted)}
+/* a padlock, not a disabled button — a greyed button here reads as a checkbox */
+.lock{text-align:center;font-size:1rem;opacity:.45;cursor:help;user-select:none}
+.del-btn{width:100%;padding:6px 0;min-height:40px}
+.del-confirm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:2px 0 10px}
 .cr-opts{display:block;margin:-2px 0 10px;padding-inline-start:8px;
   border-inline-start:3px solid var(--border);font-size:.85rem;color:var(--muted)}
 .cr-opts textarea{min-height:56px}
@@ -185,6 +189,9 @@ s_employees:"👤 קבוצות עובדים ותקציבי חופשה",s_workpla
 s_extra:"➕ משימה נוספת",s_notes:"📝 הערות לוגיקת שיבוץ",
 s_order:"↕️ סדר השורות",s_labels:"🏷️ שורות ותוויות",s_options:"📝 אפשרויות בחירה",
 s_targets:"🎯 יעדים שבועיים",
+del_col:"מחיקה",del_row_q:"האם למחוק את השורה \"{r}\"?",
+rows_hint:"שורות מובנות נעולות 🔒 ולא ניתנות למחיקה — אפשר רק לשנות את התוויות שלהן. שורות שהוספת ניתנות למחיקה ב-🗑.",
+add_row_new:"➕ הוסף שורה חדשה",
 row_key:"שם מקורי (מזהה)",row_key_hint:"אנגלית, בלי רווחים · קבוע — לא ניתן לשינוי אחר כך",
 builtin_row:"שורה מובנית — לא ניתנת למחיקה",
 named_in_wp:"השם נקבע בטאב מקומות עבודה",named_in_extra:"השם נקבע בטאב משימות נוספות",
@@ -263,6 +270,9 @@ s_employees:"👤 Employee groups & vacation budgets",s_workplaces:"🏢 Workpla
 s_extra:"➕ Extra task",s_notes:"📝 Assignment logic notes",
 s_order:"↕️ Row order",s_labels:"🏷️ Rows & labels",s_options:"📝 Dropdown options",
 s_targets:"🎯 Weekly targets",
+del_col:"Delete",del_row_q:"Delete the row \"{r}\"?",
+rows_hint:"Built-in rows are locked 🔒 and cannot be deleted — only their labels can change. Rows you added can be deleted with 🗑.",
+add_row_new:"➕ Add a new row",
 row_key:"Original name (identifier)",row_key_hint:"English, no spaces · permanent — it cannot be changed later",
 builtin_row:"Built-in row — cannot be deleted",
 named_in_wp:"Named on the Workplaces tab",named_in_extra:"Named on the Extra tasks tab",
@@ -341,6 +351,9 @@ s_employees:"👤 Grupos de empleados y presupuestos",s_workplaces:"🏢 Lugares
 s_extra:"➕ Tarea extra",s_notes:"📝 Notas de lógica de asignación",
 s_order:"↕️ Orden de filas",s_labels:"🏷️ Filas y etiquetas",s_options:"📝 Opciones de listas",
 s_targets:"🎯 Metas semanales",
+del_col:"Eliminar",del_row_q:"¿Eliminar la fila \"{r}\"?",
+rows_hint:"Las filas integradas están bloqueadas 🔒 y no se pueden eliminar — solo cambian sus etiquetas. Las filas que agregaste se eliminan con 🗑.",
+add_row_new:"➕ Agregar una fila nueva",
 row_key:"Nombre original (identificador)",row_key_hint:"Inglés, sin espacios · permanente — no se puede cambiar después",
 builtin_row:"Fila integrada — no se puede eliminar",
 named_in_wp:"El nombre se define en Lugares de trabajo",named_in_extra:"El nombre se define en Tareas extra",
@@ -1632,8 +1645,9 @@ function viewSettings(){
     <button class="btn small" data-dn="${i}" ${i===rk.length-1?"disabled":""}>↓</button></span></li>`; });
   h+=sect("order",t("s_order"),ord+`</ul>`);
   /* every schedule row: its labels, and delete where it is allowed */
-  let lab=`<div class="lbl-row"><b class="orig-lbl">${t("orig_name")}</b>
-    <b>${t("lbl_he")}</b><b>${t("lbl_en")}</b><b>${t("lbl_es")}</b><b></b></div>`;
+  let lab=`<div class="hint">${t("rows_hint")}</div>
+    <div class="lbl-row lbl-head"><b class="orig-lbl">${t("orig_name")}</b>
+    <b>${t("lbl_he")}</b><b>${t("lbl_en")}</b><b>${t("lbl_es")}</b><b>${t("del_col")}</b></div>`;
   labelledRowKeys().forEach(k=>{
     const kind=rowKind(k), own=kind==="custom";
     const frozen=kind==="section"||kind==="extra";
@@ -1642,28 +1656,30 @@ function viewSettings(){
     const cell=lg=>frozen
       ? `<input value="${esc(rowLabel(k,lg))}" disabled title="${esc(why)}">`
       : `<input data-lbl="${esc(k)}" data-lang="${lg}" value="${esc(rowLabel(k,lg))}">`;
-    const conf=S.pendingConfirm==="delrow_"+k;
+    /* A built-in row shows a padlock, not a dead button: a greyed-out button
+       at the end of a row reads as an empty checkbox and invites clicking. */
     lab+=`<div class="lbl-row">
       <span class="orig-lbl" title="${esc(k)}">${esc(orig)}</span>
       ${cell("he")}${cell("en")}${cell("es")}
       ${own
-        ? (conf
-            ? `<span class="inline-confirm">
-                 <button class="btn small warn" data-delrow-yes="${esc(k)}">✓</button>
-                 <button class="btn small" data-cancel-confirm="1">✗</button></span>`
-            : `<button class="btn small warn" data-delrow="${esc(k)}" title="${t("delete")}">🗑</button>`)
-        : `<button class="btn small" disabled title="${esc(why)}">🗑</button>`}
+        ? `<button class="btn small warn del-btn" data-delrow="${esc(k)}"
+             title="${esc(t("delete"))}">🗑</button>`
+        : `<span class="lock" title="${esc(why)}">🔒</span>`}
     </div>`;
-    /* a custom dropdown row keeps its option list right here */
     if(own){
       const r=customRows().find(x=>x.key===k);
+      /* a custom dropdown row keeps its option list right here */
       if(r&&r.input==="select")
         lab+=`<label class="cr-opts">${t("row_opts")}
           <textarea data-cre-opts="${esc(k)}">${esc((r.options||[]).join("\n"))}</textarea></label>`;
+      if(S.pendingConfirm==="delrow_"+k)
+        lab+=`<div class="msg warn del-confirm">${t("del_row_q",{r:rowLabel(k)})}
+          <button class="btn small warn" data-delrow-yes="${esc(k)}">🗑 ${t("delete")}</button>
+          <button class="btn small" data-cancel-confirm="1">✗ ${t("no")}</button></div>`;
     }
   });
   lab+=`<p><button class="btn primary" id="saveLabels">${t("save_settings")}</button></p><hr>
-    <h3>➕ ${t("add_row")}</h3>
+    <h3>${t("add_row_new")}</h3>
     <div class="grid2">
       <label>${t("row_key")}<br><input id="crKey" placeholder="night_shift">
         <span class="hint">${t("row_key_hint")}</span></label>
@@ -1676,8 +1692,9 @@ function viewSettings(){
       <label>${t("row_name")} (${t("lbl_en")})<br><input id="crEn"></label>
       <label>${t("row_name")} (${t("lbl_es")})<br><input id="crEs"></label>
     </div>
-    <label>${t("row_opts")}<br><textarea id="crOpts" style="min-height:70px"></textarea></label>
-    <p><button class="btn primary" id="addRow">➕ ${t("add_row")}</button></p>`;
+    <label id="crOptsWrap">${t("row_opts")}<br>
+      <textarea id="crOpts" style="min-height:70px"></textarea></label>
+    <p><button class="btn primary" id="addRow">${t("add_row_new")}</button></p>`;
   h+=sect("labels",t("s_labels"),lab);
   /* options */
   const groups=[["entry",rowLabel("entry")],["exit",rowLabel("exit")],["escort",t("opt_escort")],
@@ -2490,6 +2507,11 @@ function wireSettings(){
     saveConfig(); render(); reopen("axes");
   });
   /* ── add a row ── */
+  const syncCrType=()=>{
+    const w=$("crOptsWrap");
+    if(w) w.style.display=$("crType").value==="select"?"":"none";
+  };
+  if($("crType")){ $("crType").onchange=syncCrType; syncCrType(); }
   if($("addRow")) $("addRow").onclick=()=>{
     const he=$("crHe").value.trim();
     if(!he){ toast("⚠️ "+t("name_required")); return; }
