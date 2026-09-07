@@ -122,6 +122,39 @@ table.stats th{background:#eef2f7}
 .pct-tot.ok{color:#fff;background:var(--ok)}
 .pct-tot.bad{color:#fff;background:var(--danger)}
 .map-inp{width:100%;min-width:120px}
+/* landing */
+.landing{position:relative;overflow:hidden;background:#fff;border-radius:18px;
+  border:1px solid #eee;padding:56px 24px 44px;text-align:center;
+  box-shadow:0 2px 14px rgba(0,0,0,.05)}
+.landing .lz{position:absolute;border-radius:50%;background:#f5c842;opacity:.15;pointer-events:none}
+.lz1{width:150px;height:150px;top:-46px;inset-inline-start:-40px}
+.lz2{width:96px;height:96px;top:22px;inset-inline-end:-30px}
+.lz3{width:190px;height:190px;bottom:-80px;inset-inline-end:-56px}
+.lz4{width:74px;height:74px;bottom:26px;inset-inline-start:-24px}
+.l-mark{font-size:72px;line-height:1;margin-bottom:14px}
+.l-title{font-size:28px;font-weight:500;color:#1a1a1a;margin:0 0 6px}
+.l-sub{color:#f5c842;letter-spacing:2px;font-size:.78rem;font-weight:600;margin-bottom:30px}
+.l-nav{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:32px;
+  position:relative;z-index:1}
+.l-pill{background:#fcfcfc;border:.5px solid #ddd;border-radius:50px;color:#333;
+  padding:.55rem 1.15rem;font-size:.9rem;cursor:pointer;min-height:44px}
+.l-pill:hover,.l-pill:focus-visible{background:#fff8e0;border-color:#f0d98a}
+.l-enter{background:#f5c842;color:#1a1a1a;border:none;border-radius:50px;font-weight:500;
+  padding:.75rem 2.5rem;font-size:1rem;cursor:pointer;min-height:48px;position:relative;z-index:1}
+.l-enter:hover,.l-enter:focus-visible{background:#efbd2c}
+@media(max-width:700px){
+  .landing{padding:40px 16px 34px}
+  .l-mark{font-size:60px} .l-title{font-size:23px}
+  .l-pill{width:100%;max-width:280px}
+}
+/* change log */
+.log-tbl td{font-size:.85rem}
+.log-tbl tr.lg-save td{background:#eafaf1}
+.log-tbl tr.lg-auto td{background:#e8f1fb}
+.log-tbl tr.lg-set  td{background:#f0f2f5}
+.log-tbl tr.lg-del  td{background:#fdecea}
+.log-tbl tr.lg-exp  td{background:#fef8e3}
+.log-tbl tr.lg-bak  td{background:#f3ecfa}
 /* guide — reuses the app's cards and accordions; the only additions are a
    readable measure, a chapter scale, and the two callout colours */
 .guide-lead{color:var(--muted);font-size:.92rem;line-height:1.6}
@@ -198,7 +231,18 @@ details.guide-ch>summary{font-size:1rem;gap:10px}
 /* ═══════════════ i18n ═══════════════ */
 const I18N = {
 he:{app_title:"אשר סידור מוניות",nav_sched:"📋 סידור",nav_settings:"⚙️ הגדרות",nav_archive:"📁 ארכיון",nav_stats:"📊 סטטיסטיקה",
-nav_guide:"📖 מדריך",guide_lead:"מדריך קצר לכל מה שהמערכת יודעת לעשות. פתח פרק כדי לקרוא אותו.",
+nav_guide:"📖 מדריך",enter_system:"כניסה למערכת",
+s_log:"📋 לוג שינויים",log_time:"תאריך ושעה",log_action:"פעולה",log_details:"פרטים",log_changes:"שינויים",
+log_hint:"{n} הפעולות האחרונות. הלוג נשמר על המכשיר בלבד.",log_empty:"אין עדיין פעולות בלוג",
+log_clear:"🗑 נקה לוג",log_clear_q:"למחוק את כל הלוג? פעולה זו בלתי הפיכה.",log_cleared:"הלוג נוקה",
+log_export:"📤 ייצוא לוג",
+act_save_schedule:"שמירת סידור",act_auto_assign:"שיבוץ אוטומטי",act_save_settings:"שמירת הגדרות",
+act_delete_row:"מחיקת שורה",act_add_row:"הוספת שורה",act_export_excel:"ייצוא",
+act_backup:"גיבוי",act_restore:"שחזור",
+log_saved:"הסידור לשבוע {w} נשמר בארכיון",log_auto:"שיבוץ אוטומטי לשבוע {w}",
+log_settings:"ההגדרות עודכנו",log_add_row:"נוספה השורה \"{r}\"",log_del_row:"נמחקה השורה \"{r}\"",
+log_export_week:"ייצוא הסידור לשבוע {w}",log_backup:"גיבוי מלא הורד",log_restore:"שוחזר מגיבוי",
+log_cfg_export:"ייצוא הגדרות",log_cfg_import:"ייבוא הגדרות",guide_lead:"מדריך קצר לכל מה שהמערכת יודעת לעשות. פתח פרק כדי לקרוא אותו.",
 week_start:"תחילת שבוע",generate:"צור סידור",auto_assign:"⚡ שיבוץ אוטומטי",save:"💾 שמור",export_excel:"📤 ייצוא Excel",print:"🖨️ הדפסה",
 saved:"הסידור נשמר בארכיון",valid:"הסידור תקין ✓",replace_q:"קיים סידור שמור לשבוע זה — להחליף?",yes:"כן",no:"ביטול",
 row_dates:"תאריכים",row_days:"ימים",row_work_hours:"שעות עבודה",row_entry:"כניסה",row_exit:"יציאה",
@@ -279,7 +323,18 @@ err_axis_ud:"ציר {a}: סכום U+D הוא {n}%, חייב 100%",
 err_axis_rule_pct:"{f} {v}: סכום אחוזי הצירים הוא {n}%, חייב 100%",
 warn_axis_rule:"{f} {a} לא מותר עבור {e} {v}"},
 en:{app_title:"Asher Taxi Scheduler",nav_sched:"📋 Schedule",nav_settings:"⚙️ Settings",nav_archive:"📁 Archive",nav_stats:"📊 Statistics",
-nav_guide:"📖 Guide",guide_lead:"A short guide to everything the app can do. Open a chapter to read it.",
+nav_guide:"📖 Guide",enter_system:"Enter System",
+s_log:"📋 Change log",log_time:"Date and time",log_action:"Action",log_details:"Details",log_changes:"Changes",
+log_hint:"The last {n} actions. The log is kept on this device only.",log_empty:"Nothing in the log yet",
+log_clear:"🗑 Clear log",log_clear_q:"Clear the whole log? This cannot be undone.",log_cleared:"Log cleared",
+log_export:"📤 Export log",
+act_save_schedule:"Schedule saved",act_auto_assign:"Auto assign",act_save_settings:"Settings saved",
+act_delete_row:"Row deleted",act_add_row:"Row added",act_export_excel:"Export",
+act_backup:"Backup",act_restore:"Restore",
+log_saved:"Schedule for {w} saved to the archive",log_auto:"Automatic assignment for {w}",
+log_settings:"Settings updated",log_add_row:"Added the row \"{r}\"",log_del_row:"Deleted the row \"{r}\"",
+log_export_week:"Exported the schedule for {w}",log_backup:"Full backup downloaded",log_restore:"Restored from a backup",
+log_cfg_export:"Settings exported",log_cfg_import:"Settings imported",guide_lead:"A short guide to everything the app can do. Open a chapter to read it.",
 week_start:"Week start",generate:"New Schedule",auto_assign:"⚡ Auto Assign",save:"💾 Save",export_excel:"📤 Export Excel",print:"🖨️ Print",
 saved:"Schedule saved to archive",valid:"Schedule is valid ✓",replace_q:"A schedule exists for this week — replace?",yes:"Yes",no:"Cancel",
 row_dates:"Dates",row_days:"Days",row_work_hours:"Work Hours",row_entry:"Entry",row_exit:"Exit",
@@ -360,7 +415,18 @@ err_axis_ud:"Axis {a}: U+D totals {n}%, must be 100%",
 err_axis_rule_pct:"{f} {v}: axis shares total {n}%, must be 100%",
 warn_axis_rule:"{f} {a} is not allowed for {e} {v}"},
 es:{app_title:"Asher Programador de Taxis",nav_sched:"📋 Horario",nav_settings:"⚙️ Configuración",nav_archive:"📁 Archivo",nav_stats:"📊 Estadísticas",
-nav_guide:"📖 Guía",guide_lead:"Una guía breve de todo lo que hace la app. Abre un capítulo para leerlo.",
+nav_guide:"📖 Guía",enter_system:"Entrar al Sistema",
+s_log:"📋 Registro de cambios",log_time:"Fecha y hora",log_action:"Acción",log_details:"Detalles",log_changes:"Cambios",
+log_hint:"Las últimas {n} acciones. El registro se guarda solo en este dispositivo.",log_empty:"Todavía no hay nada en el registro",
+log_clear:"🗑 Borrar registro",log_clear_q:"¿Borrar todo el registro? No se puede deshacer.",log_cleared:"Registro borrado",
+log_export:"📤 Exportar registro",
+act_save_schedule:"Horario guardado",act_auto_assign:"Asignación automática",act_save_settings:"Configuración guardada",
+act_delete_row:"Fila eliminada",act_add_row:"Fila agregada",act_export_excel:"Exportación",
+act_backup:"Respaldo",act_restore:"Restauración",
+log_saved:"Horario de {w} guardado en el archivo",log_auto:"Asignación automática para {w}",
+log_settings:"Configuración actualizada",log_add_row:"Se agregó la fila \"{r}\"",log_del_row:"Se eliminó la fila \"{r}\"",
+log_export_week:"Se exportó el horario de {w}",log_backup:"Respaldo completo descargado",log_restore:"Restaurado desde un respaldo",
+log_cfg_export:"Configuración exportada",log_cfg_import:"Configuración importada",guide_lead:"Una guía breve de todo lo que hace la app. Abre un capítulo para leerlo.",
 week_start:"Inicio de semana",generate:"Nuevo Horario",auto_assign:"⚡ Asignación Automática",save:"💾 Guardar",export_excel:"📤 Exportar Excel",print:"🖨️ Imprimir",
 saved:"Horario guardado en archivo",valid:"El horario es válido ✓",replace_q:"Existe un horario para esta semana — ¿reemplazar?",yes:"Sí",no:"Cancelar",
 row_dates:"Fechas",row_days:"Días",row_work_hours:"Horas de Trabajo",row_entry:"Ingreso",row_exit:"Salida",
@@ -591,7 +657,45 @@ const FIXED_HISTORY_FIELDS = ["entry","exit","arrival_point","theater",
   "vehicle_morning","vehicle_noon","taxi_emb","taxi_arrival_noon"];
 
 /* ═══════════════ storage ═══════════════ */
-const LS = {config:"agenda_config", archive:"agenda_archive", draft:"agenda_draft", lang:"agenda_lang"};
+const LS = {config:"agenda_config", archive:"agenda_archive", draft:"agenda_draft",
+  lang:"agenda_lang", log:"agenda_log"};
+/* ── change log ─────────────────────────────────────────────────────────── */
+/* Every entry keeps the phrasing shown when it happened (details) plus the
+   key it came from (dkey/dvars), so the table re-reads correctly after the
+   language is switched. */
+const LOG_MAX = 200, LOG_SHOW = 50;
+const LOG_STYLE = {
+  save_schedule:{icon:"💾", cls:"lg-save"},   auto_assign:{icon:"⚡", cls:"lg-auto"},
+  save_settings:{icon:"⚙️", cls:"lg-set"},    delete_row:{icon:"🗑", cls:"lg-del"},
+  add_row:{icon:"➕", cls:"lg-add"},           export_excel:{icon:"📤", cls:"lg-exp"},
+  backup:{icon:"📦", cls:"lg-bak"},            restore:{icon:"📦", cls:"lg-bak"}
+};
+function loadLog(){ try{ return JSON.parse(localStorage.getItem(LS.log)||"[]"); }catch(e){ return []; } }
+function saveLog(l){ localStorage.setItem(LS.log, JSON.stringify(l.slice(0,LOG_MAX))); }
+/* the next saveConfig() is attributed to this instead of a plain settings save */
+let _logNext=null;
+function logNext(action, dkey, dvars){ _logNext={action, dkey, dvars}; }
+function logAction(action, dkey, dvars, extra){
+  extra=extra||{};
+  const now=new Date();
+  const rec={ id:now.getTime(), action, dkey, dvars:dvars||null,
+    details:t(dkey, dvars), week:extra.week||"", changes:extra.changes||0,
+    timestamp:now.toISOString() };
+  const l=loadLog(); l.unshift(rec); saveLog(l);
+  return rec;
+}
+function logDetails(r){ return r.dkey?t(r.dkey, r.dvars||undefined):(r.details||""); }
+function fmtLogTime(iso){
+  const d=new Date(iso);
+  if(isNaN(d)) return iso;
+  const p=n=>String(n).padStart(2,"0");
+  return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+function filledCells(days){
+  let n=0;
+  for(const dk in days) for(const f in days[dk]) if(days[dk][f]) n++;
+  return n;
+}
 function deepMerge(base, over){
   for (const k in over){
     if (over[k] && typeof over[k]==="object" && !Array.isArray(over[k]) &&
@@ -756,7 +860,12 @@ function loadConfig(){
   try{ raw = JSON.parse(localStorage.getItem(LS.config)||"{}")||{}; deepMerge(cfg,raw); }catch(e){}
   return migrateConfig(cfg, raw);
 }
-function saveConfig(){ localStorage.setItem(LS.config, JSON.stringify(CFG)); toast(t("settings_saved")); }
+function saveConfig(){
+  localStorage.setItem(LS.config, JSON.stringify(CFG)); toast(t("settings_saved"));
+  const r=_logNext||{action:"save_settings", dkey:"log_settings"};
+  _logNext=null;
+  logAction(r.action, r.dkey, r.dvars);
+}
 function loadArchive(){ try{ return JSON.parse(localStorage.getItem(LS.archive)||"{}"); }catch(e){ return {}; } }
 function saveArchive(a){ localStorage.setItem(LS.archive, JSON.stringify(a)); }
 
@@ -764,7 +873,7 @@ function saveArchive(a){ localStorage.setItem(LS.archive, JSON.stringify(a)); }
 let CFG = loadConfig();
 let S = {
   lang: localStorage.getItem(LS.lang)||"he",
-  screen: "sched",
+  screen: "landing",     // the landing shows once per page load
   weekStart: nextMonday(new Date()),
   days: null,          // {iso: {field:value}}
   statsTab: "week", statsMonth:"", statsYear:"",
@@ -1204,6 +1313,7 @@ function applyWeeklyTargets(keys, hist){
 function autoAssign(){
   if(!S.days) return;
   const keys=Object.keys(S.days).sort();
+  const filledBefore=filledCells(S.days);
   /* 90-day window: covers ~13 weeks so year-boundary never creates a cold start */
   const hist=buildHistory(addDays(keys[0], -HISTORY_DAYS));
   const sv=CFG.special_values;
@@ -1323,6 +1433,9 @@ function autoAssign(){
     day.taxi_emb=yn?(day.taxi_emb||leastUsed(opts("taxi_emb"),hist.taxi_emb||{},"taxi_apt")):"";
     day.taxi_arrival_noon=yn?(day.taxi_arrival_noon||leastUsed(opts("taxi_arrival_noon"),hist.taxi_arrival_noon||{},"taxi_arrival")):"";
   });
+  const filledAfter=filledCells(S.days);
+  logAction("auto_assign","log_auto",{w:keys[0]},
+    {week:keys[0], changes:Math.max(0, filledAfter-filledBefore)});
   S.dirty=true; saveDraft(); render(); toast("⚡ ✓");
 }
 
@@ -1416,12 +1529,14 @@ function render(){
   document.title=t("app_title")+" 🚕";
   document.getElementById("hTitle").textContent=t("app_title");
   const nav=document.getElementById("nav");
-  nav.innerHTML=[["sched","nav_sched"],["settings","nav_settings"],["archive","nav_archive"],
-    ["stats","nav_stats"],["guide","nav_guide"]]
+  nav.innerHTML=S.screen==="landing" ? "" :
+    [["sched","nav_sched"],["settings","nav_settings"],["archive","nav_archive"],
+     ["stats","nav_stats"],["guide","nav_guide"]]
     .map(([id,k])=>`<button data-nav="${id}" class="${S.screen===id?"active":""}">${t(k)}</button>`).join("");
   nav.querySelectorAll("button").forEach(b=>b.onclick=()=>{S.screen=b.dataset.nav;S.pendingConfirm=null;render();});
   const app=document.getElementById("app");
-  if(S.screen==="sched") app.innerHTML=viewSched();
+  if(S.screen==="landing") app.innerHTML=viewLanding();
+  else if(S.screen==="sched") app.innerHTML=viewSched();
   else if(S.screen==="settings") app.innerHTML=viewSettings();
   else if(S.screen==="archive") app.innerHTML=viewArchive();
   else if(S.screen==="guide") app.innerHTML=viewGuide();
@@ -1756,6 +1871,7 @@ function viewSettings(){
   const tgt=`${targetsPanel()}${pctTables()}`;
   h+=sect("targets",t("s_targets"),tgt);
   h+=sect("notes",t("s_notes"),notesPanel());
+  h+=sect("log",t("s_log"),logPanel());
   return h;
 }
 /* rows renamed on the Labels tab: not sections (named by their workplace),
@@ -2003,6 +2119,56 @@ function viewStats(){
     h+=`</tr></table></div>`;
   }
   return h+`</div>`;
+}
+
+/* ═══════════════ screen 0: landing ═══════════════ */
+/* Shown once per page load. The nav lives on the card itself, so the header's
+   own nav is hidden while it is up. */
+const LANDING_NAV=[["sched","nav_sched"],["settings","nav_settings"],
+  ["archive","nav_archive"],["stats","nav_stats"],["guide","nav_guide"]];
+function viewLanding(){
+  return `<div class="landing">
+    <span class="lz lz1"></span><span class="lz lz2"></span>
+    <span class="lz lz3"></span><span class="lz lz4"></span>
+    <div class="l-mark">🚕</div>
+    <h1 class="l-title">${esc(t("app_title"))}</h1>
+    <div class="l-sub">ASHER TAXI SCHEDULER</div>
+    <nav class="l-nav">${LANDING_NAV.map(([id,k])=>
+      `<button class="l-pill" data-land="${id}">${t(k)}</button>`).join("")}</nav>
+    <button class="l-enter" data-land="sched">${t("enter_system")} ←</button>
+  </div>`;
+}
+
+/* ═══════════════ settings: change log ═══════════════ */
+function logPanel(){
+  const rows=loadLog();
+  let h=`<div class="hint">${t("log_hint",{n:LOG_SHOW})}</div>`;
+  if(!rows.length) return h+`<div class="msg warn">${t("log_empty")}</div>`;
+  h+=`<div class="tbl-wrap" style="max-height:420px"><table class="stats log-tbl">
+    <tr><th>${t("log_time")}</th><th>${t("log_action")}</th>
+        <th>${t("log_details")}</th><th>${t("log_changes")}</th></tr>`;
+  rows.slice(0,LOG_SHOW).forEach(r=>{
+    const st=LOG_STYLE[r.action]||{icon:"•", cls:""};
+    h+=`<tr class="${st.cls}"><td>${esc(fmtLogTime(r.timestamp))}</td>
+      <td>${st.icon} ${esc(t("act_"+r.action))}</td>
+      <td style="text-align:start">${esc(logDetails(r))}</td>
+      <td>${r.changes?esc(r.changes):""}</td></tr>`;
+  });
+  h+=`</table></div>`;
+  if(S.pendingConfirm==="clearlog")
+    h+=`<div class="msg warn">${t("log_clear_q")}
+      <button class="btn small warn" id="logClearYes">✓ ${t("yes")}</button>
+      <button class="btn small" data-cancel-confirm="1">✗ ${t("no")}</button></div>`;
+  h+=`<p class="row-flex"><button class="btn" id="logExport">${t("log_export")}</button>
+    <button class="btn warn" id="logClear">${t("log_clear")}</button></p>`;
+  return h;
+}
+function logCsv(){
+  const q=v=>`"${String(v==null?"":v).replace(/"/g,'""')}"`;
+  const rows=[[t("log_time"),t("log_action"),t("log_details"),t("log_changes"),t("week_start")]];
+  loadLog().forEach(r=>rows.push([fmtLogTime(r.timestamp), t("act_"+r.action),
+    logDetails(r), r.changes||"", r.week||""]));
+  return "\ufeff"+rows.map(r=>r.map(q).join(",")).join("\r\n");
 }
 
 /* ═══════════════ screen 5: guide ═══════════════ */
@@ -2569,7 +2735,11 @@ function doPrint(){
 function wire(){
   const $=id=>document.getElementById(id);
   document.querySelectorAll("[data-cancel-confirm]").forEach(b=>b.onclick=()=>{S.pendingConfirm=null;render();});
-  if(S.screen==="sched"){
+  if(S.screen==="landing"){
+    document.querySelectorAll("[data-land]").forEach(b=>b.onclick=()=>{
+      S.screen=b.dataset.land; render(); });
+  }
+  else if(S.screen==="sched"){
     $("weekPick").onchange=e=>{ S.weekStart=snapMonday(e.target.value); e.target.value=S.weekStart; };
     $("btnGen").onclick=()=>{
       const target=snapMonday($("weekPick").value||S.weekStart);
@@ -2584,9 +2754,15 @@ function wire(){
     const cn=$("clearNo"); if(cn) cn.onclick=()=>{ S.pendingConfirm=null; render(); };
     if($("btnAuto")) $("btnAuto").onclick=autoAssign;
     if($("btnSave")) $("btnSave").onclick=()=>{ const a=loadArchive();
-      a[Object.keys(S.days).sort()[0]]=S.days; saveArchive(a);
-      S.dirty=false; saveDraft(); updateStatus(); toast("✅ "+t("saved")); };
-    if($("btnCsv")) $("btnCsv").onclick=()=>downloadCsv(S.days,Object.keys(S.days).sort()[0]);
+      const wk=Object.keys(S.days).sort()[0];
+      a[wk]=S.days; saveArchive(a);
+      S.dirty=false; saveDraft(); updateStatus(); toast("✅ "+t("saved"));
+      logAction("save_schedule","log_saved",{w:wk},{week:wk,changes:filledCells(S.days)});
+      if(S.screen==="settings") render(); };
+    if($("btnCsv")) $("btnCsv").onclick=()=>{
+      const wk=Object.keys(S.days).sort()[0];
+      downloadCsv(S.days,wk);
+      logAction("export_excel","log_export_week",{w:wk},{week:wk}); };
     if($("btnPrint")) $("btnPrint").onclick=doPrint;
     const sb=$("statusBadge"); if(sb) sb.onclick=()=>{ const el=$("errList");
       if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); };
@@ -2600,8 +2776,10 @@ function wire(){
   }
   else if(S.screen==="settings"){ wireSettings(); }
   else if(S.screen==="archive"){
-    $("btnBackup").onclick=()=>downloadJson(backupData(),
-      `agenda_backup_${new Date().toISOString().slice(0,10)}.json`);
+    $("btnBackup").onclick=()=>{
+      downloadJson(backupData(), `agenda_backup_${new Date().toISOString().slice(0,10)}.json`);
+      logAction("backup","log_backup",null,
+        {changes:Object.keys(loadArchive()).length}); };
     $("btnRestore").onclick=()=>$("restoreFile").click();
     $("restoreFile").onchange=e=>{
       const f=e.target.files[0]; if(!f) return;
@@ -2615,13 +2793,16 @@ function wire(){
       applyRestore(window.__restoreData||{}); window.__restoreData=null;
       S.pendingConfirm=null; S.days=null; S.dirty=false;
       localStorage.removeItem(LS.draft);
+      logAction("restore","log_restore",null,{changes:Object.keys(loadArchive()).length});
       toast("✅ "+t("restore_done")); render(); };
     const rn=$("restoreNo"); if(rn) rn.onclick=()=>{
       window.__restoreData=null; S.pendingConfirm=null; render(); };
     document.querySelectorAll("[data-load]").forEach(b=>b.onclick=()=>{
       const wk=b.dataset.load; S.days=JSON.parse(JSON.stringify(loadArchive()[wk])); S.weekStart=wk;
       S.dirty=false; saveDraft(); S.screen="sched"; toast("✅ "+t("loaded")); render(); });
-    document.querySelectorAll("[data-csv]").forEach(b=>b.onclick=()=>downloadCsv(loadArchive()[b.dataset.csv],b.dataset.csv));
+    document.querySelectorAll("[data-csv]").forEach(b=>b.onclick=()=>{
+      downloadCsv(loadArchive()[b.dataset.csv], b.dataset.csv);
+      logAction("export_excel","log_export_week",{w:b.dataset.csv},{week:b.dataset.csv}); });
     document.querySelectorAll("[data-delarch]").forEach(b=>b.onclick=()=>{S.pendingConfirm="delarch_"+b.dataset.delarch;render();});
     document.querySelectorAll("[data-delarch-yes]").forEach(b=>b.onclick=()=>{
       const a=loadArchive(); delete a[b.dataset.delarchYes]; saveArchive(a);
@@ -2667,8 +2848,9 @@ function reopen(key){
 }
 function wireSettings(){
   const $=id=>document.getElementById(id);
-  $("btnCfgExport").onclick=()=>downloadJson(cfgSnapshot(),
-    `agenda_settings_${new Date().toISOString().slice(0,10)}.json`);
+  $("btnCfgExport").onclick=()=>{
+    downloadJson(cfgSnapshot(), `agenda_settings_${new Date().toISOString().slice(0,10)}.json`);
+    logAction("backup","log_cfg_export"); render(); reopen("log"); };
   $("btnCfgImport").onclick=()=>$("importCfgFile").click();
   $("importCfgFile").onchange=e=>{
     const f=e.target.files[0]; if(!f) return;
@@ -2682,7 +2864,8 @@ function wireSettings(){
   const icy=$("importCfgYes"); if(icy) icy.onclick=()=>{
     localStorage.setItem(LS.config, JSON.stringify(window.__importCfg));
     window.__importCfg=null; S.pendingConfirm=null;
-    CFG=loadConfig(); toast("✅ "+t("import_done")); render(); };
+    CFG=loadConfig(); logAction("restore","log_cfg_import");
+    toast("✅ "+t("import_done")); render(); };
   const icn=$("importCfgNo"); if(icn) icn.onclick=()=>{
     window.__importCfg=null; S.pendingConfirm=null; render(); };
   /* ── employee groups ── */
@@ -2913,6 +3096,19 @@ function wireSettings(){
     };
     saveConfig(); render(); reopen("options");
   };
+  /* ── change log ── */
+  if($("logExport")) $("logExport").onclick=()=>{
+    const blob=new Blob([logCsv()],{type:"text/csv;charset=utf-8"});
+    const a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download=`agenda_log_${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+  };
+  if($("logClear")) $("logClear").onclick=()=>{ S.pendingConfirm="clearlog"; render(); reopen("log"); };
+  if($("logClearYes")) $("logClearYes").onclick=()=>{
+    saveLog([]); S.pendingConfirm=null; toast("🗑 "+t("log_cleared"));
+    render(); reopen("log"); };
   /* ── weekly quotas ── */
   const readTargets=()=>{
     const out=[];
@@ -3080,6 +3276,7 @@ function wireSettings(){
       options:type==="select"
         ? $("crOpts").value.split("\n").map(x=>x.trim()).filter(Boolean) : [] }]);
     if(S.days) Object.values(S.days).forEach(d=>{ if(d[key]==null) d[key]=""; });
+    logNext("add_row","log_add_row",{r:he});
     saveConfig(); saveDraft(); toast("✅ "+t("row_added")); render();
     reopen("labels");
   };
@@ -3087,6 +3284,7 @@ function wireSettings(){
     S.pendingConfirm="delrow_"+b.dataset.delrow; render(); reopen("labels"); });
   document.querySelectorAll("[data-delrow-yes]").forEach(b=>b.onclick=()=>{
     const key=b.dataset.delrowYes, kind=rowKind(key);
+    logNext("delete_row","log_del_row",{r:rowLabel(key)});
     /* Remove the row at its source so the tab that owns it agrees:
        a section leaves its workplace, an extra task is switched off, a custom
        row is dropped, and a built-in is recorded in removed_rows. */
