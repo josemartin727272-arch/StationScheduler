@@ -62,8 +62,20 @@ def export_to_excel(schedule: dict, week_start: date, lang: str = "he") -> bytes
 
     # ── Header row: row label + 7 day columns ──────────────────────────────
     ws.column_dimensions["A"].width = 22
+    # The widest value actually present sizes the day columns: a role with
+    # max_workers 3+ produces names like "ANA+BRUNO+CARLA" that overflow a
+    # fixed width.
+    widest = 0
+    for dk in day_keys:
+        for value in schedule[dk].values():
+            if isinstance(value, str):
+                widest = max(widest, len(value))
+        widest = max(widest, len(" / ".join(
+            str(schedule[dk].get(f, "")) for f in cfg.vac_fields()
+            if schedule[dk].get(f))))
+    day_width = max(14, min(32, widest + 2))
     for col_idx in range(2, num_days + 2):
-        ws.column_dimensions[get_column_letter(col_idx)].width = 14
+        ws.column_dimensions[get_column_letter(col_idx)].width = day_width
 
     # Row 1: dates
     ws.row_dimensions[1].height = 20
