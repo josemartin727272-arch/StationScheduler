@@ -41,6 +41,18 @@ DOW_ORDER = ["monday", "tuesday", "wednesday", "thursday", "friday",
 # so that already-archived weeks stay readable.
 LEGACY_VAC = {"g1": "vacation_il", "g2": "vacation_pe"}
 
+# Which config option list feeds each fixed select row.
+ROW_OPTS = {
+    "entry": "entry", "exit": "exit",
+    "escort_morning": "escort", "escort_noon": "escort",
+    "arrival_point": "arrival_point", "theater": "theater",
+    "vehicle_morning": "vehicle", "vehicle_noon": "vehicle",
+    "axis_morning": "axis", "axis_noon": "axis",
+    "wait_morning": "wait_spot", "wait_noon": "wait_spot",
+    "taxi_apt": "taxi_apt", "taxi_arrival": "taxi_arrival",
+    "taxi_emb": "taxi_emb", "taxi_arrival_noon": "taxi_arrival_noon",
+}
+
 # Option lists are stored WITHOUT the leading blank; use options_with_blank().
 # Nothing about a particular station is baked in: employee groups, workplaces,
 # working days and the extra task are all data, editable from Settings.
@@ -57,13 +69,16 @@ DEFAULTS = {
     ],
     "workplaces": [
         {"id": "wp1", "name": "EMB", "active": True, "notes": "", "sections": [
-            {"id": "s1", "name": "IL", "group_id": "g1", "row_key": "emb_il"},
+            {"id": "s1", "name": "IL", "group_id": "g1", "row_key": "emb_il",
+             "max_workers": 1},
             {"id": "s2", "name": "PE", "group_id": "g2", "row_key": "emb_pe",
-             "allow_pair": True},
+             "max_workers": 2},
         ]},
         {"id": "wp2", "name": "דירה", "active": True, "notes": "", "sections": [
-            {"id": "s3", "name": "IL", "group_id": "g1", "row_key": "apt_il"},
-            {"id": "s4", "name": "PE", "group_id": "g2", "row_key": "apt_pe"},
+            {"id": "s3", "name": "IL", "group_id": "g1", "row_key": "apt_il",
+             "max_workers": 1},
+            {"id": "s4", "name": "PE", "group_id": "g2", "row_key": "apt_pe",
+             "max_workers": 1},
         ]},
         {"id": "wp3", "name": "", "active": False, "notes": "", "sections": []},
         {"id": "wp4", "name": "", "active": False, "notes": "", "sections": []},
@@ -117,9 +132,16 @@ DEFAULTS = {
         "holiday": "חג",              # excluded from entry/exit auto-assign
         "vehicle_special": "YELLOW",  # counted vehicle; enables taxi rows
     },
+    # Weekly quotas, any number of them. `value: ""` means "this row is
+    # filled", any other value means "this exact value". A field listed here is
+    # governed entirely by its quotas: remaining days take the other values, or
+    # stay blank when a value-less quota is used.
+    "weekly_targets": [
+        {"field": "vehicle_morning", "value": "YELLOW", "count": 2},
+        {"field": "vehicle_noon",    "value": "YELLOW", "count": 1},
+        {"field": "theater",         "value": "",       "count": 3},
+    ],
     "targets": {
-        "yellow_per_week": 3,
-        "theater_per_week": 3,
         # {field_key: {option: percent}} — target share of each option for the
         # weighted-least-used auto-assign. Empty ⇒ equal split for every field
         # (which behaves exactly like plain least-used).
@@ -257,6 +279,44 @@ def _migrate(cfg: dict, raw: dict) -> dict:
         g["employees"] = [e for e in g.get("employees", []) if e]
     for w in cfg["workplaces"]:
         w["sections"] = [x for x in w.get("sections", []) if x and x.get("row_key")]
+        # allow_pair was a two-state flag; max_workers is a count
+        for sec in w["sections"]:
+            if sec.get("max_workers") is None:
+                sec["max_workers"] = 2 if sec.get("allow_pair") else 1
+            try:
+                sec["max_workers"] = max(0, min(10, int(sec["max_workers"])))
+            except (TypeError, ValueError):
+                sec["max_workers"] = 1
+            sec.pop("allow_pair", None)
+
+    # the fixed YELLOW / theater counts became a list of weekly quotas
+    if not raw.get("weekly_targets"):
+        tg, out = raw.get("targets") or {}, []
+        if tg.get("yellow_per_week") is not None:
+            n = int(tg["yellow_per_week"] or 0)
+            vs = cfg["special_values"]["vehicle_special"]
+            if n > 0:
+                out.append({"field": "vehicle_morning", "value": vs,
+                            "count": -(-n // 2)})
+                if n > 1:
+                    out.append({"field": "vehicle_noon", "value": vs, "count": n // 2})
+        if int(tg.get("theater_per_week") or 0) > 0:
+            out.append({"field": "theater", "value": "",
+                        "count": int(tg["theater_per_week"])})
+        if out:
+            cfg["weekly_targets"] = out
+    clean = []
+    for q in cfg.get("weekly_targets") or []:
+        if not (q and q.get("field")):
+            continue
+        try:
+            count = max(0, int(q.get("count") or 0))
+        except (TypeError, ValueError):
+            count = 0
+        clean.append({"field": q["field"], "value": q.get("value") or "", "count": count})
+    cfg["weekly_targets"] = clean
+    for k in ("yellow_per_week", "theater_per_week"):
+        cfg.get("targets", {}).pop(k, None)
     cfg["schema_version"] = 2
     return cfg
 
@@ -360,6 +420,14 @@ def section_by_row(row_key: str):
     return next(((w, s) for w, s in all_sections() if s["row_key"] == row_key), None)
 
 
+def section_size(sec: dict) -> int:
+    """How many employees a section takes; 0 means "never assign this row"."""
+    try:
+        return max(0, min(10, int(sec.get("max_workers", 1))))
+    except (TypeError, ValueError):
+        return 1
+
+
 def section_label(w: dict, sec: dict) -> str:
     name = (sec.get("name") or "").strip()
     return workplace_name(w) + (" " + name if name else "")
@@ -416,6 +484,50 @@ def extra_label(et, lang: str = "he") -> str:
 def extra_targets(et: dict) -> dict:
     return {"morning": int(et.get("target_morning") or 0),
             "noon": int(et.get("target_noon") or 0)}
+
+
+# ── weekly quotas ──────────────────────────────────────────────────────────
+
+def weekly_targets() -> list:
+    return [dict(q) for q in get_config().get("weekly_targets") or []]
+
+
+def governed_fields() -> set:
+    """Rows a quota owns — auto-assign leaves these to the quota pass."""
+    return {q["field"] for q in weekly_targets()}
+
+
+def target_field_values(key: str) -> list:
+    """Pickable values of any row that can carry a quota."""
+    if key == "work_hours":
+        return hour_options()
+    et = extra_by_row(key)
+    if et:
+        return [o for o in et.get("options", []) if o]
+    sx = section_by_row(key)
+    if sx:
+        group = group_by_id(sx[1].get("group_id"))
+        return group_employees(group["id"]) if group else all_employees()
+    for r in custom_rows():
+        if r["key"] == key:
+            return list(r.get("options", []))
+    if key == "other_empl":
+        return all_employees()
+    return options(ROW_OPTS.get(key, ""))
+
+
+def target_fields() -> list:
+    """Rows offered in the quota field picker: every select row."""
+    text_rows = {"school"}
+    custom = {r["key"]: r for r in custom_rows()}
+    out = []
+    for k in natural_row_keys():
+        if k in ("dates", "days", "vacation") or k in text_rows:
+            continue
+        if k in custom and custom[k].get("input") != "select":
+            continue
+        out.append(k)
+    return out
 
 
 def axis_letters() -> list:
@@ -486,22 +598,10 @@ def _equal_pcts(values: list) -> dict:
 
 
 def default_pcts(key: str) -> dict:
-    """Equal split, except vehicles, which mirror the weekly special-vehicle
-    target (3 of the 10 morning+noon slots ⇒ 30/70) so the two never disagree."""
-    values = pct_options(key)
-    if key != "vehicle":
-        return _equal_pcts(values)
-    vs = special("vehicle_special")
-    if len(values) < 2 or vs not in values:
-        return _equal_pcts(values)
-    sp = max(0, min(100, int(targets().get("yellow_per_week", 0) * 10 + 0.5)))
-    rest = [v for v in values if v != vs]
-    out, total = {vs: sp}, sp
-    base = int((100 - sp) / len(rest) + 0.5)
-    for i, v in enumerate(rest):
-        p = 100 - total if i == len(rest) - 1 else base
-        out[v], total = p, total + p
-    return out
+    """Every field defaults to an equal split. Vehicles used to derive theirs
+    from the weekly YELLOW count; that count is now an explicit weekly quota,
+    so the percentages only matter for a field with no quota on it."""
+    return _equal_pcts(pct_options(key))
 
 
 def field_pcts(key: str) -> dict:

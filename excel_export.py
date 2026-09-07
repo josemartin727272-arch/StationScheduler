@@ -159,8 +159,13 @@ def export_to_excel(schedule: dict, week_start: date, lang: str = "he") -> bytes
         for f in ("vehicle_morning", "vehicle_noon")
         if schedule[dk].get(f) == _vs
     )
-    ws2.append(["YELLOW total", yellow_total,
-                "/ " + str(cfg.targets()["yellow_per_week"])])
+    ws2.append(["YELLOW total", yellow_total, ""])
+    for q in cfg.weekly_targets():
+        def _hit(value, want=q["value"]):
+            return value == want if want else bool(value)
+        seen = sum(1 for dk in day_keys if _hit(schedule[dk].get(q["field"], "")))
+        label = cfg.row_label(q["field"], lang) + (f' = {q["value"]}' if q["value"] else "")
+        ws2.append([label, seen, "/ " + str(q["count"])])
     for et in cfg.active_extras():
         rk, tg = cfg.extra_row_key(et), cfg.extra_targets(et)
         name = cfg.extra_label(et, lang)

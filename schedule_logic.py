@@ -5,6 +5,7 @@ All employee lists, option lists and weekly targets come from app_config
 """
 import random
 from datetime import date, timedelta
+from itertools import combinations
 
 import app_config as cfg
 
@@ -39,9 +40,24 @@ def section_options(row_key: str) -> list:
         return [""] + cfg.all_employees()
     _, sec = sx
     people = cfg.group_employees(sec.get("group_id")) or cfg.all_employees()
+    size = cfg.section_size(sec)
     out = [""] + people
-    if sec.get("allow_pair"):
-        out += [f"{a}+{b}" for i, a in enumerate(people) for b in people[i + 1:]]
+    if size >= 2:
+        out += _combos(people, min(size, len(people)))
+    return out
+
+
+def _combos(pool: list, n: int, cap: int = 300) -> list:
+    """Every way of picking n names out of pool, joined with "+"."""
+    if n <= 0 or not pool:
+        return []
+    if n >= len(pool):
+        return ["+".join(pool)]
+    out = []
+    for combo in combinations(pool, n):
+        out.append("+".join(combo))
+        if len(out) >= cap:
+            break
     return out
 
 
@@ -70,19 +86,16 @@ def validate_schedule(schedule: dict, lang: str = "he") -> list:
     from translations import t
     errors = []
 
-    targets = cfg.targets()
-    vehicle_special = cfg.special("vehicle_special")
     extras = cfg.active_extras()
     extra_counts = {cfg.extra_row_key(e): {"m": 0, "n": 0} for e in extras}
     sections = cfg.all_sections()
-
-    yellow_count = 0
+    quotas = [dict(q, seen=0) for q in cfg.weekly_targets()]
 
     for day_key, day in schedule.items():
-        if day.get("vehicle_morning") == vehicle_special:
-            yellow_count += 1
-        if day.get("vehicle_noon") == vehicle_special:
-            yellow_count += 1
+        for q in quotas:
+            value = day.get(q["field"], "")
+            if (value == q["value"]) if q["value"] else bool(value):
+                q["seen"] += 1
 
         for et in extras:
             row_key = cfg.extra_row_key(et)
@@ -124,10 +137,14 @@ def validate_schedule(schedule: dict, lang: str = "he") -> list:
                         "err_sec_none", lang, s=label,
                         g=cfg.group_name(group) if group else "—"))
 
-    theater_count = sum(1 for day in schedule.values() if day.get("theater", ""))
-
-    if yellow_count != targets["yellow_per_week"]:
-        errors.append(t("warning_yellow_count", lang, count=yellow_count))
+    for q in quotas:
+        if q["seen"] == q["count"]:
+            continue
+        name = cfg.row_label(q["field"], lang)
+        errors.append(
+            t("warn_target", lang, f=name, v=q["value"], n=q["seen"], t=q["count"])
+            if q["value"] else
+            t("warn_target_any", lang, f=name, n=q["seen"], t=q["count"]))
     for et in extras:
         counts, tg = extra_counts[cfg.extra_row_key(et)], cfg.extra_targets(et)
         name = cfg.extra_label(et, lang)
@@ -137,8 +154,6 @@ def validate_schedule(schedule: dict, lang: str = "he") -> list:
         if counts["n"] != tg["noon"]:
             errors.append(t("warn_extra_n", lang, n=counts["n"],
                             t=tg["noon"], f=name))
-    if theater_count != targets["theater_per_week"]:
-        errors.append(t("warning_theater_count", lang, count=theater_count))
 
     return errors
 
@@ -151,35 +166,39 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
     Everything comes from the configuration:
     - each workplace section draws from its own employee group
     - nobody is booked twice on the same day
-    - a section marked allow_pair may hold two employees ("A+B")
+    - a section holds max_workers employees, joined with "+" when 2 or more
     - taxis are assigned later (once the vehicle type is known) in
       auto_assign_week_vehicles_udex
     """
     day = day.copy()
     other_empl = day.get("other_empl", "")
     axis_vals = cfg.options("axis")
+    gov = cfg.governed_fields()          # quota-governed rows are filled later
 
     # ── entry/exit and both axes: independent, each balanced against its own
     #    target percentages ───────────────────────────────────────────────────
-    if not day.get("axis_morning") and axis_vals:
+    if "axis_morning" not in gov and not day.get("axis_morning") and axis_vals:
         day["axis_morning"] = _least_used(
             axis_vals, history.get("axis_morning", {}), "axis_morning")
-    if not day.get("axis_noon") and axis_vals:
+    if "axis_noon" not in gov and not day.get("axis_noon") and axis_vals:
         day["axis_noon"] = _least_used(
             axis_vals, history.get("axis_noon", {}), "axis_noon")
-    if not day.get("entry"):
+    if "entry" not in gov and not day.get("entry"):
         day["entry"] = _least_used(
             entry_auto_options(), history.get("entry", {}), "entry")
-    if not day.get("exit"):
+    if "exit" not in gov and not day.get("exit"):
         day["exit"] = _least_used(
             exit_auto_options(), history.get("exit", {}), "exit")
 
     # ── workplace sections, in configured order ─────────────────────────────
     taken = set()
+    governed = cfg.governed_fields()
     for wp, sec in cfg.all_sections():
-        row_key = sec["row_key"]
+        row_key, size = sec["row_key"], cfg.section_size(sec)
         if day.get(row_key):
             taken.update(e for e in str(day[row_key]).split("+") if e)
+            continue
+        if not size or row_key in governed:
             continue
         group = cfg.group_by_id(sec.get("group_id"))
         vac = day.get(cfg.vac_field(group), "") if group else ""
@@ -188,26 +207,26 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
                 if e not in (vac, other_empl) and e not in taken]
         if not pool:
             continue
-        if sec.get("allow_pair") and len(pool) >= 2:
-            pairs = [f"{a}+{b}" for i, a in enumerate(pool) for b in pool[i + 1:]]
-            choice = _least_used(pairs, history.get(row_key, {}))
+        if size >= 2:
+            choice = _least_used(_combos(pool, min(size, len(pool))),
+                                 history.get(row_key, {}))
         else:
             choice = _least_used(pool, history.get(row_key, {}))
         day[row_key] = choice
         taken.update(e for e in str(choice).split("+") if e)
 
     # ── Arrival point ───────────────────────────────────────────────────────
-    if not day.get("arrival_point"):
+    if "arrival_point" not in gov and not day.get("arrival_point"):
         day["arrival_point"] = _least_used(
             cfg.options("arrival_point"), history.get("arrival_point", {}),
             "arrival_point")
 
     # ── Wait spots ──────────────────────────────────────────────────────────
     wait_vals = cfg.options("wait_spot")
-    if not day.get("wait_morning") and wait_vals:
+    if "wait_morning" not in gov and not day.get("wait_morning") and wait_vals:
         day["wait_morning"] = _least_used(
             wait_vals, history.get("wait_morning", {}), "wait_spot")
-    if not day.get("wait_noon") and wait_vals:
+    if "wait_noon" not in gov and not day.get("wait_noon") and wait_vals:
         day["wait_noon"] = _least_used(
             wait_vals, history.get("wait_noon", {}), "wait_spot")
 
@@ -215,62 +234,87 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
     return day
 
 
+def apply_weekly_targets(schedule: dict, history: dict = None) -> dict:
+    """Place every weekly quota, then decide what the untargeted days of those
+    same fields get. A field carrying a value-less quota stays blank outside
+    it; a field carrying only value quotas fills its remaining days from the
+    values no quota claimed."""
+    history = history or {}
+    keys = list(schedule.keys())
+    by_field = {}
+    for q in cfg.weekly_targets():
+        by_field.setdefault(q["field"], []).append(q)
+
+    holiday = cfg.special("holiday")
+    for field, quotas in by_field.items():
+        # the holiday value is manual-only, so it never fills a spare day —
+        # an explicit quota on it still places it
+        claimed = [q["value"] for q in quotas if q["value"]] + [holiday]
+        any_q = next((q for q in quotas if not q["value"]), None)
+        counts = dict(history.get(field, {}))
+
+        for q in (x for x in quotas if x["value"]):
+            need = q["count"] - sum(1 for k in keys if schedule[k].get(field) == q["value"])
+            free = [k for k in keys if not schedule[k].get(field)]
+            random.shuffle(free)
+            for k in free[:max(0, need)]:
+                schedule[k][field] = q["value"]
+                counts[q["value"]] = counts.get(q["value"], 0) + 1
+
+        pool = [v for v in cfg.target_field_values(field) if v not in claimed]
+        if any_q:
+            # "any value" quota: fill up to count days, leave the rest blank
+            need = any_q["count"] - sum(1 for k in keys if schedule[k].get(field))
+            free = [k for k in keys if not schedule[k].get(field)]
+            random.shuffle(free)
+            for k in free[:max(0, need)]:
+                if not pool:
+                    break
+                chosen = _least_used(pool, counts)
+                counts[chosen] = counts.get(chosen, 0) + 1
+                schedule[k][field] = chosen
+        elif pool:
+            # only exact-value quotas: the other days take the unclaimed values
+            for k in keys:
+                if not schedule[k].get(field):
+                    chosen = _least_used(pool, counts)
+                    counts[chosen] = counts.get(chosen, 0) + 1
+                    schedule[k][field] = chosen
+    return schedule
+
+
 def auto_assign_week_vehicles_udex(schedule: dict, history: dict = None,
                                    monthly_history: dict = None) -> dict:
     """
-    Assign VEHICLE (yellow_per_week special vehicles across morning+noon,
-    default 3 of 10 = 70/30; the morning/noon split is chosen to best balance
-    the last-month history), UDEX (udex_m + udex_t), Theater
-    (theater_per_week days), and Taxis (only on special-vehicle slots).
+    Apply the weekly quotas, then fill what they do not govern: the extra-task
+    rows (their own morning/noon targets), any vehicle row without a quota, and
+    the taxis (only on special-vehicle slots).
     """
     if history is None:
         history = {}
     keys = list(schedule.keys())
-
-    targets = cfg.targets()
+    gov = cfg.governed_fields()
     vehicle_special = cfg.special("vehicle_special")
-    vehicle_regular = next(
-        (v for v in cfg.options("vehicle") if v != vehicle_special), "")
 
+    apply_weekly_targets(schedule, history)
 
-    # Special vehicle: choose the morning/noon split that best balances the
-    # monthly history (falls back to the cumulative history if not provided)
-    mh = monthly_history if monthly_history is not None else history
-    y_m_hist = mh.get("vehicle_morning", {}).get(vehicle_special, 0)
-    y_n_hist = mh.get("vehicle_noon", {}).get(vehicle_special, 0)
-    cur_m = sum(1 for k in keys if schedule[k].get("vehicle_morning") == vehicle_special)
-    cur_n = sum(1 for k in keys if schedule[k].get("vehicle_noon") == vehicle_special)
-    free_m = [k for k in keys if not schedule[k].get("vehicle_morning")]
-    free_n = [k for k in keys if not schedule[k].get("vehicle_noon")]
-    random.shuffle(free_m)
-    random.shuffle(free_n)
-    need = max(0, targets["yellow_per_week"] - cur_m - cur_n)
-    # Allowed splits: each period gets at least one special vehicle when the
-    # week has 2+ to place (e.g. for 3 → only 2+1 or 1+2, never 3+0)
-    if need >= 2 and cur_m == 0 and cur_n == 0:
-        candidates = list(range(1, need))
-    else:
-        candidates = list(range(need + 1))
-    best_x, best_diff = 0 if 0 in candidates else (candidates[0] if candidates else 0), None
-    random.shuffle(candidates)  # random tie-break between equal splits
-    for x in candidates:
-        if x > len(free_m) or need - x > len(free_n):
+    # a vehicle row with no quota of its own still needs a value on every day
+    veh_vals = cfg.options("vehicle")
+    for field in ("vehicle_morning", "vehicle_noon"):
+        if field in gov or not veh_vals:
             continue
-        diff = abs((y_m_hist + cur_m + x) - (y_n_hist + cur_n + need - x))
-        if best_diff is None or diff < best_diff:
-            best_diff, best_x = diff, x
-    for k in free_m[:best_x]:
-        schedule[k]["vehicle_morning"] = vehicle_special
-    for k in free_n[:need - best_x]:
-        schedule[k]["vehicle_noon"] = vehicle_special
-    for k in keys:
-        for f in ("vehicle_morning", "vehicle_noon"):
-            if not schedule[k].get(f):
-                schedule[k][f] = vehicle_regular
+        counts = dict(history.get(field, {}))
+        for k in keys:
+            if not schedule[k].get(field):
+                chosen = _least_used(veh_vals, counts, "vehicle")
+                counts[chosen] = counts.get(chosen, 0) + 1
+                schedule[k][field] = chosen
 
     # Extra tasks: each row gets its own targets, balanced within each type
     for et in cfg.active_extras():
         row_key = cfg.extra_row_key(et)
+        if row_key in gov:
+            continue
         m_vals = [v for v in et.get("morning_values", []) if v]
         n_vals = [v for v in et.get("noon_values", []) if v]
         tg = cfg.extra_targets(et)
@@ -292,16 +336,6 @@ def auto_assign_week_vehicles_udex(schedule: dict, history: dict = None,
                 chosen = _least_used(n_vals, n_hist)
                 n_hist[chosen] = n_hist.get(chosen, 0) + 1
                 schedule[unassigned.pop(0)][row_key] = chosen
-
-    # Theater: assign to exactly theater_per_week days
-    theater_vals = cfg.options("theater")
-    theater_unassigned = [k for k in keys if not schedule[k].get("theater")]
-    theater_needed = targets["theater_per_week"] - sum(
-        1 for k in keys if schedule[k].get("theater"))
-    if theater_needed > 0 and len(theater_unassigned) >= theater_needed and theater_vals:
-        chosen_theater_days = random.sample(theater_unassigned, theater_needed)
-        for k in chosen_theater_days:
-            schedule[k]["theater"] = _least_used(theater_vals, history.get("theater", {}))
 
     # Taxis: morning taxis only when vehicle_morning is special; noon likewise.
     # Each taxi row draws from its own option list.

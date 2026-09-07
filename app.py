@@ -222,8 +222,8 @@ if st.session_state.page == "settings":
                     s2.selectbox(t("wp_sec_group", lang), act_gids,
                         index=act_gids.index(sec["group_id"]) if sec.get("group_id") in act_gids else 0,
                         key=f"scgroup_{sid}", format_func=lambda g: cfg.group_name(cfg.group_by_id(g)))
-                    s3.checkbox(t("wp_sec_pair", lang), value=bool(sec.get("allow_pair")),
-                                key=f"scpair_{sid}")
+                    s3.number_input(t("wp_sec_size", lang), min_value=0, max_value=10,
+                                    value=cfg.section_size(sec), key=f"scsize_{sid}")
                     if s4.button("🗑", key=f"screm_{sid}"):
                         w["sections"] = [x for x in w["sections"] if x["id"] != sid]
                         cfg.save_config(config)
@@ -233,7 +233,7 @@ if st.session_state.page == "settings":
                     w.setdefault("sections", []).append({
                         "id": f"s_{uid}", "name": "",
                         "group_id": act_gids[0] if act_gids else "",
-                        "row_key": f"sec_{uid}"})
+                        "row_key": f"sec_{uid}", "max_workers": 1})
                     cfg.save_config(config)
                     st.rerun()
                 st.text_area(t("wp_notes", lang), value=w.get("notes", ""),
@@ -252,7 +252,7 @@ if st.session_state.page == "settings":
                     sid = sec["id"]
                     sec["name"] = st.session_state.get(f"scname_{sid}", sec.get("name", "")).strip()
                     sec["group_id"] = st.session_state.get(f"scgroup_{sid}", sec.get("group_id"))
-                    sec["allow_pair"] = bool(st.session_state.get(f"scpair_{sid}"))
+                    sec["max_workers"] = int(st.session_state.get(f"scsize_{sid}", 1))
             cfg.save_config(config)
             st.success("✅ " + t("settings_saved", lang))
             st.rerun()
@@ -554,28 +554,53 @@ if st.session_state.page == "settings":
                 st.success("✅ " + t("settings_saved", lang))
                 st.rerun()
 
-    # ── Tab 4: Weekly targets ──────────────────────────────────────────────
+    # ── Tab 4: Weekly quotas ───────────────────────────────────────────────
     with tab_targets:
+        st.caption(t("wt_hint", lang))
+        quotas = cfg.weekly_targets()
+        if not quotas:
+            st.warning(t("wt_none", lang))
+        field_keys = cfg.target_fields()
         with st.form("targets_form"):
-            tg = config["targets"]
-            g1, g2 = st.columns(2)
-            v_yellow = g1.number_input(t("targets_yellow", lang),
-                min_value=0, max_value=10, value=int(tg["yellow_per_week"]))
-            v_theater = g2.number_input(t("targets_theater", lang),
-                min_value=0, max_value=5, value=int(tg["theater_per_week"]))
+            for i, q in enumerate(quotas):
+                c1, c2, c3 = st.columns([3, 3, 1])
+                c1.selectbox(t("rules_field", lang) if False else "", field_keys,
+                    index=field_keys.index(q["field"]) if q["field"] in field_keys else 0,
+                    key=f"tgfield_{i}", label_visibility="collapsed",
+                    format_func=lambda k: cfg.row_label(k, lang))
+                vals = [""] + cfg.target_field_values(q["field"])
+                c2.selectbox("", vals,
+                    index=vals.index(q["value"]) if q["value"] in vals else 0,
+                    key=f"tgvalue_{i}", label_visibility="collapsed",
+                    format_func=lambda v: v or t("wt_any", lang))
+                c3.number_input("", min_value=0, max_value=14, value=int(q["count"]),
+                                key=f"tgcount_{i}", label_visibility="collapsed")
             if st.form_submit_button("💾 " + t("save_settings", lang), type="primary"):
-                config["targets"] = {
-                    "yellow_per_week": int(v_yellow),
-                    "theater_per_week": int(v_theater),
-                    # keep the per-field percentages; the vehicle row is just
-                    # another view of yellow_per_week, so re-derive it
-                    "field_pcts": config["targets"].get("field_pcts", {}),
-                }
-                cfg.save_config(config)
-                config["targets"]["field_pcts"]["vehicle"] = cfg.default_pcts("vehicle")
+                config["weekly_targets"] = [
+                    {"field": st.session_state.get(f"tgfield_{i}"),
+                     "value": st.session_state.get(f"tgvalue_{i}") or "",
+                     "count": int(st.session_state.get(f"tgcount_{i}", 0))}
+                    for i in range(len(quotas))]
                 cfg.save_config(config)
                 st.success("✅ " + t("settings_saved", lang))
                 st.rerun()
+
+        ct1, ct2 = st.columns(2)
+        if ct1.button(t("wt_add", lang), key="add_target"):
+            config.setdefault("weekly_targets", []).append(
+                {"field": field_keys[0] if field_keys else "theater",
+                 "value": "", "count": 1})
+            cfg.save_config(config)
+            st.rerun()
+        rm_i = ct2.selectbox(
+            "🗑", [""] + [str(i) for i in range(len(quotas))], key="rm_target",
+            format_func=lambda i: "" if i == "" else
+                cfg.row_label(quotas[int(i)]["field"], lang) +
+                (f' = {quotas[int(i)]["value"]}' if quotas[int(i)]["value"] else ""))
+        if rm_i != "" and ct2.button("🗑", key="rm_target_go"):
+            config["weekly_targets"].pop(int(rm_i))
+            cfg.save_config(config)
+            st.rerun()
 
         # ── Target percentages per balanced field ──────────────────────────
         st.markdown("### " + t("pct_title", lang))
@@ -601,11 +626,12 @@ if st.session_state.page == "settings":
                     if total != 100:
                         st.warning("⚠️ " + t("pct_err_100", lang))
                     else:
-                        config["targets"].setdefault("field_pcts", {})[key] = \
-                            {k: int(x) for k, x in entered.items()}
-                        if key == "vehicle":
-                            config["targets"]["yellow_per_week"] = round(
-                                entered.get(cfg.special("vehicle_special"), 0) / 10)
+                        saved_pcts = config["targets"].setdefault("field_pcts", {})
+                        # merge, never replace: a value later deleted from the
+                        # option list keeps its saved share
+                        merged = dict(saved_pcts.get(key, {}))
+                        merged.update({k: int(x) for k, x in entered.items()})
+                        saved_pcts[key] = merged
                         cfg.save_config(config)
                         st.success("✅ " + t("settings_saved", lang))
                         st.rerun()
@@ -620,13 +646,14 @@ if st.session_state.page == "settings":
             with st.form(f"map_form_{cfg_key}"):
                 st.markdown(f"**{t(title_key, lang)}**")
                 entered = {}
+                letters = cfg.axis_letters()
                 for v in cfg.options(opt_key):
-                    entered[v] = st.text_input(
-                        f'{v} → {t("map_axes", lang)}', value=saved.get(v, ""),
+                    entered[v] = st.multiselect(
+                        f'{v} → {t("map_axes", lang)}', letters,
+                        default=[L for L in saved.get(v, []) if L in letters],
                         key=f"map_{cfg_key}_{v}")
                 if st.form_submit_button("💾 " + t("save_settings", lang)):
-                    config[cfg_key] = {k: x.strip()
-                                       for k, x in entered.items() if x.strip()}
+                    config[cfg_key] = {k: list(x) for k, x in entered.items() if x}
                     cfg.save_config(config)
                     st.success("✅ " + t("settings_saved", lang))
                     st.rerun()
@@ -1293,9 +1320,10 @@ def render_row(rk: str):
                 _people = [e for e in (cfg.group_employees(_sec.get("group_id"))
                                        if _grp else ALL_EMPLOYEES) if e != _vac]
                 avail = [""] + _people
-                if _sec.get("allow_pair"):
-                    avail += [f"{a}+{b}" for ii, a in enumerate(_people)
-                              for b in _people[ii + 1:]]
+                _size = cfg.section_size(_sec)
+                if _size >= 2:
+                    from schedule_logic import _combos
+                    avail += _combos(_people, min(_size, len(_people)))
                 cur = day.get(rk, "")
                 day[rk] = st.selectbox("", avail,
                     index=avail.index(cur) if cur in avail else 0,
