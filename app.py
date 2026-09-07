@@ -55,14 +55,13 @@ ALL_EMPLOYEES = cfg.all_employees()
 SECTIONS = cfg.all_sections()                 # [(workplace, section)]
 SECTION_KEYS = cfg.section_row_keys()
 VAC_FIELDS = cfg.vac_fields()
-WORK_HOURS_WEEKDAY = cfg.options_with_blank("work_hours_weekday")
-WORK_HOURS_FRIDAY  = cfg.options_with_blank("work_hours_friday")
+WORK_HOURS = [""] + cfg.hour_options()
 ENTRY_OPTIONS = cfg.options_with_blank("entry")
 EXIT_OPTIONS  = cfg.options_with_blank("exit")
 ESCORT_OPTIONS = cfg.options_with_blank("escort")
 ARRIVAL_POINT_OPTIONS = cfg.options_with_blank("arrival_point")
 THEATER_OPTIONS = cfg.options_with_blank("theater")
-UDEX_OPTIONS = [""] + cfg.extra_options()
+EXTRA_ROW_KEYS = cfg.extra_row_keys()
 VEHICLE_OPTIONS = cfg.options_with_blank("vehicle")
 AXIS_OPTIONS = cfg.options_with_blank("axis")
 WAIT_SPOT_OPTIONS = cfg.options_with_blank("wait_spot")
@@ -72,11 +71,11 @@ VACATION_BUDGET = vacation_budget()
 
 # Fields that auto-assign fills (need session-state sync on assign)
 AUTO_FIELDS = [
-    "entry", "exit", "arrival_point", "theater", "udex",
+    "entry", "exit", "arrival_point", "theater",
     "vehicle_morning", "vehicle_noon",
     "axis_morning", "axis_noon", "wait_morning", "wait_noon",
     "taxi_apt", "taxi_arrival", "taxi_emb", "taxi_arrival_noon",
-] + SECTION_KEYS
+] + SECTION_KEYS + EXTRA_ROW_KEYS
 
 # ── Sidebar (settings only) ────────────────────────────────────────────────
 with st.sidebar:
@@ -277,12 +276,10 @@ if st.session_state.page == "settings":
                 c1.checkbox(t(d, lang), value=d in picked, key=f"wd_{d}")
                 c2.text_input(t("wd_label", lang), value=labels.get(d, t(d, lang)),
                               key=f"wdlbl_{d}", label_visibility="collapsed")
-            st.markdown("**" + t("wd_labels_title", lang) + "**")
-            wl1, wl2 = st.columns(2)
-            wl1.text_input(t("wd_lbl_weekday", lang),
-                value=(config.get("work_day_labels") or {}).get("weekday", ""), key="wdl_weekday")
-            wl2.text_input(t("wd_lbl_friday", lang),
-                value=(config.get("work_day_labels") or {}).get("friday", ""), key="wdl_friday")
+            st.markdown("**" + t("wd_hours_title", lang) + "**")
+            st.caption(t("wd_hours_hint", lang))
+            v_hours = st.text_area(t("wd_hours_title", lang), height=150,
+                value="\n".join(cfg.hour_options()), label_visibility="collapsed")
             if st.form_submit_button("💾 " + t("save_settings", lang), type="primary"):
                 days = [d for d in cfg.DOW_ORDER if st.session_state.get(f"wd_{d}")]
                 if not days:
@@ -291,47 +288,80 @@ if st.session_state.page == "settings":
                     config["work_days"] = {
                         "days": days,
                         "labels": {d: (st.session_state.get(f"wdlbl_{d}", "").strip()
-                                       or t(d, lang)) for d in cfg.DOW_ORDER}}
-                    config["work_day_labels"] = {
-                        "weekday": st.session_state.get("wdl_weekday", "").strip(),
-                        "friday":  st.session_state.get("wdl_friday", "").strip()}
+                                       or t(d, lang)) for d in cfg.DOW_ORDER},
+                        "hour_options": [l.strip() for l in v_hours.splitlines() if l.strip()]}
                     cfg.save_config(config)
                     st.success("✅ " + t("settings_saved", lang))
                     st.rerun()
 
-    # ── Tab 4: The extra task (was UDEX) ───────────────────────────────────
+    # ── Tab 4: Extra tasks (was the single UDEX row) ───────────────────────
     with tab_extra:
-        et = config["extra_task"]
+        act_extras = [e for e in config["extra_tasks"] if e.get("active")]
+        if not act_extras:
+            st.warning(t("et_none", lang))
         with st.form("extra_form"):
-            e1, e2, e3 = st.columns(3)
-            v_he = e1.text_input(t("et_name", lang) + " (he)", value=et["label"].get("he", ""))
-            v_en = e2.text_input(t("et_name", lang) + " (en)", value=et["label"].get("en", ""))
-            v_es = e3.text_input(t("et_name", lang) + " (es)", value=et["label"].get("es", ""))
-            o1, o2, o3 = st.columns(3)
-            v_opts = o1.text_area(t("et_options", lang),
-                value="\n".join(et.get("options", [])), height=130)
-            v_m = o2.text_area(t("et_morning", lang),
-                value="\n".join(et.get("morning_values", [])), height=130)
-            v_n = o3.text_area(t("et_noon", lang),
-                value="\n".join(et.get("noon_values", [])), height=130)
-            g1, g2 = st.columns(2)
-            v_tm = g1.number_input(t("et_tg_m", lang), min_value=0, max_value=7,
-                value=int((et.get("targets") or {}).get("morning", 0)))
-            v_tn = g2.number_input(t("et_tg_n", lang), min_value=0, max_value=7,
-                value=int((et.get("targets") or {}).get("noon", 0)))
+            for et in act_extras:
+                eid = et["id"]
+                st.markdown(f"**{cfg.extra_label(et, lang)}**")
+                e1, e2, e3 = st.columns(3)
+                e1.text_input(t("et_name", lang) + " (he)",
+                              value=(et.get("label") or {}).get("he", ""), key=f"ethe_{eid}")
+                e2.text_input(t("et_name", lang) + " (en)",
+                              value=(et.get("label") or {}).get("en", ""), key=f"eten_{eid}")
+                e3.text_input(t("et_name", lang) + " (es)",
+                              value=(et.get("label") or {}).get("es", ""), key=f"etes_{eid}")
+                o1, o2, o3 = st.columns(3)
+                o1.text_area(t("et_options", lang), height=130,
+                             value="\n".join(et.get("options", [])), key=f"etopts_{eid}")
+                o2.text_area(t("et_morning", lang), height=130,
+                             value="\n".join(et.get("morning_values", [])), key=f"etm_{eid}")
+                o3.text_area(t("et_noon", lang), height=130,
+                             value="\n".join(et.get("noon_values", [])), key=f"etn_{eid}")
+                g1, g2 = st.columns(2)
+                g1.number_input(t("et_tg_m", lang), min_value=0, max_value=7,
+                                value=int(et.get("target_morning") or 0), key=f"ettgm_{eid}")
+                g2.number_input(t("et_tg_n", lang), min_value=0, max_value=7,
+                                value=int(et.get("target_noon") or 0), key=f"ettgn_{eid}")
+                st.divider()
             if st.form_submit_button("💾 " + t("save_settings", lang), type="primary"):
                 lines = lambda txt: [l.strip() for l in txt.splitlines() if l.strip()]
-                config["extra_task"] = {
-                    "label": {"he": v_he.strip() or "?", "en": v_en.strip() or v_he.strip() or "?",
-                              "es": v_es.strip() or v_he.strip() or "?"},
-                    "options": lines(v_opts),
-                    "morning_values": lines(v_m),
-                    "noon_values": lines(v_n),
-                    "targets": {"morning": int(v_tm), "noon": int(v_tn)},
-                }
+                for et in config["extra_tasks"]:
+                    if not et.get("active"):
+                        continue
+                    eid = et["id"]
+                    he = st.session_state.get(f"ethe_{eid}", "").strip()
+                    et["label"] = {
+                        "he": he or eid,
+                        "en": st.session_state.get(f"eten_{eid}", "").strip() or he or eid,
+                        "es": st.session_state.get(f"etes_{eid}", "").strip() or he or eid}
+                    et["options"] = lines(st.session_state.get(f"etopts_{eid}", ""))
+                    et["morning_values"] = lines(st.session_state.get(f"etm_{eid}", ""))
+                    et["noon_values"] = lines(st.session_state.get(f"etn_{eid}", ""))
+                    et["target_morning"] = int(st.session_state.get(f"ettgm_{eid}", 0))
+                    et["target_noon"] = int(st.session_state.get(f"ettgn_{eid}", 0))
                 cfg.save_config(config)
                 st.success("✅ " + t("settings_saved", lang))
                 st.rerun()
+
+        ce1, ce2 = st.columns(2)
+        free_et = next((e for e in config["extra_tasks"] if not e.get("active")), None)
+        if ce1.button(t("et_add", lang), disabled=free_et is None, key="add_extra"):
+            free_et["active"] = True
+            if not (free_et.get("label") or {}).get("he"):
+                name = free_et["id"].upper()
+                free_et["label"] = {"he": name, "en": name, "es": name}
+            cfg.save_config(config)
+            st.rerun()
+        if free_et is None:
+            ce1.caption(t("et_max", lang))
+        rm_et = ce2.selectbox(t("et_remove", lang), [""] + [e["id"] for e in act_extras],
+                              key="rm_extra")
+        if rm_et and ce2.button("🗑", key="rm_extra_go"):
+            for e in config["extra_tasks"]:
+                if e["id"] == rm_et:
+                    e["active"] = False       # switched off; its values are kept
+            cfg.save_config(config)
+            st.rerun()
 
     # ── Tab 8: Free-text assignment notes ──────────────────────────────────
     with tab_notes:
@@ -482,9 +512,6 @@ if st.session_state.page == "settings":
 
     # ── Tab 3: Dropdown options ────────────────────────────────────────────
     with tab_opts:
-        _wdl = cfg.work_day_type_labels()
-        weekday_lbl = _wdl.get("weekday") or t("monday", lang)
-        friday_lbl = _wdl.get("friday") or t("friday", lang)
         OPTION_GROUPS = [
             ("entry",         t("row_entry", lang)),
             ("exit",          t("row_exit", lang)),
@@ -498,8 +525,6 @@ if st.session_state.page == "settings":
             ("taxi_arrival",      cfg.row_label("taxi_arrival", lang)),
             ("taxi_emb",          cfg.row_label("taxi_emb", lang)),
             ("taxi_arrival_noon", cfg.row_label("taxi_arrival_noon", lang)),
-            ("work_hours_weekday", t("row_work_hours", lang) + f" ({weekday_lbl})"),
-            ("work_hours_friday",  t("row_work_hours", lang) + f" ({friday_lbl})"),
         ]
         with st.form("opts_form"):
             grid = st.columns(3)
@@ -804,19 +829,20 @@ def _render_stats(schedules: list, title: str):
         df.index.name = ""
         st.dataframe(df, use_container_width=True)
 
-    # Extra task — always show every configured value, even at 0
-    extra_counts = field_counts.get("udex", {})
-    extra_total = sum(extra_counts.values()) or 1
-    extra_name = cfg.extra_label(lang)
-    for vals, suffix in ((cfg.extra_morning_values(), t("et_tg_m", lang)),
-                         (cfg.extra_noon_values(), t("et_tg_n", lang))):
-        if not vals:
-            continue
-        row = {v: f"{extra_counts.get(v, 0)} "
-                  f"({extra_counts.get(v, 0) / extra_total * 100:.0f}%)" for v in vals}
-        df_e = pd.DataFrame([row], index=[f"{extra_name} — {suffix}"])
-        df_e.index.name = ""
-        st.dataframe(df_e, use_container_width=True)
+    # Extra tasks — always show every configured value, even at 0
+    for _et in cfg.active_extras():
+        counts = field_counts.get(cfg.extra_row_key(_et), {})
+        total = sum(counts.values()) or 1
+        name = cfg.extra_label(_et, lang)
+        for vals, suffix in ((_et.get("morning_values", []), t("et_tg_m", lang)),
+                             (_et.get("noon_values", []), t("et_tg_n", lang))):
+            if not vals:
+                continue
+            row = {v: f"{counts.get(v, 0)} "
+                      f"({counts.get(v, 0) / total * 100:.0f}%)" for v in vals}
+            df_e = pd.DataFrame([row], index=[f"{name} — {suffix}"])
+            df_e.index.name = ""
+            st.dataframe(df_e, use_container_width=True)
 
     def _axis_bar(counts_ax, title, color):
         """Horizontal bar chart for axis values — A1 at top, clear labels."""
@@ -1232,7 +1258,7 @@ def render_row(rk: str):
         with cols[i+1]:
             if rk == "work_hours":
                 d = day.get("date")
-                opts = WORK_HOURS_FRIDAY if (hasattr(d,"weekday") and d.weekday()==4) else WORK_HOURS_WEEKDAY
+                opts = WORK_HOURS          # one shared list for every day
                 cur = day.get("work_hours","")
                 day["work_hours"] = st.selectbox("", opts,
                     index=opts.index(cur) if cur in opts else 0,
@@ -1294,10 +1320,12 @@ def render_row(rk: str):
                     index=THEATER_OPTIONS.index(cur) if cur in THEATER_OPTIONS else 0,
                     key=ck, label_visibility="collapsed")
 
-            elif rk == "udex":
-                cur = day.get("udex","")
-                day["udex"] = st.selectbox("", UDEX_OPTIONS,
-                    index=UDEX_OPTIONS.index(cur) if cur in UDEX_OPTIONS else 0,
+            elif rk in EXTRA_ROW_KEYS:
+                _et = cfg.extra_by_row(rk) or {}
+                eopts = [""] + [o for o in _et.get("options", []) if o]
+                cur = day.get(rk, "")
+                day[rk] = st.selectbox("", eopts,
+                    index=eopts.index(cur) if cur in eopts else 0,
                     key=ck, label_visibility="collapsed")
 
             elif rk in ("vehicle_morning","vehicle_noon"):

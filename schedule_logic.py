@@ -72,13 +72,11 @@ def validate_schedule(schedule: dict, lang: str = "he") -> list:
 
     targets = cfg.targets()
     vehicle_special = cfg.special("vehicle_special")
-    extra_m = set(cfg.extra_morning_values())
-    extra_n = set(cfg.extra_noon_values())
-    extra_tg = cfg.extra_targets()
-    extra_name = cfg.extra_label(lang)
+    extras = cfg.active_extras()
+    extra_counts = {cfg.extra_row_key(e): {"m": 0, "n": 0} for e in extras}
     sections = cfg.all_sections()
 
-    yellow_count = extra_m_count = extra_n_count = 0
+    yellow_count = 0
 
     for day_key, day in schedule.items():
         if day.get("vehicle_morning") == vehicle_special:
@@ -86,11 +84,15 @@ def validate_schedule(schedule: dict, lang: str = "he") -> list:
         if day.get("vehicle_noon") == vehicle_special:
             yellow_count += 1
 
-        extra = day.get("udex", "")
-        if extra in extra_m:
-            extra_m_count += 1
-        elif extra in extra_n:
-            extra_n_count += 1
+        for et in extras:
+            row_key = cfg.extra_row_key(et)
+            val = day.get(row_key, "")
+            if not val:
+                continue
+            if val in et.get("morning_values", []):
+                extra_counts[row_key]["m"] += 1
+            elif val in et.get("noon_values", []):
+                extra_counts[row_key]["n"] += 1
 
         other_empl = day.get("other_empl", "")
         d_str = day.get("date").strftime("%d/%m") if day.get("date") else day_key
@@ -126,12 +128,15 @@ def validate_schedule(schedule: dict, lang: str = "he") -> list:
 
     if yellow_count != targets["yellow_per_week"]:
         errors.append(t("warning_yellow_count", lang, count=yellow_count))
-    if extra_m_count != extra_tg["morning"]:
-        errors.append(t("warn_extra_m", lang, n=extra_m_count,
-                        t=extra_tg["morning"], f=extra_name))
-    if extra_n_count != extra_tg["noon"]:
-        errors.append(t("warn_extra_n", lang, n=extra_n_count,
-                        t=extra_tg["noon"], f=extra_name))
+    for et in extras:
+        counts, tg = extra_counts[cfg.extra_row_key(et)], cfg.extra_targets(et)
+        name = cfg.extra_label(et, lang)
+        if counts["m"] != tg["morning"]:
+            errors.append(t("warn_extra_m", lang, n=counts["m"],
+                            t=tg["morning"], f=name))
+        if counts["n"] != tg["noon"]:
+            errors.append(t("warn_extra_n", lang, n=counts["n"],
+                            t=tg["noon"], f=name))
     if theater_count != targets["theater_per_week"]:
         errors.append(t("warning_theater_count", lang, count=theater_count))
 
@@ -226,9 +231,7 @@ def auto_assign_week_vehicles_udex(schedule: dict, history: dict = None,
     vehicle_special = cfg.special("vehicle_special")
     vehicle_regular = next(
         (v for v in cfg.options("vehicle") if v != vehicle_special), "")
-    udex_m_vals = cfg.extra_morning_values()
-    udex_t_vals = cfg.extra_noon_values()
-    extra_tg = cfg.extra_targets()
+
 
     # Special vehicle: choose the morning/noon split that best balances the
     # monthly history (falls back to the cumulative history if not provided)
@@ -265,25 +268,30 @@ def auto_assign_week_vehicles_udex(schedule: dict, history: dict = None,
             if not schedule[k].get(f):
                 schedule[k][f] = vehicle_regular
 
-    # Extra task: balance within each type via history
-    extra_unassigned = [k for k in keys if not schedule[k].get("udex")]
-    m_needed = extra_tg["morning"] - sum(
-        1 for k in keys if schedule[k].get("udex") in udex_m_vals)
-    t_needed = extra_tg["noon"] - sum(
-        1 for k in keys if schedule[k].get("udex") in udex_t_vals)
-    random.shuffle(extra_unassigned)
-    m_hist = dict(history.get("udex", {}))
-    t_hist = dict(history.get("udex", {}))
-    for _ in range(max(0, m_needed)):
-        if extra_unassigned and udex_m_vals:
-            chosen = _least_used(udex_m_vals, m_hist)
-            m_hist[chosen] = m_hist.get(chosen, 0) + 1
-            schedule[extra_unassigned.pop(0)]["udex"] = chosen
-    for _ in range(max(0, t_needed)):
-        if extra_unassigned and udex_t_vals:
-            chosen = _least_used(udex_t_vals, t_hist)
-            t_hist[chosen] = t_hist.get(chosen, 0) + 1
-            schedule[extra_unassigned.pop(0)]["udex"] = chosen
+    # Extra tasks: each row gets its own targets, balanced within each type
+    for et in cfg.active_extras():
+        row_key = cfg.extra_row_key(et)
+        m_vals = [v for v in et.get("morning_values", []) if v]
+        n_vals = [v for v in et.get("noon_values", []) if v]
+        tg = cfg.extra_targets(et)
+        unassigned = [k for k in keys if not schedule[k].get(row_key)]
+        m_needed = tg["morning"] - sum(
+            1 for k in keys if schedule[k].get(row_key) in m_vals)
+        n_needed = tg["noon"] - sum(
+            1 for k in keys if schedule[k].get(row_key) in n_vals)
+        random.shuffle(unassigned)
+        m_hist = dict(history.get(row_key, {}))
+        n_hist = dict(history.get(row_key, {}))
+        for _ in range(max(0, m_needed)):
+            if unassigned and m_vals:
+                chosen = _least_used(m_vals, m_hist)
+                m_hist[chosen] = m_hist.get(chosen, 0) + 1
+                schedule[unassigned.pop(0)][row_key] = chosen
+        for _ in range(max(0, n_needed)):
+            if unassigned and n_vals:
+                chosen = _least_used(n_vals, n_hist)
+                n_hist[chosen] = n_hist.get(chosen, 0) + 1
+                schedule[unassigned.pop(0)][row_key] = chosen
 
     # Theater: assign to exactly theater_per_week days
     theater_vals = cfg.options("theater")
@@ -363,9 +371,9 @@ def update_history(history: dict, schedule: dict) -> dict:
         "entry", "exit", "arrival_point", "theater",
         "axis_morning", "axis_noon",
         "wait_morning", "wait_noon", "taxi_apt", "taxi_arrival",
-        "vehicle_morning", "vehicle_noon", "udex",
+        "vehicle_morning", "vehicle_noon",
         "taxi_emb", "taxi_arrival_noon",
-    ] + cfg.section_row_keys()
+    ] + cfg.section_row_keys() + cfg.extra_row_keys()
     for day in schedule.values():
         for field in fields_to_track:
             val = day.get(field, "")

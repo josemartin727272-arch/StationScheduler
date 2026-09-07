@@ -4,6 +4,7 @@ config.json next to this file. Any key missing from config.json falls back to
 DEFAULTS, so a partial or old config file keeps the app working unchanged.
 """
 import json
+import re
 from copy import deepcopy
 from pathlib import Path
 
@@ -18,7 +19,7 @@ FIXED_ROW_ORDER = [
     "escort_morning", "school", "escort_noon",
     "@workplaces",
     "other_empl",
-    "arrival_point", "theater", "udex",
+    "arrival_point", "theater", "@extras",
     "vehicle_morning", "axis_morning", "wait_morning",
     "taxi_apt", "taxi_arrival",
     "vehicle_noon", "axis_noon", "wait_noon",
@@ -29,6 +30,8 @@ FIXED_ROW_ORDER = [
 
 MAX_GROUPS = 5
 MAX_WORKPLACES = 5
+MAX_EXTRAS = 5
+DEFAULT_VAC_BUDGET = 14
 
 # Monday-based, because a week always starts on a Monday here.
 DOW_ORDER = ["monday", "tuesday", "wednesday", "thursday", "friday",
@@ -71,24 +74,30 @@ DEFAULTS = {
         "labels": {"sunday": "ראשון", "monday": "שני", "tuesday": "שלישי",
                    "wednesday": "רביעי", "thursday": "חמישי",
                    "friday": "שישי 🕕", "saturday": "שבת"},
+        # one shared work-hours list for every working day
+        "hour_options": ["7:30-16:00", "8:00-16:30", "8:30-17:00",
+                         "7:30-13:30", "8:00-14:00", "8:30-14:30",
+                         "7:30-13:00", "8:00-13:30"],
     },
-    # headings of the two work-hours option lists
-    "work_day_labels": {"weekday": "א'-ה'", "friday": "שישי"},
-    "extra_task": {
-        "label": {"he": "משימה נוספת", "en": "Extra Task", "es": "Tarea Extra"},
-        "options": ["EMB-M", "EMB-T", "R-M", "R-T"],
-        "targets": {"morning": 3, "noon": 2},
-        "morning_values": ["EMB-M", "R-M"],
-        "noon_values": ["EMB-T", "R-T"],
-    },
+    # Up to MAX_EXTRAS independent extra-task rows. The first keeps the row key
+    # "udex" so already-archived weeks stay readable.
+    "extra_tasks": [
+        {"id": "et1",
+         "label": {"he": "משימה נוספת", "en": "Extra Task", "es": "Tarea Extra"},
+         "options": ["EMB-M", "EMB-T", "R-M", "R-T"],
+         "morning_values": ["EMB-M", "R-M"], "noon_values": ["EMB-T", "R-T"],
+         "target_morning": 3, "target_noon": 2, "active": True},
+    ] + [
+        {"id": f"et{i}", "label": {"he": "", "en": "", "es": ""}, "options": [],
+         "morning_values": [], "noon_values": [],
+         "target_morning": 0, "target_noon": 0, "active": False}
+        for i in range(2, MAX_EXTRAS + 1)
+    ],
     "vacation_budget": {
         "LEON": 14, "TORO": 14,
         "HALCON": 30, "CHCHORRO": 30, "BUHO": 30,
     },
     "options": {
-        "work_hours_weekday": ["7:30-16:00", "8:00-16:30", "8:30-17:00"],
-        "work_hours_friday":  ["7:30-13:30", "8:00-14:00", "8:30-14:30",
-                               "7:30-13:00", "8:00-13:30"],
         "entry":         ["10", "13", "10-T", "13-D", "SPLIT", "חג"],
         "exit":          ["10", "13", "13-T", "10-D", "SPLIT", "חג"],
         "escort":        ["200", "201", "300", "301", "400", "500"],
@@ -116,8 +125,9 @@ DEFAULTS = {
         # (which behaves exactly like plain least-used).
         "field_pcts": {},
     },
-    # Manual reference maps edited on the Settings page: {entry/exit: free text}.
-    # Documentation only — auto-assign and validation never read these.
+    # Manual reference maps edited on the Settings page:
+    # {entry/exit value: [axis letters]}. Documentation only — auto-assign and
+    # validation never read these.
     "entry_axis_map": {},
     "exit_axis_map": {},
     # Free-text station notes; documentation only, never read by the logic.
@@ -155,19 +165,82 @@ def _migrate(cfg: dict, raw: dict) -> dict:
         pe = [e for e in raw["employees"].get("pe", []) if e]
         cfg["groups"][0]["employees"], cfg["groups"][0]["active"] = il, True
         cfg["groups"][1]["employees"], cfg["groups"][1]["active"] = pe, bool(pe)
-    if not raw.get("extra_task"):
+    # v1 UDEX → the first extra task
+    if not raw.get("extra_task") and not raw.get("extra_tasks"):
         opt = (raw.get("options") or {}).get("udex")
         sv, tg = raw.get("special_values") or {}, raw.get("targets") or {}
+        et = cfg["extra_tasks"][0]
         if isinstance(opt, list) and opt:
-            cfg["extra_task"]["options"] = [o for o in opt if o]
+            et["options"] = [o for o in opt if o]
         if isinstance(sv.get("udex_morning"), list):
-            cfg["extra_task"]["morning_values"] = [o for o in sv["udex_morning"] if o]
+            et["morning_values"] = [o for o in sv["udex_morning"] if o]
         if isinstance(sv.get("udex_noon"), list):
-            cfg["extra_task"]["noon_values"] = [o for o in sv["udex_noon"] if o]
+            et["noon_values"] = [o for o in sv["udex_noon"] if o]
         if tg.get("udex_m") is not None:
-            cfg["extra_task"]["targets"]["morning"] = int(tg["udex_m"])
+            et["target_morning"] = int(tg["udex_m"])
         if tg.get("udex_t") is not None:
-            cfg["extra_task"]["targets"]["noon"] = int(tg["udex_t"])
+            et["target_noon"] = int(tg["udex_t"])
+    # v2 single extra_task → extra_tasks[0]
+    if raw.get("extra_task") and not raw.get("extra_tasks"):
+        old, et = raw["extra_task"], cfg["extra_tasks"][0]
+        t0 = old.get("targets") or {}
+        if old.get("label"):
+            et["label"] = {k: old["label"].get(k, "") for k in ("he", "en", "es")}
+        for src, dst in (("options", "options"), ("morning_values", "morning_values"),
+                         ("noon_values", "noon_values")):
+            if isinstance(old.get(src), list):
+                et[dst] = [o for o in old[src] if o]
+        if t0.get("morning") is not None:
+            et["target_morning"] = int(t0["morning"])
+        if t0.get("noon") is not None:
+            et["target_noon"] = int(t0["noon"])
+        et["active"] = True
+    cfg.pop("extra_task", None)
+    while len(cfg["extra_tasks"]) < MAX_EXTRAS:
+        cfg["extra_tasks"].append(
+            {"id": f"et{len(cfg['extra_tasks']) + 1}",
+             "label": {"he": "", "en": "", "es": ""}, "options": [],
+             "morning_values": [], "noon_values": [],
+             "target_morning": 0, "target_noon": 0, "active": False})
+    for et in cfg["extra_tasks"]:
+        et.setdefault("label", {"he": "", "en": "", "es": ""})
+        for k in ("options", "morning_values", "noon_values"):
+            et[k] = [o for o in et.get(k, []) if o]
+
+    # The two per-day-type work-hours lists became one shared list. Test the
+    # RAW config, not the merged one: a v1 file has no work_days at all, so the
+    # merged copy already carries the shipped defaults and would mask the
+    # user's own hours.
+    wd = cfg["work_days"]
+    if not [h for h in (raw.get("work_days") or {}).get("hour_options", []) or [] if h]:
+        merged, seen = [], set()
+        for key in ("work_hours_weekday", "work_hours_friday"):
+            for v in (raw.get("options") or {}).get(key, []) or []:
+                if v and v not in seen:
+                    seen.add(v)
+                    merged.append(v)
+        if merged:
+            wd["hour_options"] = merged
+    wd["hour_options"] = [h for h in wd.get("hour_options", []) if h]
+    for k in ("work_hours_weekday", "work_hours_friday"):
+        cfg.get("options", {}).pop(k, None)
+    cfg.pop("work_day_labels", None)
+
+    # axis reference maps: free text ("D, B") → a list of axis letters
+    for key in ("entry_axis_map", "exit_axis_map"):
+        out = {}
+        for value, raw_axes in (cfg.get(key) or {}).items():
+            items = raw_axes if isinstance(raw_axes, list) else \
+                re.split(r"[,\s]+", str(raw_axes or ""))
+            letters = []
+            for x in items:
+                letter = str(x or "").strip()[:1].upper()
+                if letter and letter not in letters:
+                    letters.append(letter)
+            if letters:
+                out[value] = letters
+        cfg[key] = out
+
     cfg.pop("employees", None)
     cfg.get("options", {}).pop("udex", None)
     for k in ("udex_morning", "udex_noon"):
@@ -256,11 +329,6 @@ def vac_fields() -> list:
     return [vac_field(g) for g in active_groups()]
 
 
-def default_vacation_budget(emp: str) -> int:
-    g = next((x for x in active_groups() if emp in x.get("employees", [])), None)
-    return 14 if g and g.get("id") == "g1" else 30
-
-
 # ── workplaces & their sections ────────────────────────────────────────────
 
 def workplaces() -> list:
@@ -310,36 +378,54 @@ def work_day_label(dow: str) -> str:
     return labels.get(dow) or dow
 
 
-def work_day_type_labels() -> dict:
-    return dict(get_config().get("work_day_labels") or {})
+def hour_options() -> list:
+    """The one work-hours list, offered on every working day."""
+    return [h for h in (get_config().get("work_days") or {}).get("hour_options", []) if h]
 
 
-# ── extra task (was UDEX) ──────────────────────────────────────────────────
+# ── extra tasks (was the single UDEX row) ──────────────────────────────────
 
-def extra_task() -> dict:
-    return dict(get_config()["extra_task"])
-
-
-def extra_label(lang: str = "he") -> str:
-    lbl = extra_task().get("label") or {}
-    return lbl.get(lang) or lbl.get("he") or lbl.get("en") or "udex"
+def extra_tasks() -> list:
+    return list(get_config()["extra_tasks"])
 
 
-def extra_options() -> list:
-    return [o for o in extra_task().get("options", []) if o]
+def active_extras() -> list:
+    return [e for e in extra_tasks() if e.get("active")]
 
 
-def extra_morning_values() -> list:
-    return [o for o in extra_task().get("morning_values", []) if o]
+def extra_row_key(et: dict) -> str:
+    """The first task keeps the original row key so archived weeks still read."""
+    return "udex" if et.get("id") == "et1" else "extra_" + str(et.get("id"))
 
 
-def extra_noon_values() -> list:
-    return [o for o in extra_task().get("noon_values", []) if o]
+def extra_row_keys() -> list:
+    return [extra_row_key(e) for e in active_extras()]
 
 
-def extra_targets() -> dict:
-    t = extra_task().get("targets") or {}
-    return {"morning": int(t.get("morning") or 0), "noon": int(t.get("noon") or 0)}
+def extra_by_row(row_key: str):
+    return next((e for e in active_extras() if extra_row_key(e) == row_key), None)
+
+
+def extra_label(et, lang: str = "he") -> str:
+    if isinstance(et, str):              # called with a language only
+        et, lang = active_extras()[0] if active_extras() else {}, et
+    lbl = (et or {}).get("label") or {}
+    return lbl.get(lang) or lbl.get("he") or lbl.get("en") or str((et or {}).get("id", ""))
+
+
+def extra_targets(et: dict) -> dict:
+    return {"morning": int(et.get("target_morning") or 0),
+            "noon": int(et.get("target_noon") or 0)}
+
+
+def axis_letters() -> list:
+    """Distinct axis letters behind the configured axis values (A-U, A-D → A)."""
+    out = []
+    for a in options("axis"):
+        letter = str(a).strip()[:1].upper()
+        if letter and letter not in out:
+            out.append(letter)
+    return out
 
 
 def assign_notes() -> str:
@@ -453,8 +539,12 @@ def pct_label(key: str, lang: str) -> str:
 
 
 def reference_map(name: str) -> dict:
-    """entry_axis_map / exit_axis_map — manual notes, never enforced."""
-    return dict(get_config().get(name, {}) or {})
+    """entry_axis_map / exit_axis_map — {value: [axis letters]}, never enforced."""
+    return {k: list(v) for k, v in (get_config().get(name) or {}).items()}
+
+
+def default_vacation_budget(emp: str = "") -> int:
+    return DEFAULT_VAC_BUDGET
 
 
 def vacation_budget() -> dict:
@@ -484,6 +574,8 @@ def natural_row_keys() -> list:
     for k in FIXED_ROW_ORDER:
         if k == "@workplaces":
             out += section_row_keys()
+        elif k == "@extras":
+            out += extra_row_keys()
         elif k == "@custom":
             out += custom_row_keys()
         else:
@@ -518,8 +610,9 @@ def row_label(key: str, lang: str) -> str:
     override = cfg["row_labels"].get(key, {})
     if override.get(lang):
         return override[lang]
-    if key == "udex":
-        return extra_label(lang)
+    et = extra_by_row(key)
+    if et:
+        return extra_label(et, lang)
     sx = section_by_row(key)
     if sx:
         return section_label(*sx)

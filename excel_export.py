@@ -94,6 +94,10 @@ def export_to_excel(schedule: dict, week_start: date, lang: str = "he") -> bytes
 
     # Rows 3+: schedule rows (base + custom rows from config)
     row_display_keys = [k for k in cfg.all_row_keys() if k not in ("dates", "days")]
+    # morning/noon value sets of every active extra-task row
+    EXTRA_VALUES = {cfg.extra_row_key(e): {"m": set(e.get("morning_values", [])),
+                                           "n": set(e.get("noon_values", []))}
+                    for e in cfg.active_extras()}
     # each workplace-section row is tinted with its employee group's colour
     SECTION_GROUP_BG = {}
     for _w, _sec in cfg.all_sections():
@@ -133,9 +137,9 @@ def export_to_excel(schedule: dict, week_start: date, lang: str = "he") -> bytes
                 bg = COLOR_VACATION
             elif rk in ("vehicle_morning", "vehicle_noon") and val == "YELLOW":
                 bg = COLOR_YELLOW
-            elif rk == "udex" and val in cfg.extra_morning_values():
+            elif rk in EXTRA_VALUES and val in EXTRA_VALUES[rk]["m"]:
                 bg = COLOR_EMB_M
-            elif rk == "udex" and val in cfg.extra_noon_values():
+            elif rk in EXTRA_VALUES and val in EXTRA_VALUES[rk]["n"]:
                 bg = COLOR_EMB_T
             elif rk in SECTION_GROUP_BG:
                 bg = SECTION_GROUP_BG[rk]
@@ -155,16 +159,18 @@ def export_to_excel(schedule: dict, week_start: date, lang: str = "he") -> bytes
         for f in ("vehicle_morning", "vehicle_noon")
         if schedule[dk].get(f) == _vs
     )
-    extra_m_vals, extra_n_vals = cfg.extra_morning_values(), cfg.extra_noon_values()
-    extra_tg = cfg.extra_targets()
-    extra_m = sum(1 for dk in day_keys if schedule[dk].get("udex") in extra_m_vals)
-    extra_n = sum(1 for dk in day_keys if schedule[dk].get("udex") in extra_n_vals)
-    extra_name = cfg.extra_label(lang)
-
     ws2.append(["YELLOW total", yellow_total,
                 "/ " + str(cfg.targets()["yellow_per_week"])])
-    ws2.append([extra_name + " (AM)", extra_m, "/ " + str(extra_tg["morning"])])
-    ws2.append([extra_name + " (PM)", extra_n, "/ " + str(extra_tg["noon"])])
+    for et in cfg.active_extras():
+        rk, tg = cfg.extra_row_key(et), cfg.extra_targets(et)
+        name = cfg.extra_label(et, lang)
+        m_vals, n_vals = et.get("morning_values", []), et.get("noon_values", [])
+        ws2.append([name + " (AM)",
+                    sum(1 for dk in day_keys if schedule[dk].get(rk) in m_vals),
+                    "/ " + str(tg["morning"])])
+        ws2.append([name + " (PM)",
+                    sum(1 for dk in day_keys if schedule[dk].get(rk) in n_vals),
+                    "/ " + str(tg["noon"])])
 
     # Save to bytes
     buf = io.BytesIO()

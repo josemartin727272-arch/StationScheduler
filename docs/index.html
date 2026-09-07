@@ -114,6 +114,7 @@ table.stats th{background:#eef2f7}
 .pct-tot.ok{color:#fff;background:var(--ok)}
 .pct-tot.bad{color:#fff;background:var(--danger)}
 .map-inp{width:100%;min-width:120px}
+.chk-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 /* group / workplace / work-day editors */
 .sec-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;
   padding:6px 0;border-bottom:1px dashed var(--border)}
@@ -187,7 +188,9 @@ wp_sections:"תפקידים במקום העבודה",wp_sec_add:"➕ הוסף ת
 wp_sec_group:"קבוצה",wp_sec_pair:"מאפשר זוג עובדים",wp_notes:"הערות לוגיקת שיבוץ (עזר בלבד)",
 wp_notes_hint:"לוגיקת שיבוץ מפורטת — הגדר בשדה ההערות. המערכת לא אוכפת אותה.",
 wd_pick:"סמן את ימי העבודה",wd_label:"תווית בטבלה",wd_none:"⚠️ חייב לבחור לפחות יום עבודה אחד",
-wd_labels_title:"תוויות סוגי יום (לרשימות שעות העבודה)",wd_lbl_weekday:"יום רגיל",wd_lbl_friday:"יום מקוצר",
+wd_hours_title:"שעות עבודה — אפשרויות",wd_hours_hint:"שורה לכל ערך · אותה רשימה מוצעת בכל ימי העבודה",
+et_add:"➕ הוסף משימה",et_remove:"🗑 מחק משימה",et_max:"הגעת למספר המשימות המרבי (5)",
+et_none:"אין משימות נוספות פעילות — הוסף משימה",map_no_axes:"אין צירים מוגדרים ברשימת האפשרויות",
 et_name:"שם המשימה",et_options:"אפשרויות (שורה לכל ערך)",et_morning:"ערכי בוקר (שורה לכל ערך)",
 et_noon:"ערכי צהריים (שורה לכל ערך)",et_tg_m:"כמה פעמים בוקר בשבוע",et_tg_n:"כמה פעמים צהריים בשבוע",
 notes_general:"הערות כלליות לשיבוץ",notes_hint:"טקסט חופשי לתיעוד — המערכת לא קוראת אותו",
@@ -197,7 +200,6 @@ order_hint:"גרור (⠿) או השתמש בחצים — נשמר אוטומט�
 save_settings:"💾 שמור הגדרות",settings_saved:"ההגדרות נשמרו",
 lbl_he:"עברית",lbl_en:"English",lbl_es:"Español",
 opt_escort:"ליווי",opt_vehicle:"סוג רכב",opt_axis:"ציר",opt_wait:"מקום המתנה בוקר / צהריים",
-opt_wh_wd:"שעות עבודה (א'-ה')",opt_wh_fr:"שעות עבודה (שישי)",
 special_note:"ערכים עם משמעות בשיבוץ — אם שינית אותם ברשימות עדכן גם כאן",
 sv_holiday:"ערך חג",sv_vehicle:"רכב מיוחד",
 tg_yellow:"רכבי YELLOW בשבוע",tg_theater:"תאטרון בשבוע",
@@ -219,8 +221,7 @@ pct_title:"📊 אחוזי יעד לכל שדה",pct_value:"ערך",pct_pct:"% �
 pct_err_100:"⚠️ הסכום חייב להיות בדיוק 100% כדי לשמור",pct_reset:"↺ חלוקה שווה",
 pct_hint:"השיבוץ האוטומטי בוחר בכל פעם את הערך הרחוק ביותר מאחוז היעד שלו",
 map_entry_title:"כניסה ↔ ציר",map_exit_title:"יציאה ↔ ציר",map_axes:"צירים",
-map_hint:"מידע עזר בלבד — המערכת לא אוכפת קשר בין ציר לכניסה/יציאה",
-map_ph:"טקסט חופשי, למשל: A-U, B-D"},
+map_hint:"מידע עזר בלבד — המערכת לא אוכפת קשר בין ציר לכניסה/יציאה"},
 en:{app_title:"Weekly Work Schedule",nav_sched:"📋 Schedule",nav_settings:"⚙️ Settings",nav_archive:"📁 Archive",nav_stats:"📊 Statistics",
 week_start:"Week start",generate:"New Schedule",auto_assign:"⚡ Auto Assign",save:"💾 Save",export_excel:"📤 Export Excel",print:"🖨️ Print",
 saved:"Schedule saved to archive",valid:"Schedule is valid ✓",replace_q:"A schedule exists for this week — replace?",yes:"Yes",no:"Cancel",
@@ -250,7 +251,9 @@ wp_sections:"Roles at this workplace",wp_sec_add:"➕ Add role",wp_sec_name:"Rol
 wp_sec_group:"Group",wp_sec_pair:"Allows a pair of employees",wp_notes:"Assignment logic notes (reference only)",
 wp_notes_hint:"Detailed assignment logic — write it in the notes field. The app does not enforce it.",
 wd_pick:"Select the working days",wd_label:"Label in the table",wd_none:"⚠️ At least one working day is required",
-wd_labels_title:"Day-type labels (for the work-hours lists)",wd_lbl_weekday:"Regular day",wd_lbl_friday:"Short day",
+wd_hours_title:"Work hours — options",wd_hours_hint:"One value per line · the same list is offered on every working day",
+et_add:"➕ Add task",et_remove:"🗑 Delete task",et_max:"Maximum number of tasks reached (5)",
+et_none:"No active extra tasks — add one",map_no_axes:"No axes defined in the options list",
 et_name:"Task name",et_options:"Options (one per line)",et_morning:"Morning values (one per line)",
 et_noon:"Noon values (one per line)",et_tg_m:"Morning times per week",et_tg_n:"Noon times per week",
 notes_general:"General assignment notes",notes_hint:"Free text for documentation — the app never reads it",
@@ -260,7 +263,6 @@ order_hint:"Drag (⠿) or use the arrows — saved automatically",
 save_settings:"💾 Save settings",settings_saved:"Settings saved",
 lbl_he:"Hebrew",lbl_en:"English",lbl_es:"Spanish",
 opt_escort:"Escort",opt_vehicle:"Vehicle",opt_axis:"Axis",opt_wait:"Wait spot morning / noon",
-opt_wh_wd:"Work hours (Mon-Thu)",opt_wh_fr:"Work hours (Friday)",
 special_note:"Values with special meaning in auto-assign — if renamed in the lists, update them here too",
 sv_holiday:"Holiday value",sv_vehicle:"Special vehicle",
 tg_yellow:"YELLOW vehicles per week",tg_theater:"Theater per week",
@@ -282,8 +284,7 @@ pct_title:"📊 Target % per field",pct_value:"Value",pct_pct:"Target %",pct_tot
 pct_err_100:"⚠️ Total must be exactly 100% to save",pct_reset:"↺ Equal split",
 pct_hint:"Auto-assign always picks the value furthest below its target share",
 map_entry_title:"Entry ↔ Axis",map_exit_title:"Exit ↔ Axis",map_axes:"Axes",
-map_hint:"Reference only — the app does not enforce any axis ↔ entry/exit link",
-map_ph:"Free text, e.g. A-U, B-D"},
+map_hint:"Reference only — the app does not enforce any axis ↔ entry/exit link"},
 es:{app_title:"Horario Semanal de Trabajo",nav_sched:"📋 Horario",nav_settings:"⚙️ Configuración",nav_archive:"📁 Archivo",nav_stats:"📊 Estadísticas",
 week_start:"Inicio de semana",generate:"Nuevo Horario",auto_assign:"⚡ Asignación Automática",save:"💾 Guardar",export_excel:"📤 Exportar Excel",print:"🖨️ Imprimir",
 saved:"Horario guardado en archivo",valid:"El horario es válido ✓",replace_q:"Existe un horario para esta semana — ¿reemplazar?",yes:"Sí",no:"Cancelar",
@@ -313,7 +314,9 @@ wp_sections:"Puestos en este lugar",wp_sec_add:"➕ Agregar puesto",wp_sec_name:
 wp_sec_group:"Grupo",wp_sec_pair:"Permite una pareja de empleados",wp_notes:"Notas de lógica de asignación (solo referencia)",
 wp_notes_hint:"Lógica de asignación detallada — escríbela en las notas. La app no la impone.",
 wd_pick:"Selecciona los días laborables",wd_label:"Etiqueta en la tabla",wd_none:"⚠️ Se requiere al menos un día laborable",
-wd_labels_title:"Etiquetas de tipo de día (para las listas de horas)",wd_lbl_weekday:"Día regular",wd_lbl_friday:"Día corto",
+wd_hours_title:"Horas de trabajo — opciones",wd_hours_hint:"Un valor por línea · la misma lista se ofrece todos los días laborables",
+et_add:"➕ Agregar tarea",et_remove:"🗑 Eliminar tarea",et_max:"Número máximo de tareas alcanzado (5)",
+et_none:"No hay tareas extra activas — agrega una",map_no_axes:"No hay rutas definidas en la lista de opciones",
 et_name:"Nombre de la tarea",et_options:"Opciones (una por línea)",et_morning:"Valores de mañana (uno por línea)",
 et_noon:"Valores de mediodía (uno por línea)",et_tg_m:"Veces por semana (mañana)",et_tg_n:"Veces por semana (mediodía)",
 notes_general:"Notas generales de asignación",notes_hint:"Texto libre para documentar — la app nunca lo lee",
@@ -323,7 +326,6 @@ order_hint:"Arrastra (⠿) o usa las flechas — se guarda automáticamente",
 save_settings:"💾 Guardar configuración",settings_saved:"Configuración guardada",
 lbl_he:"Hebreo",lbl_en:"Inglés",lbl_es:"Español",
 opt_escort:"Escolta",opt_vehicle:"Vehículo",opt_axis:"Ruta",opt_wait:"Punta llegada mañana / mediodía",
-opt_wh_wd:"Horas (Lun-Jue)",opt_wh_fr:"Horas (Viernes)",
 special_note:"Valores con significado especial en la asignación — si los renombraste, actualízalos aquí también",
 sv_holiday:"Valor feriado",sv_vehicle:"Vehículo especial",
 tg_yellow:"Vehículos YELLOW por semana",tg_theater:"Teatro por semana",
@@ -345,15 +347,15 @@ pct_title:"📊 % objetivo por campo",pct_value:"Valor",pct_pct:"% meta",pct_tot
 pct_err_100:"⚠️ El total debe ser exactamente 100% para guardar",pct_reset:"↺ División igual",
 pct_hint:"La asignación automática elige el valor más lejano de su % meta",
 map_entry_title:"Ingreso ↔ Ruta",map_exit_title:"Salida ↔ Ruta",map_axes:"Rutas",
-map_hint:"Solo referencia — la app no impone ninguna relación ruta ↔ ingreso/salida",
-map_ph:"Texto libre, p. ej. A-U, B-D"}
+map_hint:"Solo referencia — la app no impone ninguna relación ruta ↔ ingreso/salida"}
 };
 
 /* ═══════════════ default config (mirrors ~/Agenda app_config.py) ═══════════════ */
 /* Nothing about a particular station is baked in: employee groups, workplaces,
    working days and the extra task are all data. A station in any country
    reshapes the app entirely from the Settings screen. */
-const MAX_GROUPS = 5, MAX_WORKPLACES = 5;
+const MAX_GROUPS = 5, MAX_WORKPLACES = 5, MAX_EXTRAS = 5;
+const DEFAULT_VAC_BUDGET = 14;
 const DEFAULT_CONFIG = {
   schema_version: 2,
   groups: [
@@ -377,21 +379,29 @@ const DEFAULT_CONFIG = {
   work_days: {
     days: ["monday","tuesday","wednesday","thursday","friday"],
     labels: { sunday:"ראשון", monday:"שני", tuesday:"שלישי", wednesday:"רביעי",
-              thursday:"חמישי", friday:"שישי 🕕", saturday:"שבת" }
+              thursday:"חמישי", friday:"שישי 🕕", saturday:"שבת" },
+    /* one shared work-hours list for every working day */
+    hour_options: ["7:30-16:00","8:00-16:30","8:30-17:00",
+                   "7:30-13:30","8:00-14:00","8:30-14:30","7:30-13:00","8:00-13:30"]
   },
-  /* headings of the two work-hours option lists */
-  work_day_labels: { weekday:"א'-ה'", friday:"שישי" },
-  extra_task: {
-    label: { he:"משימה נוספת", en:"Extra Task", es:"Tarea Extra" },
-    options: ["EMB-M","EMB-T","R-M","R-T"],
-    targets: { morning:3, noon:2 },
-    morning_values: ["EMB-M","R-M"],
-    noon_values: ["EMB-T","R-T"]
-  },
+  /* up to MAX_EXTRAS independent extra-task rows; et1 keeps the row key
+     "udex" so already-archived weeks stay readable */
+  extra_tasks: [
+    { id:"et1", label:{ he:"משימה נוספת", en:"Extra Task", es:"Tarea Extra" },
+      options:["EMB-M","EMB-T","R-M","R-T"],
+      morning_values:["EMB-M","R-M"], noon_values:["EMB-T","R-T"],
+      target_morning:3, target_noon:2, active:true },
+    { id:"et2", label:{he:"",en:"",es:""}, options:[], morning_values:[], noon_values:[],
+      target_morning:0, target_noon:0, active:false },
+    { id:"et3", label:{he:"",en:"",es:""}, options:[], morning_values:[], noon_values:[],
+      target_morning:0, target_noon:0, active:false },
+    { id:"et4", label:{he:"",en:"",es:""}, options:[], morning_values:[], noon_values:[],
+      target_morning:0, target_noon:0, active:false },
+    { id:"et5", label:{he:"",en:"",es:""}, options:[], morning_values:[], noon_values:[],
+      target_morning:0, target_noon:0, active:false }
+  ],
   vacation_budget: { LEON:14, TORO:14, HALCON:30, CHCHORRO:30, BUHO:30 },
   options: {
-    work_hours_weekday: ["7:30-16:00","8:00-16:30","8:30-17:00"],
-    work_hours_friday:  ["7:30-13:30","8:00-14:00","8:30-14:30","7:30-13:00","8:00-13:30"],
     entry: ["10","13","10-T","13-D","SPLIT","חג"],
     exit:  ["10","13","13-T","10-D","SPLIT","חג"],
     escort:["200","201","300","301","400","500"],
@@ -407,7 +417,7 @@ const DEFAULT_CONFIG = {
   },
   special_values: { holiday:"חג", vehicle_special:"YELLOW" },
   targets: { yellow_per_week:3, theater_per_week:3, field_pcts:{} },
-  /* manual reference maps (free text, never enforced): value -> axes text */
+  /* manual reference maps, never enforced: entry/exit value -> [axis letters] */
   entry_axis_map: {},
   exit_axis_map: {},
   /* free-text station notes; documentation only, never read by the logic */
@@ -437,7 +447,7 @@ const PCT_LABELS = {entry:()=>rowLabel("entry"), exit:()=>rowLabel("exit"),
    custom rows are injected at "@workplaces" / "@custom" when the natural
    order is built (see naturalRowKeys). */
 const FIXED_ROW_ORDER = ["work_hours","entry","exit","escort_morning","school","escort_noon",
-  "@workplaces","other_empl","arrival_point","theater","udex",
+  "@workplaces","other_empl","arrival_point","theater","@extras",
   "vehicle_morning","axis_morning","wait_morning","taxi_apt","taxi_arrival",
   "vehicle_noon","axis_noon","wait_noon","taxi_emb","taxi_arrival_noon","@custom","vacation"];
 /* which config option list feeds each select row */
@@ -452,7 +462,7 @@ const TEXT_ROWS = new Set(["school"]);
 const FIXED_DIVIDERS = ["arrival_point","vehicle_morning","vehicle_noon","vacation"];
 const FIXED_HISTORY_FIELDS = ["entry","exit","arrival_point","theater",
   "axis_morning","axis_noon","wait_morning","wait_noon","taxi_apt","taxi_arrival",
-  "vehicle_morning","vehicle_noon","udex","taxi_emb","taxi_arrival_noon"];
+  "vehicle_morning","vehicle_noon","taxi_emb","taxi_arrival_noon"];
 
 /* ═══════════════ storage ═══════════════ */
 const LS = {config:"agenda_config", archive:"agenda_archive", draft:"agenda_draft", lang:"agenda_lang"};
@@ -474,14 +484,64 @@ function migrateConfig(cfg, raw){
     cfg.groups[0].employees=il; cfg.groups[0].active=true;
     cfg.groups[1].employees=pe; cfg.groups[1].active=pe.length>0;
   }
-  if (!raw.extra_task){
+  /* v1 UDEX → the first extra task */
+  if (!raw.extra_task && !raw.extra_tasks){
     const o=(raw.options||{}).udex, sv=raw.special_values||{}, tg=raw.targets||{};
-    if (Array.isArray(o) && o.length) cfg.extra_task.options=o.filter(Boolean);
-    if (Array.isArray(sv.udex_morning)) cfg.extra_task.morning_values=sv.udex_morning.filter(Boolean);
-    if (Array.isArray(sv.udex_noon))    cfg.extra_task.noon_values=sv.udex_noon.filter(Boolean);
-    if (tg.udex_m!=null) cfg.extra_task.targets.morning=+tg.udex_m||0;
-    if (tg.udex_t!=null) cfg.extra_task.targets.noon=+tg.udex_t||0;
+    const et=cfg.extra_tasks[0];
+    if (Array.isArray(o) && o.length) et.options=o.filter(Boolean);
+    if (Array.isArray(sv.udex_morning)) et.morning_values=sv.udex_morning.filter(Boolean);
+    if (Array.isArray(sv.udex_noon))    et.noon_values=sv.udex_noon.filter(Boolean);
+    if (tg.udex_m!=null) et.target_morning=+tg.udex_m||0;
+    if (tg.udex_t!=null) et.target_noon=+tg.udex_t||0;
   }
+  /* v2 single extra_task → extra_tasks[0] */
+  if (raw.extra_task && !raw.extra_tasks){
+    const o=raw.extra_task, t0=o.targets||{}, et=cfg.extra_tasks[0];
+    if (o.label) et.label={he:o.label.he||"", en:o.label.en||"", es:o.label.es||""};
+    if (Array.isArray(o.options)) et.options=o.options.filter(Boolean);
+    if (Array.isArray(o.morning_values)) et.morning_values=o.morning_values.filter(Boolean);
+    if (Array.isArray(o.noon_values))    et.noon_values=o.noon_values.filter(Boolean);
+    if (t0.morning!=null) et.target_morning=+t0.morning||0;
+    if (t0.noon!=null)    et.target_noon=+t0.noon||0;
+    et.active=true;
+  }
+  delete cfg.extra_task;
+  while (cfg.extra_tasks.length < MAX_EXTRAS)
+    cfg.extra_tasks.push({id:"et"+(cfg.extra_tasks.length+1), label:{he:"",en:"",es:""},
+      options:[], morning_values:[], noon_values:[],
+      target_morning:0, target_noon:0, active:false});
+  cfg.extra_tasks.forEach(et=>{
+    et.label=et.label||{he:"",en:"",es:""};
+    ["options","morning_values","noon_values"].forEach(k=>{
+      et[k]=(et[k]||[]).filter(Boolean); });
+  });
+  /* The two per-day-type work-hours lists became one shared list. Test the
+     RAW config, not the merged one: a v1 file has no work_days at all, so the
+     merged copy already carries the shipped defaults and would mask the
+     user's own hours. */
+  const wd=cfg.work_days;
+  if (!(((raw.work_days||{}).hour_options)||[]).filter(Boolean).length){
+    const seen=new Set(), merged=[];
+    [((raw.options||{}).work_hours_weekday)||[], ((raw.options||{}).work_hours_friday)||[]]
+      .forEach(list=>list.forEach(v=>{ if(v&&!seen.has(v)){ seen.add(v); merged.push(v); } }));
+    if (merged.length) wd.hour_options=merged;
+  }
+  wd.hour_options=(wd.hour_options||[]).filter(Boolean);
+  if (cfg.options){ delete cfg.options.work_hours_weekday; delete cfg.options.work_hours_friday; }
+  delete cfg.work_day_labels;
+  /* axis reference maps: free text ("D, B") → a list of axis letters */
+  ["entry_axis_map","exit_axis_map"].forEach(k=>{
+    const m=cfg[k]||{}, out={};
+    for(const v in m){
+      const raw2=m[v];
+      const list=Array.isArray(raw2)?raw2:String(raw2||"").split(/[,\s]+/);
+      const letters=[];
+      list.forEach(x=>{ const L=String(x||"").trim().charAt(0).toUpperCase();
+        if(L&&!letters.includes(L)) letters.push(L); });
+      if(letters.length) out[v]=letters;
+    }
+    cfg[k]=out;
+  });
   delete cfg.employees;
   if (cfg.options) delete cfg.options.udex;
   if (cfg.special_values){ delete cfg.special_values.udex_morning; delete cfg.special_values.udex_noon; }
@@ -583,8 +643,8 @@ function dayLabel(isoStr){
   const n=dowName(isoStr);
   return (((CFG.work_days||{}).labels)||{})[n] || t(n) || n;
 }
-function isShortDay(isoStr){ return dowName(isoStr)==="friday"; }
-function workHoursList(isoStr){ return opts(isShortDay(isoStr)?"work_hours_friday":"work_hours_weekday"); }
+/* one shared work-hours list, offered on every working day */
+function hourOptions(){ return (((CFG.work_days||{}).hour_options)||[]).filter(Boolean); }
 
 /* ── employee groups ────────────────────────────────────────────────────── */
 function groupsAll(){ return CFG.groups||[]; }
@@ -604,10 +664,7 @@ function allEmps(){
 const LEGACY_VAC = {g1:"vacation_il", g2:"vacation_pe"};
 function vacField(g){ return LEGACY_VAC[g.id]||("vacation_"+g.id); }
 function vacFields(){ return activeGroups().map(vacField); }
-function defaultVacBudget(emp){
-  const g=activeGroups().find(x=>(x.employees||[]).includes(emp));
-  return g&&g.id==="g1"?14:30;
-}
+function defaultVacBudget(){ return DEFAULT_VAC_BUDGET; }
 
 /* ── workplaces & their sections ────────────────────────────────────────── */
 function workplacesAll(){ return CFG.workplaces||[]; }
@@ -628,18 +685,33 @@ function sectionLabel(x){
 }
 function newId(prefix){ return prefix+Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
 
-/* ── extra task (was UDEX) ──────────────────────────────────────────────── */
-function extraCfg(){ return CFG.extra_task||{}; }
-function extraLabel(lang){
-  const l=extraCfg().label||{};
+/* ── extra tasks (was the single UDEX row) ──────────────────────────────── */
+function extrasAll(){ return CFG.extra_tasks||[]; }
+function activeExtras(){ return extrasAll().filter(e=>e&&e.active); }
+/* the first task keeps the original row key so archived weeks still read */
+function extraRowKey(et){ return et.id==="et1"?"udex":("extra_"+et.id); }
+function extraRowKeys(){ return activeExtras().map(extraRowKey); }
+function extraByRow(rk){ return activeExtras().find(e=>extraRowKey(e)===rk)||null; }
+function extraLabel(et, lang){
+  const l=(et&&et.label)||{};
   lang=lang||S.lang;
-  return l[lang]||l.he||l.en||"udex";
+  return l[lang]||l.he||l.en||(et?et.id:"");
 }
-function extraOptions(){ return (extraCfg().options||[]).filter(Boolean); }
-function extraMorning(){ return (extraCfg().morning_values||[]).filter(Boolean); }
-function extraNoon(){ return (extraCfg().noon_values||[]).filter(Boolean); }
-function extraTargets(){ const t=extraCfg().targets||{};
-  return {morning:+t.morning||0, noon:+t.noon||0}; }
+function extraTargets(et){
+  return {morning:+((et||{}).target_morning)||0, noon:+((et||{}).target_noon)||0};
+}
+/* distinct axis letters behind the configured axis values (A-U, A-D → A) */
+function axisLetters(){
+  const out=[];
+  opts("axis").forEach(a=>{ const L=String(a).trim().charAt(0).toUpperCase();
+    if(L&&!out.includes(L)) out.push(L); });
+  return out;
+}
+function axisMap(key){
+  const m=CFG[key]||{}, out={};
+  for(const v in m) out[v]=Array.isArray(m[v])?m[v].slice():[];
+  return out;
+}
 
 /* ── rows ───────────────────────────────────────────────────────────────── */
 function opts(name){ return (CFG.options[name]||[]).filter(Boolean); }
@@ -650,6 +722,7 @@ function naturalRowKeys(){
   const out=[];
   FIXED_ROW_ORDER.forEach(k=>{
     if(k==="@workplaces") out.push(...sectionRowKeys());
+    else if(k==="@extras") out.push(...extraRowKeys());
     else if(k==="@custom") out.push(...customKeys());
     else out.push(k);
   });
@@ -665,7 +738,7 @@ function scheduleFields(){
   return naturalRowKeys().filter(k=>k!=="vacation").concat(vacFields());
 }
 /* the counters auto-assign balances against */
-function historyFields(){ return FIXED_HISTORY_FIELDS.concat(sectionRowKeys()); }
+function historyFields(){ return FIXED_HISTORY_FIELDS.concat(sectionRowKeys(), extraRowKeys()); }
 /* row key → the divider text shown above it */
 function rowDividers(){
   const m={};
@@ -680,7 +753,8 @@ function rowLabel(key, lang){
   lang = lang||S.lang;
   const ov=(CFG.row_labels||{})[key];
   if (ov && ov[lang]) return ov[lang];
-  if (key==="udex") return extraLabel(lang);
+  const et=extraByRow(key);
+  if (et) return extraLabel(et, lang);
   const sx=sectionByRow(key);
   if (sx) return sectionLabel(sx);
   const cr=customRows().find(r=>r.key===key);
@@ -873,14 +947,17 @@ function autoAssign(){
   keys.forEach(k=>{ ["vehicle_morning","vehicle_noon"].forEach(f=>{
     if(!S.days[k][f]) S.days[k][f]=vehRegular; }); });
 
-  /* extra task: morning-type + noon-type targets, balanced within each type */
-  const mVals=extraMorning(), tVals=extraNoon(), et=extraTargets();
-  let extraFree=shuffle(keys.filter(k=>!S.days[k].udex));
-  let mNeed=et.morning-keys.filter(k=>mVals.includes(S.days[k].udex)).length;
-  let tNeed=et.noon   -keys.filter(k=>tVals.includes(S.days[k].udex)).length;
-  const mh={...(hist.udex||{})}, th={...(hist.udex||{})};
-  while(mNeed-->0&&extraFree.length&&mVals.length){ const c=leastUsed(mVals,mh); mh[c]=(mh[c]||0)+1; S.days[extraFree.shift()].udex=c; }
-  while(tNeed-->0&&extraFree.length&&tVals.length){ const c=leastUsed(tVals,th); th[c]=(th[c]||0)+1; S.days[extraFree.shift()].udex=c; }
+  /* extra tasks: each row gets its own morning/noon targets, balanced by type */
+  activeExtras().forEach(et=>{
+    const rk=extraRowKey(et), mVals=(et.morning_values||[]).filter(Boolean),
+          tVals=(et.noon_values||[]).filter(Boolean), tg2=extraTargets(et);
+    let free=shuffle(keys.filter(k=>!S.days[k][rk]));
+    let mNeed=tg2.morning-keys.filter(k=>mVals.includes(S.days[k][rk])).length;
+    let tNeed=tg2.noon   -keys.filter(k=>tVals.includes(S.days[k][rk])).length;
+    const mh={...(hist[rk]||{})}, th={...(hist[rk]||{})};
+    while(mNeed-->0&&free.length&&mVals.length){ const c=leastUsed(mVals,mh); mh[c]=(mh[c]||0)+1; S.days[free.shift()][rk]=c; }
+    while(tNeed-->0&&free.length&&tVals.length){ const c=leastUsed(tVals,th); th[c]=(th[c]||0)+1; S.days[free.shift()][rk]=c; }
+  });
 
   /* theater: exactly N days */
   const thVals=opts("theater");
@@ -903,15 +980,21 @@ function validate(){
   if(!S.days) return [];
   const errs=[];
   const sv=CFG.special_values, tg=CFG.targets, VS=sv.vehicle_special;
-  const mV=extraMorning(), nV=extraNoon(), et=extraTargets();
+  const extras=activeExtras();
+  const exCount={};                            // row key → {m, n}
+  extras.forEach(e=>exCount[extraRowKey(e)]={m:0,n:0});
   const secs=allSections();
-  let yellow=0,um=0,ut=0,th=0;
+  let yellow=0,th=0;
   for(const dk of Object.keys(S.days).sort()){
     const day=S.days[dk], d=fmtDM(dk);
     if(day.vehicle_morning===VS) yellow++;
     if(day.vehicle_noon===VS) yellow++;
-    if(mV.includes(day.udex)) um++;
-    else if(nV.includes(day.udex)) ut++;
+    extras.forEach(e=>{
+      const rk=extraRowKey(e), v=day[rk];
+      if(!v) return;
+      if((e.morning_values||[]).includes(v)) exCount[rk].m++;
+      else if((e.noon_values||[]).includes(v)) exCount[rk].n++;
+    });
     if(day.theater) th++;
     const other=day.other_empl||"";
     const placed={};                          // employee → the section holding them
@@ -933,8 +1016,11 @@ function validate(){
     });
   }
   if(yellow!==tg.yellow_per_week) errs.push({lvl:"warn",msg:t("warn_yellow",{n:yellow,t:tg.yellow_per_week})});
-  if(um!==et.morning) errs.push({lvl:"warn",msg:t("warn_extra_m",{n:um,t:et.morning,f:extraLabel()})});
-  if(ut!==et.noon)    errs.push({lvl:"warn",msg:t("warn_extra_n",{n:ut,t:et.noon,f:extraLabel()})});
+  extras.forEach(e=>{
+    const c=exCount[extraRowKey(e)], tg2=extraTargets(e), f=extraLabel(e);
+    if(c.m!==tg2.morning) errs.push({lvl:"warn",msg:t("warn_extra_m",{n:c.m,t:tg2.morning,f})});
+    if(c.n!==tg2.noon)    errs.push({lvl:"warn",msg:t("warn_extra_n",{n:c.n,t:tg2.noon,f})});
+  });
   if(th!==tg.theater_per_week) errs.push({lvl:"warn",msg:t("warn_theater",{n:th,t:tg.theater_per_week})});
   return errs;
 }
@@ -1024,12 +1110,12 @@ function selCell(dk,field,options,val,cls,bg){
 }
 function renderRow(rk,keys){
   const cr=customRows().find(r=>r.key===rk);
-  const sx=sectionByRow(rk);
+  const sx=sectionByRow(rk), ex=extraByRow(rk);
   let h=`<tr><td class="label">${esc(rowLabel(rk))}</td>`;
   for(let i=0;i<keys.length;i++){
     const dk=keys[i], day=S.days[dk];
     if(rk==="work_hours"){
-      h+=selCell(dk,"work_hours",workHoursList(dk),day.work_hours);
+      h+=selCell(dk,"work_hours",hourOptions(),day.work_hours);
     } else if(rk==="vacation"){
       /* one picker per active group, tinted with that group's colour */
       let c="";
@@ -1047,8 +1133,8 @@ function renderRow(rk,keys){
       if(sx.sec.allow_pair)
         for(let a=0;a<avail.length;a++) for(let b=a+1;b<avail.length;b++) list.push(avail[a]+"+"+avail[b]);
       h+=selCell(dk,rk,list,day[rk],"",g?g.color:"");
-    } else if(rk==="udex"){
-      h+=selCell(dk,rk,extraOptions(),day[rk]);
+    } else if(ex){
+      h+=selCell(dk,rk,(ex.options||[]).filter(Boolean),day[rk]);
     } else if(rk==="other_empl"){
       h+=selCell(dk,rk,allEmps(),day[rk]);
     } else if(TEXT_ROWS.has(rk)||(cr&&cr.input!=="select")){
@@ -1087,7 +1173,7 @@ function groupsPanel(){
     ${free?"":`<span class="hint">${t("grp_max")}</span>`}</p>`;
   h+=`<div class="hint">⚠️ ${t("rename_warn")} · ${t("one_per_line")}</div>`;
   h+=`<h3>${t("vac_budget")}</h3><div class="grid3">`;
-  allEmps().forEach(e=>{ const v=CFG.vacation_budget[e]!=null?CFG.vacation_budget[e]:defaultVacBudget(e);
+  allEmps().forEach(e=>{ const v=CFG.vacation_budget[e]!=null?CFG.vacation_budget[e]:defaultVacBudget();
     h+=`<label>${esc(e)}<br><input type="number" min="0" max="365" data-vb="${esc(e)}" value="${v}"></label>`; });
   h+=`</div><p><button class="btn primary" id="saveGroups">${t("save_settings")}</button></p>`;
   return h;
@@ -1134,31 +1220,41 @@ function workDaysPanel(){
     </div>`;
   });
   h+=`<div class="msg warn" id="wdWarn" style="display:none">${t("wd_none")}</div>`;
-  h+=`<h3>${t("wd_labels_title")}</h3><div class="grid2">
-    <label>${t("wd_lbl_weekday")}<br><input id="wdlWeekday" value="${esc((CFG.work_day_labels||{}).weekday||"")}"></label>
-    <label>${t("wd_lbl_friday")}<br><input id="wdlFriday" value="${esc((CFG.work_day_labels||{}).friday||"")}"></label>
-  </div>
+  h+=`<h3>${t("wd_hours_title")}</h3><div class="hint">${t("wd_hours_hint")}</div>
+    <textarea id="wdHours">${esc(hourOptions().join("\n"))}</textarea>
   <p><button class="btn primary" id="saveWorkDays">${t("save_settings")}</button></p>`;
   return h;
 }
-/* the extra task — name, its values, which are morning/noon, and the targets */
+/* extra tasks — each with its own name, values, morning/noon split and targets */
 function extraPanel(){
-  const et=extraCfg(), tg=extraTargets(), l=et.label||{};
-  return `<div class="grid3">
-    <label>${t("et_name")} (${t("lbl_he")})<br><input id="etHe" value="${esc(l.he||"")}"></label>
-    <label>${t("et_name")} (${t("lbl_en")})<br><input id="etEn" value="${esc(l.en||"")}"></label>
-    <label>${t("et_name")} (${t("lbl_es")})<br><input id="etEs" value="${esc(l.es||"")}"></label>
-  </div>
-  <div class="grid3">
-    <label>${t("et_options")}<br><textarea id="etOpts">${esc(extraOptions().join("\n"))}</textarea></label>
-    <label>${t("et_morning")}<br><textarea id="etM">${esc(extraMorning().join("\n"))}</textarea></label>
-    <label>${t("et_noon")}<br><textarea id="etN">${esc(extraNoon().join("\n"))}</textarea></label>
-  </div>
-  <div class="grid2">
-    <label>${t("et_tg_m")}<br><input type="number" id="etTgM" min="0" max="7" value="${tg.morning}"></label>
-    <label>${t("et_tg_n")}<br><input type="number" id="etTgN" min="0" max="7" value="${tg.noon}"></label>
-  </div>
-  <p><button class="btn primary" id="saveExtra">${t("save_settings")}</button></p>`;
+  const act=activeExtras();
+  let h="";
+  if(!act.length) h+=`<div class="msg warn">${t("et_none")}</div>`;
+  act.forEach(et=>{
+    const id=esc(et.id), l=et.label||{}, tg=extraTargets(et);
+    h+=`<div class="pct-box"><b>${esc(extraLabel(et))}</b>
+    <div class="grid3">
+      <label>${t("et_name")} (${t("lbl_he")})<br><input data-ethe="${id}" value="${esc(l.he||"")}"></label>
+      <label>${t("et_name")} (${t("lbl_en")})<br><input data-eten="${id}" value="${esc(l.en||"")}"></label>
+      <label>${t("et_name")} (${t("lbl_es")})<br><input data-etes="${id}" value="${esc(l.es||"")}"></label>
+    </div>
+    <div class="grid3">
+      <label>${t("et_options")}<br><textarea data-etopts="${id}">${esc((et.options||[]).join("\n"))}</textarea></label>
+      <label>${t("et_morning")}<br><textarea data-etm="${id}">${esc((et.morning_values||[]).join("\n"))}</textarea></label>
+      <label>${t("et_noon")}<br><textarea data-etn="${id}">${esc((et.noon_values||[]).join("\n"))}</textarea></label>
+    </div>
+    <div class="grid2">
+      <label>${t("et_tg_m")}<br><input type="number" data-ettgm="${id}" min="0" max="7" value="${tg.morning}"></label>
+      <label>${t("et_tg_n")}<br><input type="number" data-ettgn="${id}" min="0" max="7" value="${tg.noon}"></label>
+    </div>
+    <div class="row-flex"><button class="btn small warn" data-etremove="${id}">${t("et_remove")}</button></div>
+    </div>`;
+  });
+  const free=extrasAll().find(e=>!e.active);
+  h+=`<p class="row-flex"><button class="btn" id="addExtra" ${free?"":"disabled"}>${t("et_add")}</button>
+    ${free?"":`<span class="hint">${t("et_max")}</span>`}</p>`;
+  h+=`<p><button class="btn primary" id="saveExtra">${t("save_settings")}</button></p>`;
+  return h;
 }
 function notesPanel(){
   return `<div class="hint">${t("notes_hint")}</div>
@@ -1197,14 +1293,11 @@ function viewSettings(){
     <input data-lbl="${k}" data-lang="es" value="${esc(rowLabel(k,"es"))}"></div>`; });
   h+=sect("labels",t("s_labels"),lab+`<p><button class="btn primary" id="saveLabels">${t("save_settings")}</button></p>`);
   /* options */
-  const wdl=CFG.work_day_labels||{};
   const groups=[["entry",rowLabel("entry")],["exit",rowLabel("exit")],["escort",t("opt_escort")],
     ["arrival_point",rowLabel("arrival_point")],["theater",rowLabel("theater")],
     ["vehicle",t("opt_vehicle")],["axis",t("opt_axis")],["wait_spot",t("opt_wait")],
     ["taxi_apt",rowLabel("taxi_apt")],["taxi_arrival",rowLabel("taxi_arrival")],
-    ["taxi_emb",rowLabel("taxi_emb")],["taxi_arrival_noon",rowLabel("taxi_arrival_noon")],
-    ["work_hours_weekday",rowLabel("work_hours")+" ("+(wdl.weekday||"")+")"],
-    ["work_hours_friday", rowLabel("work_hours")+" ("+(wdl.friday||"")+")"]];
+    ["taxi_emb",rowLabel("taxi_emb")],["taxi_arrival_noon",rowLabel("taxi_arrival_noon")]];
   let op=`<div class="hint">${t("one_per_line")}</div><div class="grid3">`;
   groups.forEach(([k,lbl])=>{ op+=`<label>${esc(lbl)}<br><textarea data-opt="${k}">${esc((CFG.options[k]||[]).join("\n"))}</textarea></label>`; });
   op+=`</div><div class="hint">⚠️ ${t("special_note")}</div><div class="grid2">
@@ -1259,8 +1352,8 @@ function viewSettings(){
 /* rows renamed on the Labels tab: not sections (named by their workplace),
    not the extra task (its own tab), not custom rows (their own editor) */
 function labelledRowKeys(){
-  const secKeys=new Set(sectionRowKeys()), cKeys=new Set(customKeys());
-  return naturalRowKeys().filter(k=>k!=="udex"&&!secKeys.has(k)&&!cKeys.has(k));
+  const skip=new Set(sectionRowKeys().concat(customKeys(), extraRowKeys()));
+  return naturalRowKeys().filter(k=>!skip.has(k));
 }
 
 /* editable target-% table per balanced field, shown under Targets */
@@ -1287,15 +1380,23 @@ function pctTables(){
   return h;
 }
 
-/* manual, never-enforced reference maps: entry↔axis and exit↔axis */
+/* manual, never-enforced reference maps: entry↔axis and exit↔axis.
+   One checkbox per axis LETTER, rebuilt from opts("axis") every render, so
+   adding or removing an axis updates the boxes on its own. */
 function mapTables(){
+  const letters=axisLetters();
   const block=(optKey,cfgKey,title)=>{
-    const list=opts(optKey), m=CFG[cfgKey]||{};
+    const list=opts(optKey), m=axisMap(cfgKey);
     let x=`<div class="pct-box"><b>${esc(title)}</b>
       <table class="stats"><tr><th>${esc(rowLabel(optKey))}</th><th>${t("map_axes")}</th></tr>`;
-    list.forEach(v=>{ x+=`<tr><td style="font-weight:600">${esc(v)}</td>
-      <td><input class="map-inp" data-map="${cfgKey}" data-val="${esc(v)}"
-        value="${esc(m[v]||"")}" placeholder="${esc(t("map_ph"))}"></td></tr>`; });
+    if(!letters.length) x+=`<tr><td colspan="2" class="hint">${t("map_no_axes")}</td></tr>`;
+    list.forEach(v=>{
+      const on=m[v]||[];
+      x+=`<tr><td style="font-weight:600">${esc(v)}</td><td><div class="chk-row">`;
+      letters.forEach(L=>{ x+=`<label class="chk"><input type="checkbox" data-map="${cfgKey}"`+
+        ` data-val="${esc(v)}" data-letter="${esc(L)}" ${on.includes(L)?"checked":""}> ${esc(L)}</label>`; });
+      x+=`</div></td></tr>`;
+    });
     x+=`</table><p><button class="btn small primary" data-mapsave="${cfgKey}">💾 ${t("save_settings")}</button></p></div>`;
     return x;
   };
@@ -1348,9 +1449,10 @@ function computeStats(schedules){
   const empC={}; emps.forEach(e=>{ empC[e]={}; roles.forEach(r=>empC[e][r]=0); });
   const vac={}, oth={}; emps.forEach(e=>{vac[e]=0;oth[e]=0;});
   const vFields=vacFields();
-  const fields=["entry","exit","escort_morning","escort_noon","arrival_point","theater","udex",
+  const fields=["entry","exit","escort_morning","escort_noon","arrival_point","theater",
     "vehicle_morning","axis_morning","wait_morning","taxi_apt","taxi_arrival",
     "vehicle_noon","axis_noon","wait_noon","taxi_emb","taxi_arrival_noon"]
+    .concat(extraRowKeys())
     .concat(customRows().filter(r=>r.input==="select").map(r=>r.key));
   const fieldC={}; fields.forEach(f=>fieldC[f]={});
   let nd=0;
@@ -1514,8 +1616,8 @@ function wire(){
       if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); };
     document.querySelectorAll("table.sched select,table.sched input").forEach(el=>{
       el.onchange=()=>{ S.days[el.dataset.dk][el.dataset.f]=el.value; S.dirty=true; saveDraft();
-        const rerender=vacFields().concat(sectionRowKeys(),
-          ["vehicle_morning","vehicle_noon","udex","theater","other_empl"]);
+        const rerender=vacFields().concat(sectionRowKeys(), extraRowKeys(),
+          ["vehicle_morning","vehicle_noon","theater","other_empl"]);
         if(rerender.includes(el.dataset.f)) render();
         else updateStatus(); };
     });
@@ -1605,9 +1707,11 @@ function wireSettings(){
   };
   if($("saveGroups")) $("saveGroups").onclick=()=>{
     readGroups();
-    const vb={};
+    /* merge, never replace: an employee removed from a group keeps their
+       budget in CFG so it comes back with them */
+    const vb={...(CFG.vacation_budget||{})};
     document.querySelectorAll("[data-vb]").forEach(inp=>{ vb[inp.dataset.vb]=parseInt(inp.value||0,10)||0; });
-    allEmps().forEach(e=>{ if(vb[e]==null) vb[e]=defaultVacBudget(e); });
+    allEmps().forEach(e=>{ if(vb[e]==null) vb[e]=defaultVacBudget(); });
     CFG.vacation_budget=vb;
     saveConfig(); resyncDays(); render(); reopen("groups");
   };
@@ -1678,23 +1782,49 @@ function wireSettings(){
     if(!days.length){ toast(t("wd_none")); return; }
     const labels={};
     document.querySelectorAll("[data-wdlbl]").forEach(inp=>{ labels[inp.dataset.wdlbl]=inp.value.trim()||t(inp.dataset.wdlbl); });
-    CFG.work_days={days:DOW_ORDER.filter(d=>days.includes(d)), labels};
-    CFG.work_day_labels={weekday:$("wdlWeekday").value.trim(), friday:$("wdlFriday").value.trim()};
+    CFG.work_days={
+      days:DOW_ORDER.filter(d=>days.includes(d)), labels,
+      hour_options:$("wdHours").value.split("\n").map(x=>x.trim()).filter(Boolean)
+    };
     saveConfig(); resyncDays(); render(); reopen("workdays");
   };
-  /* ── extra task ── */
-  if($("saveExtra")) $("saveExtra").onclick=()=>{
-    const lines=id=>$(id).value.split("\n").map(x=>x.trim()).filter(Boolean);
-    const he=$("etHe").value.trim();
-    CFG.extra_task={
-      label:{he:he||"?", en:$("etEn").value.trim()||he||"?", es:$("etEs").value.trim()||he||"?"},
-      options:lines("etOpts"),
-      morning_values:lines("etM"),
-      noon_values:lines("etN"),
-      targets:{morning:+$("etTgM").value||0, noon:+$("etTgN").value||0}
-    };
-    saveConfig(); render(); reopen("extra");
+  /* ── extra tasks ── */
+  const readExtras=()=>{
+    const val=(attr,id)=>{ const el=document.querySelector(`[data-${attr}="${id}"]`);
+      return el?el.value:null; };
+    const lines=(attr,id)=>{ const v=val(attr,id);
+      return v==null?null:v.split("\n").map(x=>x.trim()).filter(Boolean); };
+    extrasAll().forEach(et=>{
+      if(!et.active) return;
+      if(val("ethe",et.id)!=null){
+        const he=(val("ethe",et.id)||"").trim();
+        et.label={he:he||et.id, en:(val("eten",et.id)||"").trim()||he||et.id,
+                  es:(val("etes",et.id)||"").trim()||he||et.id};
+      }
+      const o=lines("etopts",et.id); if(o) et.options=o;
+      const m=lines("etm",et.id);    if(m) et.morning_values=m;
+      const n=lines("etn",et.id);    if(n) et.noon_values=n;
+      const tm=val("ettgm",et.id);   if(tm!=null) et.target_morning=+tm||0;
+      const tn=val("ettgn",et.id);   if(tn!=null) et.target_noon=+tn||0;
+    });
   };
+  if($("saveExtra")) $("saveExtra").onclick=()=>{
+    readExtras(); saveConfig(); resyncDays(); render(); reopen("extra"); };
+  if($("addExtra")) $("addExtra").onclick=()=>{
+    readExtras();
+    const et=extrasAll().find(e=>!e.active);
+    if(!et){ toast("⚠️ "+t("et_max")); return; }
+    et.active=true;
+    if(!(et.label&&et.label.he)){ const n=et.id.toUpperCase();
+      et.label={he:n,en:n,es:n}; }
+    saveConfig(); resyncDays(); render(); reopen("extra");
+  };
+  document.querySelectorAll("[data-etremove]").forEach(b=>b.onclick=()=>{
+    readExtras();
+    const et=extrasAll().find(e=>e.id===b.dataset.etremove); if(!et) return;
+    et.active=false;                     // switched off; its values are kept
+    saveConfig(); resyncDays(); render(); reopen("extra");
+  });
   /* ── free-text assignment notes ── */
   if($("saveNotes")) $("saveNotes").onclick=()=>{
     CFG.assign_notes=$("assignNotes").value;
@@ -1789,9 +1919,11 @@ function wireSettings(){
   document.querySelectorAll("[data-pctsave]").forEach(b=>b.onclick=()=>{
     const key=b.dataset.pctsave;
     if(pctTotal(key)!==100){ toast(t("pct_err_100")); return; }
-    const o={};
-    document.querySelectorAll(`[data-pct="${key}"]`).forEach(i=>o[i.dataset.val]=parseInt(i.value||0,10)||0);
+    /* merge, never replace: a value later deleted from the option list keeps
+       its saved percentage in CFG in case it comes back */
     CFG.targets.field_pcts=CFG.targets.field_pcts||{};
+    const o={...(CFG.targets.field_pcts[key]||{})};
+    document.querySelectorAll(`[data-pct="${key}"]`).forEach(i=>o[i.dataset.val]=parseInt(i.value||0,10)||0);
     CFG.targets.field_pcts[key]=o;
     if(key==="vehicle") CFG.targets.yellow_per_week=yellowFromPcts(o);
     saveConfig(); render();
@@ -1799,8 +1931,8 @@ function wireSettings(){
   /* ── manual entry/exit ↔ axis reference maps ── */
   document.querySelectorAll("[data-mapsave]").forEach(b=>b.onclick=()=>{
     const k=b.dataset.mapsave, o={};
-    document.querySelectorAll(`[data-map="${k}"]`).forEach(i=>{
-      const v=i.value.trim(); if(v) o[i.dataset.val]=v; });
+    document.querySelectorAll(`[data-map="${k}"]:checked`).forEach(i=>{
+      (o[i.dataset.val]=o[i.dataset.val]||[]).push(i.dataset.letter); });
     CFG[k]=o; saveConfig(); render();
     reopen("targets"); });
   $("addRow").onclick=()=>{

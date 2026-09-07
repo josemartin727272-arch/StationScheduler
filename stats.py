@@ -21,7 +21,6 @@ VALUE_FIELDS = [
     ("exit",            "Exit"),
     ("arrival_point",   "Arrival Point"),
     ("theater",         "Theater"),
-    ("udex",            "Extra Task"),
     ("vehicle_morning", "Vehicle Morning"),
     ("axis_morning",    "Axis Morning"),
     ("wait_morning",    "Wait Morning"),
@@ -57,6 +56,8 @@ def compute_stats(schedules: list) -> tuple:
     roles = cfg.section_row_keys()
     emp_counts = {e: {r: 0 for r in roles} for e in all_employees}
     field_counts = {f: {} for f, _ in VALUE_FIELDS}
+    for _et in cfg.active_extras():          # one column per extra-task row
+        field_counts.setdefault(cfg.extra_row_key(_et), {})
     vacation_counts = {e: 0 for e in all_employees}
     other_counts = {e: 0 for e in all_employees}
     num_days = 0
@@ -72,7 +73,7 @@ def compute_stats(schedules: list) -> tuple:
                         emp_counts[emp][role] += 1
 
             # Value fields (normalize renamed option values)
-            for field, _ in VALUE_FIELDS:
+            for field in field_counts:
                 val = day.get(field, "")
                 if val:
                     if field == "theater":
