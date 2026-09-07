@@ -8,7 +8,7 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
-<title>שאולי מוניות 🚕</title>
+<title>אשר סידור מוניות 🚕</title>
 <style>
 :root{
   --primary:#1F4E79; --primary-lt:#2E86C1; --accent:#FFC800;
@@ -197,7 +197,7 @@ details.guide-ch>summary{font-size:1rem;gap:10px}
 "use strict";
 /* ═══════════════ i18n ═══════════════ */
 const I18N = {
-he:{app_title:"שאולי מוניות",nav_sched:"📋 סידור",nav_settings:"⚙️ הגדרות",nav_archive:"📁 ארכיון",nav_stats:"📊 סטטיסטיקה",
+he:{app_title:"אשר סידור מוניות",nav_sched:"📋 סידור",nav_settings:"⚙️ הגדרות",nav_archive:"📁 ארכיון",nav_stats:"📊 סטטיסטיקה",
 nav_guide:"📖 מדריך",guide_lead:"מדריך קצר לכל מה שהמערכת יודעת לעשות. פתח פרק כדי לקרוא אותו.",
 week_start:"תחילת שבוע",generate:"צור סידור",auto_assign:"⚡ שיבוץ אוטומטי",save:"💾 שמור",export_excel:"📤 ייצוא Excel",print:"🖨️ הדפסה",
 saved:"הסידור נשמר בארכיון",valid:"הסידור תקין ✓",replace_q:"קיים סידור שמור לשבוע זה — להחליף?",yes:"כן",no:"ביטול",
@@ -278,7 +278,7 @@ ax_add:"➕ הוסף ציר",ax_max:"הגעת למספר הצירים המרבי
 err_axis_ud:"ציר {a}: סכום U+D הוא {n}%, חייב 100%",
 err_axis_rule_pct:"{f} {v}: סכום אחוזי הצירים הוא {n}%, חייב 100%",
 warn_axis_rule:"{f} {a} לא מותר עבור {e} {v}"},
-en:{app_title:"Taxi Scheduler",nav_sched:"📋 Schedule",nav_settings:"⚙️ Settings",nav_archive:"📁 Archive",nav_stats:"📊 Statistics",
+en:{app_title:"Asher Taxi Scheduler",nav_sched:"📋 Schedule",nav_settings:"⚙️ Settings",nav_archive:"📁 Archive",nav_stats:"📊 Statistics",
 nav_guide:"📖 Guide",guide_lead:"A short guide to everything the app can do. Open a chapter to read it.",
 week_start:"Week start",generate:"New Schedule",auto_assign:"⚡ Auto Assign",save:"💾 Save",export_excel:"📤 Export Excel",print:"🖨️ Print",
 saved:"Schedule saved to archive",valid:"Schedule is valid ✓",replace_q:"A schedule exists for this week — replace?",yes:"Yes",no:"Cancel",
@@ -359,7 +359,7 @@ ax_add:"➕ Add axis",ax_max:"Maximum number of axes reached",ax_none:"No active
 err_axis_ud:"Axis {a}: U+D totals {n}%, must be 100%",
 err_axis_rule_pct:"{f} {v}: axis shares total {n}%, must be 100%",
 warn_axis_rule:"{f} {a} is not allowed for {e} {v}"},
-es:{app_title:"Programador de Taxis",nav_sched:"📋 Horario",nav_settings:"⚙️ Configuración",nav_archive:"📁 Archivo",nav_stats:"📊 Estadísticas",
+es:{app_title:"Asher Programador de Taxis",nav_sched:"📋 Horario",nav_settings:"⚙️ Configuración",nav_archive:"📁 Archivo",nav_stats:"📊 Estadísticas",
 nav_guide:"📖 Guía",guide_lead:"Una guía breve de todo lo que hace la app. Abre un capítulo para leerlo.",
 week_start:"Inicio de semana",generate:"Nuevo Horario",auto_assign:"⚡ Asignación Automática",save:"💾 Guardar",export_excel:"📤 Exportar Excel",print:"🖨️ Imprimir",
 saved:"Horario guardado en archivo",valid:"El horario es válido ✓",replace_q:"Existe un horario para esta semana — ¿reemplazar?",yes:"Sí",no:"Cancelar",
@@ -2013,12 +2013,12 @@ function viewStats(){
    tip, warn, qa. */
 const GUIDE = [
 { id:"intro", icon:"📘",
-  title:{he:"מבוא — מה זה שאולי מוניות?", en:"Introduction — what is Taxi Scheduler?",
-         es:"Introducción — ¿qué es Programador de Taxis?"},
+  title:{he:"מבוא — מה זה אשר סידור מוניות?", en:"Introduction — what is Asher Taxi Scheduler?",
+         es:"Introducción — ¿qué es Asher Programador de Taxis?"},
   blocks:[
-  {p:{he:"שאולי מוניות היא מערכת דיגיטלית שעוזרת לך לבנות סידור עבודה שבועי לעובדים שלך — בקלות, במהירות, ובצורה הוגנת לכולם.",
-      en:"Taxi Scheduler is a digital system that helps you build a weekly work schedule for your people — easily, quickly, and fairly for everyone.",
-      es:"Programador de Taxis es un sistema digital que te ayuda a armar el horario semanal de tu personal — fácil, rápido y justo para todos."}},
+  {p:{he:"אשר סידור מוניות היא מערכת דיגיטלית שעוזרת לך לבנות סידור עבודה שבועי לעובדים שלך — בקלות, במהירות, ובצורה הוגנת לכולם.",
+      en:"Asher Taxi Scheduler is a digital system that helps you build a weekly work schedule for your people — easily, quickly, and fairly for everyone.",
+      es:"Asher Programador de Taxis es un sistema digital que te ayuda a armar el horario semanal de tu personal — fácil, rápido y justo para todos."}},
   {h:{he:"מה המערכת עושה בשבילך", en:"What it does for you", es:"Qué hace por ti"}},
   {li:[
     {he:"חוסכת שעות של עבודה ידנית.",

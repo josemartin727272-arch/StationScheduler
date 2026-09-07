@@ -1,7 +1,7 @@
 {
-  "name": "שאולי מוניות 🚕",
-  "short_name": "שאולי מוניות",
-  "description": "Taxi Scheduler — weekly work schedules, fully offline",
+  "name": "אשר סידור מוניות 🚕",
+  "short_name": "אשר סידור מוניות",
+  "description": "Asher Taxi Scheduler — weekly work schedules, fully offline",
   "lang": "he",
   "dir": "rtl",
   "start_url": "./index.html",
