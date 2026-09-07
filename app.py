@@ -372,10 +372,69 @@ if st.session_state.page == "settings":
                     "udex_m": int(v_udex_m),
                     "udex_t": int(v_udex_t),
                     "theater_per_week": int(v_theater),
+                    # keep the per-field percentages; the vehicle row is just
+                    # another view of yellow_per_week, so re-derive it
+                    "field_pcts": config["targets"].get("field_pcts", {}),
                 }
+                cfg.save_config(config)
+                config["targets"]["field_pcts"]["vehicle"] = cfg.default_pcts("vehicle")
                 cfg.save_config(config)
                 st.success("✅ " + t("settings_saved", lang))
                 st.rerun()
+
+        # ── Target percentages per balanced field ──────────────────────────
+        st.markdown("### " + t("pct_title", lang))
+        st.caption(t("pct_hint", lang))
+        for spec in cfg.PCT_FIELDS:
+            key = spec["key"]
+            values = cfg.pct_options(key)
+            if not values:
+                continue
+            current = cfg.field_pcts(key)
+            with st.form(f"pct_form_{key}"):
+                st.markdown(f"**{cfg.pct_label(key, lang)}**")
+                cols = st.columns(min(len(values), 5))
+                entered = {}
+                for i, v in enumerate(values):
+                    entered[v] = cols[i % len(cols)].number_input(
+                        v, min_value=0, max_value=100,
+                        value=int(current.get(v, 0)), key=f"pct_{key}_{v}")
+                total = sum(entered.values())
+                (st.success if total == 100 else st.error)(
+                    f'{t("pct_total", lang)}: {total}%')
+                if st.form_submit_button("💾 " + t("save_settings", lang)):
+                    if total != 100:
+                        st.warning("⚠️ " + t("pct_err_100", lang))
+                    else:
+                        config["targets"].setdefault("field_pcts", {})[key] = \
+                            {k: int(x) for k, x in entered.items()}
+                        if key == "vehicle":
+                            config["targets"]["yellow_per_week"] = round(
+                                entered.get(cfg.special("vehicle_special"), 0) / 10)
+                        cfg.save_config(config)
+                        st.success("✅ " + t("settings_saved", lang))
+                        st.rerun()
+
+        # ── Manual entry/exit ↔ axis reference maps (never enforced) ───────
+        st.markdown("### " + t("map_title", lang))
+        st.caption(t("map_hint", lang))
+        for opt_key, cfg_key, title_key in [
+                ("entry", "entry_axis_map", "map_entry_title"),
+                ("exit", "exit_axis_map", "map_exit_title")]:
+            saved = cfg.reference_map(cfg_key)
+            with st.form(f"map_form_{cfg_key}"):
+                st.markdown(f"**{t(title_key, lang)}**")
+                entered = {}
+                for v in cfg.options(opt_key):
+                    entered[v] = st.text_input(
+                        f'{v} → {t("map_axes", lang)}', value=saved.get(v, ""),
+                        key=f"map_{cfg_key}_{v}")
+                if st.form_submit_button("💾 " + t("save_settings", lang)):
+                    config[cfg_key] = {k: x.strip()
+                                       for k, x in entered.items() if x.strip()}
+                    cfg.save_config(config)
+                    st.success("✅ " + t("settings_saved", lang))
+                    st.rerun()
 
     st.stop()
 

@@ -16,34 +16,9 @@ MANUAL_ROWS = {"escort_morning", "escort_noon", "other_empl", "vacation"}
 # Which rows are optional (can be blank)
 OPTIONAL_ROWS = {"escort_morning", "escort_noon"}
 
-# ── Two independent hard-compatibility pairs (axis letter decides):
-#    axis_morning ↔ entry, axis_noon ↔ exit ─────────────────────────────────
-AXIS_ENTRY_MORNING = {"A": ["13"], "B": ["10", "13-D"], "C": ["13"], "D": ["10"]}
-AXIS_EXIT_NOON     = {"A": ["13"], "B": ["10"], "C": ["10"], "D": ["13"]}
-
-
-def _axis_letter(a: str) -> str:
-    return (a or "")[:1].upper()
-
-
-def allowed_entries(axis_morning: str) -> list:
-    m = AXIS_ENTRY_MORNING.get(_axis_letter(axis_morning)) if axis_morning else None
-    return [e for e in cfg.options("entry") if e in m] if m else cfg.options("entry")
-
-
-def allowed_exits(axis_noon: str) -> list:
-    n = AXIS_EXIT_NOON.get(_axis_letter(axis_noon)) if axis_noon else None
-    return [e for e in cfg.options("exit") if e in n] if n else cfg.options("exit")
-
-
-def allowed_axes_morning(entry: str) -> list:
-    return [a for a in cfg.options("axis")
-            if entry in AXIS_ENTRY_MORNING.get(_axis_letter(a), [])]
-
-
-def allowed_axes_noon(exit_val: str) -> list:
-    return [a for a in cfg.options("axis")
-            if exit_val in AXIS_EXIT_NOON.get(_axis_letter(a), [])]
+# Entry, exit and both axes are independent: nothing constrains an axis to a
+# particular entry/exit. The entry_axis_map / exit_axis_map in config.json are
+# free-text notes for humans and are deliberately never read here.
 
 
 def entry_auto_options() -> list:
@@ -125,16 +100,6 @@ def validate_schedule(schedule: dict, lang: str = "he") -> list:
         vac_pe = day.get("vacation_pe", "")
         other_empl = day.get("other_empl", "")
         d_str = day.get("date").strftime("%d/%m") if day.get("date") else day_key
-        am, an = day.get("axis_morning", ""), day.get("axis_noon", "")
-        en, ex = day.get("entry", ""), day.get("exit", "")
-        if am and en:
-            alw = AXIS_ENTRY_MORNING.get(_axis_letter(am))
-            if alw and en not in alw:
-                errors.append(f"❌ {d_str}: " + t("err_axis_entry", lang, a=am, e=en))
-        if an and ex:
-            alw = AXIS_EXIT_NOON.get(_axis_letter(an))
-            if alw and ex not in alw:
-                errors.append(f"❌ {d_str}: " + t("err_axis_noon_exit", lang, a=an, e=ex))
         if vac_il and "," in vac_il:
             errors.append(f"{day_key}: {t('error_two_il_vacation', lang)}")
         if vac_pe and "," in vac_pe:
@@ -186,30 +151,22 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
     active_il = [e for e in employees_il if e != vac_il and e != other_empl]
     active_pe = [e for e in employees_pe if e != vac_pe and e != other_empl]
 
-    holiday = cfg.special("holiday")
     axis_vals = cfg.options("axis")
 
-    # ── two independent pairs: axis_morning↔entry, axis_noon↔exit ───────────
-    if not day.get("axis_morning"):
-        if day.get("entry"):
-            ax = allowed_axes_morning(day["entry"])
-            if ax:
-                day["axis_morning"] = _least_used(ax, history.get("axis_morning", {}))
-        elif axis_vals:
-            day["axis_morning"] = _least_used(axis_vals, history.get("axis_morning", {}))
+    # ── entry/exit and both axes: independent, each balanced against its own
+    #    target percentages ───────────────────────────────────────────────────
+    if not day.get("axis_morning") and axis_vals:
+        day["axis_morning"] = _least_used(
+            axis_vals, history.get("axis_morning", {}), "axis_morning")
+    if not day.get("axis_noon") and axis_vals:
+        day["axis_noon"] = _least_used(
+            axis_vals, history.get("axis_noon", {}), "axis_noon")
     if not day.get("entry"):
-        allowed = [e for e in allowed_entries(day.get("axis_morning", "")) if e != holiday]
-        day["entry"] = _least_used(allowed, history.get("entry", {}))
-    if not day.get("axis_noon"):
-        if day.get("exit"):
-            ax = allowed_axes_noon(day["exit"])
-            if ax:
-                day["axis_noon"] = _least_used(ax, history.get("axis_noon", {}))
-        elif axis_vals:
-            day["axis_noon"] = _least_used(axis_vals, history.get("axis_noon", {}))
+        day["entry"] = _least_used(
+            entry_auto_options(), history.get("entry", {}), "entry")
     if not day.get("exit"):
-        allowed = [e for e in allowed_exits(day.get("axis_noon", "")) if e != holiday]
-        day["exit"] = _least_used(allowed, history.get("exit", {}))
+        day["exit"] = _least_used(
+            exit_auto_options(), history.get("exit", {}), "exit")
 
     # ── Step 1: EMB IL ──────────────────────────────────────────────────────
     if not day.get("emb_il"):
@@ -253,14 +210,17 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
     # ── Arrival point ───────────────────────────────────────────────────────
     if not day.get("arrival_point"):
         day["arrival_point"] = _least_used(
-            cfg.options("arrival_point"), history.get("arrival_point", {}))
+            cfg.options("arrival_point"), history.get("arrival_point", {}),
+            "arrival_point")
 
     # ── Wait spots ──────────────────────────────────────────────────────────
     wait_vals = cfg.options("wait_spot")
     if not day.get("wait_morning") and wait_vals:
-        day["wait_morning"] = _least_used(wait_vals, history.get("wait_morning", {}))
+        day["wait_morning"] = _least_used(
+            wait_vals, history.get("wait_morning", {}), "wait_spot")
     if not day.get("wait_noon") and wait_vals:
-        day["wait_noon"] = _least_used(wait_vals, history.get("wait_noon", {}))
+        day["wait_noon"] = _least_used(
+            wait_vals, history.get("wait_noon", {}), "wait_spot")
 
     # NOTE: taxis assigned after vehicle type is known (in auto_assign_week_vehicles_udex)
     return day
@@ -357,17 +317,22 @@ def auto_assign_week_vehicles_udex(schedule: dict, history: dict = None,
         yellow_morning = day.get("vehicle_morning") == vehicle_special
         yellow_noon    = day.get("vehicle_noon")    == vehicle_special
 
-        for field in ["taxi_apt", "taxi_arrival"]:
+        # noon taxi rows share the morning rows' percentage tables
+        for field, pct_key in [("taxi_apt", "taxi_apt"),
+                               ("taxi_arrival", "taxi_arrival")]:
             if yellow_morning:
                 if not day.get(field):
-                    day[field] = _least_used(cfg.options(field), history.get(field, {}))
+                    day[field] = _least_used(
+                        cfg.options(field), history.get(field, {}), pct_key)
             else:
                 day[field] = ""
 
-        for field in ["taxi_emb", "taxi_arrival_noon"]:
+        for field, pct_key in [("taxi_emb", "taxi_apt"),
+                               ("taxi_arrival_noon", "taxi_arrival")]:
             if yellow_noon:
                 if not day.get(field):
-                    day[field] = _least_used(cfg.options(field), history.get(field, {}))
+                    day[field] = _least_used(
+                        cfg.options(field), history.get(field, {}), pct_key)
             else:
                 day[field] = ""
 
@@ -376,13 +341,35 @@ def auto_assign_week_vehicles_udex(schedule: dict, history: dict = None,
     return schedule
 
 
-def _least_used(options: list, counts: dict) -> str:
-    """Pick option with lowest cumulative usage count."""
+def _least_used(options: list, counts: dict, field: str = None) -> str:
+    """Weighted least-used: pick the option whose share of past use sits
+    furthest BELOW its target share. With equal targets — the default — this
+    is exactly plain least-used. `field` names an app_config.PCT_FIELDS entry;
+    pass None for ad-hoc lists (employees, EMB pairs) that have no table."""
     if not options:
         return ""
-    min_count = min(counts.get(o, 0) for o in options)
-    candidates = [o for o in options if counts.get(o, 0) == min_count]
-    return random.choice(candidates)
+    pcts = cfg.field_pcts(field) if field else None
+    pool = list(options)
+    if pcts:  # an explicit 0% target means "never assign"
+        positive = [o for o in pool if pcts.get(o) is None or pcts[o] > 0]
+        if positive:
+            pool = positive
+    # values outside the table (a taxi list that diverged, say) get the mean
+    # target so they stay neutral instead of silently dropping to 0%
+    covered = [pcts[o] for o in pool if pcts and pcts.get(o) is not None]
+    fallback = (sum(covered) / len(covered)) if covered else 1.0
+    tgt = {o: max(0.0, pcts[o] if pcts and pcts.get(o) is not None else fallback)
+           for o in pool} if pcts else {o: 1.0 for o in pool}
+    weight = sum(tgt.values())
+    if weight <= 0:
+        tgt, weight = {o: 1.0 for o in pool}, float(len(pool))
+    total = sum(counts.get(o, 0) for o in pool)
+
+    def gap(o):
+        return tgt[o] / weight - (counts.get(o, 0) / total if total else 0.0)
+
+    best = max(gap(o) for o in pool)
+    return random.choice([o for o in pool if gap(o) >= best - 1e-9])
 
 
 def update_history(history: dict, schedule: dict) -> dict:

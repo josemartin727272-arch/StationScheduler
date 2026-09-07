@@ -67,7 +67,15 @@ DEFAULTS = {
         "udex_m": 3,
         "udex_t": 2,
         "theater_per_week": 3,
+        # {field_key: {option: percent}} — target share of each option for the
+        # weighted-least-used auto-assign. Empty ⇒ equal split for every field
+        # (which behaves exactly like plain least-used).
+        "field_pcts": {},
     },
+    # Manual reference maps edited on the Settings page: {entry/exit: free text}.
+    # Documentation only — auto-assign and validation never read these.
+    "entry_axis_map": {},
+    "exit_axis_map": {},
     # Display order of schedule rows (keys). Empty ⇒ natural order
     # (BASE_ROW_KEYS then custom rows). Keys not listed here are appended
     # at the end; unknown/stale keys are ignored. "dates"/"days" always first.
@@ -140,6 +148,101 @@ def special(name: str):
 
 def targets() -> dict:
     return dict(get_config()["targets"])
+
+
+# Fields carrying a target-% table, and the option list each one draws from.
+# "skip_holiday" fields never auto-assign the holiday value.
+PCT_FIELDS = [
+    {"key": "entry",         "opt": "entry", "skip_holiday": True},
+    {"key": "exit",          "opt": "exit",  "skip_holiday": True},
+    {"key": "arrival_point", "opt": "arrival_point"},
+    {"key": "axis_morning",  "opt": "axis"},
+    {"key": "axis_noon",     "opt": "axis"},
+    {"key": "vehicle",       "opt": "vehicle"},
+    {"key": "wait_spot",     "opt": "wait_spot"},
+    {"key": "taxi_apt",      "opt": "taxi_apt"},
+    {"key": "taxi_arrival",  "opt": "taxi_arrival"},
+]
+
+
+def pct_options(key: str) -> list:
+    """Values the target-% table for `key` covers."""
+    spec = next((f for f in PCT_FIELDS if f["key"] == key), None)
+    if not spec:
+        return []
+    holiday = special("holiday")
+    return [o for o in options(spec["opt"])
+            if not (spec.get("skip_holiday") and o == holiday)]
+
+
+def _equal_pcts(values: list) -> dict:
+    """100/N each, rounded, with the remainder absorbed by the last value."""
+    if not values:
+        return {}
+    # int(x + .5) matches JS Math.round, so both front-ends show the same split
+    base, total, out = int(100 / len(values) + 0.5), 0, {}
+    for i, v in enumerate(values):
+        p = 100 - total if i == len(values) - 1 else base
+        out[v], total = p, total + p
+    return out
+
+
+def default_pcts(key: str) -> dict:
+    """Equal split, except vehicles, which mirror the weekly special-vehicle
+    target (3 of the 10 morning+noon slots ⇒ 30/70) so the two never disagree."""
+    values = pct_options(key)
+    if key != "vehicle":
+        return _equal_pcts(values)
+    vs = special("vehicle_special")
+    if len(values) < 2 or vs not in values:
+        return _equal_pcts(values)
+    sp = max(0, min(100, int(targets().get("yellow_per_week", 0) * 10 + 0.5)))
+    rest = [v for v in values if v != vs]
+    out, total = {vs: sp}, sp
+    base = int((100 - sp) / len(rest) + 0.5)
+    for i, v in enumerate(rest):
+        p = 100 - total if i == len(rest) - 1 else base
+        out[v], total = p, total + p
+    return out
+
+
+def field_pcts(key: str) -> dict:
+    """Saved percentages for `key`; options added since the last save fall back
+    to their default share."""
+    values = pct_options(key)
+    default = default_pcts(key)
+    saved = (get_config()["targets"].get("field_pcts") or {}).get(key)
+    if not saved:
+        return default
+    out, any_saved = {}, False
+    for v in values:
+        if saved.get(v) is not None:
+            out[v], any_saved = _to_num(saved[v]), True
+        else:
+            out[v] = default.get(v, 0)
+    return out if any_saved else default
+
+
+def _to_num(v) -> float:
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def pct_label(key: str, lang: str) -> str:
+    """Heading for a target-% table. vehicle/wait_spot name option lists rather
+    than schedule rows, so they take their label from the options tab."""
+    if key == "vehicle":
+        return row_label("vehicle_morning", lang) + " / " + row_label("vehicle_noon", lang)
+    if key == "wait_spot":
+        return row_label("wait_morning", lang) + " / " + row_label("wait_noon", lang)
+    return row_label(key, lang)
+
+
+def reference_map(name: str) -> dict:
+    """entry_axis_map / exit_axis_map — manual notes, never enforced."""
+    return dict(get_config().get(name, {}) or {})
 
 
 def vacation_budget() -> dict:
