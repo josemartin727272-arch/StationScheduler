@@ -67,22 +67,31 @@ DEFAULTS = {
         {"id": "g4", "name": "", "color": "#FADBD8", "employees": [], "active": False},
         {"id": "g5", "name": "", "color": "#E8DAEF", "employees": [], "active": False},
     ],
+    # Workplaces are staffed in `priority` order. A section marked `required`
+    # must be filled for its workplace to be staffed at all — if it cannot be,
+    # the whole workplace is skipped that day and its people stay free for the
+    # ones further down the list.
     "workplaces": [
-        {"id": "wp1", "name": "EMB", "active": True, "notes": "", "sections": [
+        {"id": "wp1", "name": "EMB", "active": True, "notes": "", "priority": 1,
+         "sections": [
             {"id": "s1", "name": "IL", "group_id": "g1", "row_key": "emb_il",
-             "max_workers": 1},
+             "max_workers": 1, "required": True},
             {"id": "s2", "name": "PE", "group_id": "g2", "row_key": "emb_pe",
-             "max_workers": 2},
+             "max_workers": 2, "required": True},
         ]},
-        {"id": "wp2", "name": "דירה", "active": True, "notes": "", "sections": [
+        {"id": "wp2", "name": "דירה", "active": True, "notes": "", "priority": 2,
+         "sections": [
             {"id": "s3", "name": "IL", "group_id": "g1", "row_key": "apt_il",
-             "max_workers": 1},
+             "max_workers": 1, "required": False},
             {"id": "s4", "name": "PE", "group_id": "g2", "row_key": "apt_pe",
-             "max_workers": 1},
+             "max_workers": 1, "required": False},
         ]},
-        {"id": "wp3", "name": "", "active": False, "notes": "", "sections": []},
-        {"id": "wp4", "name": "", "active": False, "notes": "", "sections": []},
-        {"id": "wp5", "name": "", "active": False, "notes": "", "sections": []},
+        {"id": "wp3", "name": "", "active": False, "notes": "", "priority": 3,
+         "sections": []},
+        {"id": "wp4", "name": "", "active": False, "notes": "", "priority": 4,
+         "sections": []},
+        {"id": "wp5", "name": "", "active": False, "notes": "", "priority": 5,
+         "sections": []},
     ],
     "work_days": {
         "days": ["monday", "tuesday", "wednesday", "thursday", "friday"],
@@ -274,11 +283,20 @@ def _migrate(cfg: dict, raw: dict) -> dict:
                               "color": "#eef2f7", "employees": [], "active": False})
     while len(cfg["workplaces"]) < MAX_WORKPLACES:
         cfg["workplaces"].append({"id": f"wp{len(cfg['workplaces']) + 1}", "name": "",
-                                  "active": False, "notes": "", "sections": []})
+                                  "active": False, "notes": "",
+                                  "priority": len(cfg["workplaces"]) + 1,
+                                  "sections": []})
     for g in cfg["groups"]:
         g["employees"] = [e for e in g.get("employees", []) if e]
-    for w in cfg["workplaces"]:
+    for i, w in enumerate(cfg["workplaces"]):
+        # an older config has no priority; the list order becomes it
+        try:
+            w["priority"] = max(1, min(MAX_WORKPLACES, int(w.get("priority") or i + 1)))
+        except (TypeError, ValueError):
+            w["priority"] = i + 1
         w["sections"] = [x for x in w.get("sections", []) if x and x.get("row_key")]
+        for sec in w["sections"]:
+            sec["required"] = bool(sec.get("required"))
         # allow_pair was a two-state flag; max_workers is a count
         for sec in w["sections"]:
             if sec.get("max_workers") is None:
@@ -396,7 +414,10 @@ def workplaces() -> list:
 
 
 def active_workplaces() -> list:
-    return [w for w in workplaces() if w.get("active")]
+    """Active workplaces in staffing order; list order breaks a priority tie."""
+    return [w for _, w in sorted(
+        ((i, w) for i, w in enumerate(workplaces()) if w.get("active")),
+        key=lambda p: (p[1].get("priority") or 0, p[0]))]
 
 
 def workplace_name(w: dict) -> str:
@@ -426,6 +447,10 @@ def section_size(sec: dict) -> int:
         return max(0, min(10, int(sec.get("max_workers", 1))))
     except (TypeError, ValueError):
         return 1
+
+
+def section_required(sec: dict) -> bool:
+    return bool(sec.get("required"))
 
 
 def section_label(w: dict, sec: dict) -> str:

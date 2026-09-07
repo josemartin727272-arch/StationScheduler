@@ -96,6 +96,22 @@ def compute_stats(schedules: list) -> tuple:
     return emp_counts, field_counts, num_days, vacation_counts, other_counts
 
 
+# 90-day window: covers ~13 weeks so year-boundary never creates a cold start
+HISTORY_DAYS = 90
+
+
+def load_recent_schedules(week_start, days: int = HISTORY_DAYS) -> list:
+    """Archived weeks starting within `days` before `week_start`."""
+    from datetime import timedelta
+    floor = (week_start - timedelta(days=days)).isoformat()
+    out = []
+    for sched in load_period_schedules():
+        keys = sorted(sched.keys())
+        if keys and floor <= keys[0] <= week_start.isoformat():
+            out.append(sched)
+    return out
+
+
 def load_period_schedules(year: str = None, month: str = None) -> list:
     """Load archived schedules filtered by year and/or month string (e.g. '2026', '03')."""
     arch = list_archive()

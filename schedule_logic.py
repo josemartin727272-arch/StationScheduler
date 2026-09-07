@@ -109,6 +109,15 @@ def validate_schedule(schedule: dict, lang: str = "he") -> list:
 
         other_empl = day.get("other_empl", "")
         d_str = day.get("date").strftime("%d/%m") if day.get("date") else day_key
+        for wp in cfg.active_workplaces():
+            missing = next((s for s in cfg.workplace_sections(wp)
+                            if cfg.section_required(s) and cfg.section_size(s)
+                            and not day.get(s["row_key"])), None)
+            if missing:
+                errors.append(f"{d_str}: " + t(
+                    "warn_wp_skipped", lang, w=cfg.workplace_name(wp),
+                    s=cfg.section_label(wp, missing)))
+
         placed = {}                       # employee → the section holding them
         for wp, sec in sections:
             row_key = sec["row_key"]
@@ -128,7 +137,7 @@ def validate_schedule(schedule: dict, lang: str = "he") -> list:
                                   t("warn_sec_dup", lang, e=e, s=placed[e], s2=label))
                 else:
                     placed[e] = label
-            if not people:
+            if not people and not cfg.section_required(sec) and cfg.section_size(sec):
                 pool = [e for e in (cfg.group_employees(sec.get("group_id"))
                                     if group else cfg.all_employees())
                         if e not in (vac, other_empl)]
@@ -166,7 +175,9 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
     Everything comes from the configuration:
     - each workplace section draws from its own employee group
     - nobody is booked twice on the same day
+    - workplaces are staffed in priority order
     - a section holds max_workers employees, joined with "+" when 2 or more
+    - a workplace whose required sections cannot be filled is skipped whole
     - taxis are assigned later (once the vehicle type is known) in
       auto_assign_week_vehicles_udex
     """
@@ -190,30 +201,55 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
         day["exit"] = _least_used(
             exit_auto_options(), history.get("exit", {}), "exit")
 
-    # ── workplace sections, in configured order ─────────────────────────────
-    taken = set()
+    # ── workplaces in priority order ────────────────────────────────────────
+    # A workplace whose required sections cannot all be filled is skipped
+    # whole — its optional rows stay empty too, and the people it would have
+    # used stay free for the workplaces below it.
     governed = cfg.governed_fields()
-    for wp, sec in cfg.all_sections():
-        row_key, size = sec["row_key"], cfg.section_size(sec)
-        if day.get(row_key):
-            taken.update(e for e in str(day[row_key]).split("+") if e)
-            continue
-        if not size or row_key in governed:
-            continue
+    taken = set()
+    for _, sec in cfg.all_sections():          # whatever is already placed
+        if day.get(sec["row_key"]):
+            taken.update(e for e in str(day[sec["row_key"]]).split("+") if e)
+
+    def _pick(sec, busy):
+        size = cfg.section_size(sec)
+        if not size:
+            return ""
         group = cfg.group_by_id(sec.get("group_id"))
         vac = day.get(cfg.vac_field(group), "") if group else ""
         pool = [e for e in (cfg.group_employees(sec.get("group_id"))
                             if group else cfg.all_employees())
-                if e not in (vac, other_empl) and e not in taken]
+                if e not in (vac, other_empl) and e not in busy]
         if not pool:
-            continue
+            return ""
+        counts = history.get(sec["row_key"], {})
         if size >= 2:
-            choice = _least_used(_combos(pool, min(size, len(pool))),
-                                 history.get(row_key, {}))
-        else:
-            choice = _least_used(pool, history.get(row_key, {}))
-        day[row_key] = choice
-        taken.update(e for e in str(choice).split("+") if e)
+            return _least_used(_combos(pool, min(size, len(pool))), counts)
+        return _least_used(pool, counts)
+
+    for wp in cfg.active_workplaces():
+        assignable = [s for s in cfg.workplace_sections(wp)
+                      if cfg.section_size(s) and s["row_key"] not in governed]
+        open_secs = [s for s in assignable if not day.get(s["row_key"])]
+        # required rows first, on a trial set we can throw away
+        trial, busy, ok = {}, set(taken), True
+        for sec in (s for s in open_secs if cfg.section_required(s)):
+            choice = _pick(sec, busy)
+            if not choice:
+                ok = False
+                break
+            trial[sec["row_key"]] = choice
+            busy.update(e for e in str(choice).split("+") if e)
+        if not ok:
+            continue                            # whole workplace skipped today
+        day.update(trial)
+        taken |= busy
+        for sec in (s for s in open_secs if not cfg.section_required(s)):
+            choice = _pick(sec, taken)
+            if not choice:
+                continue
+            day[sec["row_key"]] = choice
+            taken.update(e for e in str(choice).split("+") if e)
 
     # ── Arrival point ───────────────────────────────────────────────────────
     if "arrival_point" not in gov and not day.get("arrival_point"):
@@ -283,8 +319,7 @@ def apply_weekly_targets(schedule: dict, history: dict = None) -> dict:
     return schedule
 
 
-def auto_assign_week_vehicles_udex(schedule: dict, history: dict = None,
-                                   monthly_history: dict = None) -> dict:
+def auto_assign_week_vehicles_udex(schedule: dict, history: dict = None) -> dict:
     """
     Apply the weekly quotas, then fill what they do not govern: the extra-task
     rows (their own morning/noon targets), any vehicle row without a quota, and

@@ -187,6 +187,9 @@ wp_max:"הגעת למספר מקומות העבודה המרבי (5)",wp_none:"�
 wp_sections:"תפקידים במקום העבודה",wp_sec_add:"➕ הוסף תפקיד",wp_sec_name:"שם התפקיד",
 wp_sec_group:"קבוצה",wp_notes:"הערות לוגיקת שיבוץ (עזר בלבד)",
 wp_notes_hint:"לוגיקת שיבוץ מפורטת — הגדר בשדה ההערות. המערכת לא אוכפת אותה.",
+wp_priority:"סדר עדיפות",wp_sec_required:"חובה לשיבוץ",
+wp_prio_hint:"מקומות עבודה משובצים לפי סדר עדיפות. אם תפקיד חובה לא מאויש — המקום כולו מדולג.",
+warn_wp_skipped:"מקום {w} לא אויש — אין עובדים זמינים לתפקיד חובה {s}",
 wd_pick:"סמן את ימי העבודה",wd_label:"תווית בטבלה",wd_none:"⚠️ חייב לבחור לפחות יום עבודה אחד",
 wd_hours_title:"שעות עבודה — אפשרויות",wd_hours_hint:"שורה לכל ערך · אותה רשימה מוצעת בכל ימי העבודה",
 et_add:"➕ הוסף משימה",et_remove:"🗑 מחק משימה",et_max:"הגעת למספר המשימות המרבי (5)",
@@ -252,6 +255,9 @@ wp_max:"Maximum number of workplaces reached (5)",wp_none:"No active workplaces"
 wp_sections:"Roles at this workplace",wp_sec_add:"➕ Add role",wp_sec_name:"Role name",
 wp_sec_group:"Group",wp_notes:"Assignment logic notes (reference only)",
 wp_notes_hint:"Detailed assignment logic — write it in the notes field. The app does not enforce it.",
+wp_priority:"Priority",wp_sec_required:"Required",
+wp_prio_hint:"Workplaces are staffed in priority order. If a required role cannot be filled, the whole workplace is skipped.",
+warn_wp_skipped:"{w} was not staffed — no employee available for the required role {s}",
 wd_pick:"Select the working days",wd_label:"Label in the table",wd_none:"⚠️ At least one working day is required",
 wd_hours_title:"Work hours — options",wd_hours_hint:"One value per line · the same list is offered on every working day",
 et_add:"➕ Add task",et_remove:"🗑 Delete task",et_max:"Maximum number of tasks reached (5)",
@@ -317,6 +323,9 @@ wp_max:"Número máximo de lugares alcanzado (5)",wp_none:"No hay lugares de tra
 wp_sections:"Puestos en este lugar",wp_sec_add:"➕ Agregar puesto",wp_sec_name:"Nombre del puesto",
 wp_sec_group:"Grupo",wp_notes:"Notas de lógica de asignación (solo referencia)",
 wp_notes_hint:"Lógica de asignación detallada — escríbela en las notas. La app no la impone.",
+wp_priority:"Prioridad",wp_sec_required:"Obligatorio",
+wp_prio_hint:"Los lugares se cubren por orden de prioridad. Si un puesto obligatorio no se cubre, se omite todo el lugar.",
+warn_wp_skipped:"{w} no fue cubierto — no hay empleado disponible para el puesto obligatorio {s}",
 wd_pick:"Selecciona los días laborables",wd_label:"Etiqueta en la tabla",wd_none:"⚠️ Se requiere al menos un día laborable",
 wd_hours_title:"Horas de trabajo — opciones",wd_hours_hint:"Un valor por línea · la misma lista se ofrece todos los días laborables",
 et_add:"➕ Agregar tarea",et_remove:"🗑 Eliminar tarea",et_max:"Número máximo de tareas alcanzado (5)",
@@ -371,16 +380,20 @@ const DEFAULT_CONFIG = {
     { id:"g4", name:"",   color:"#FADBD8", employees:[], active:false },
     { id:"g5", name:"",   color:"#E8DAEF", employees:[], active:false }
   ],
+  /* Workplaces are staffed in `priority` order. A section marked `required`
+     must be filled for its workplace to be staffed at all — if it cannot be,
+     the whole workplace is skipped that day and its people stay free for the
+     ones further down the list. */
   workplaces: [
-    { id:"wp1", name:"EMB", active:true, notes:"", sections:[
-      { id:"s1", name:"IL", group_id:"g1", row_key:"emb_il", max_workers:1 },
-      { id:"s2", name:"PE", group_id:"g2", row_key:"emb_pe", max_workers:2 } ] },
-    { id:"wp2", name:"דירה", active:true, notes:"", sections:[
-      { id:"s3", name:"IL", group_id:"g1", row_key:"apt_il", max_workers:1 },
-      { id:"s4", name:"PE", group_id:"g2", row_key:"apt_pe", max_workers:1 } ] },
-    { id:"wp3", name:"", active:false, notes:"", sections:[] },
-    { id:"wp4", name:"", active:false, notes:"", sections:[] },
-    { id:"wp5", name:"", active:false, notes:"", sections:[] }
+    { id:"wp1", name:"EMB", active:true, notes:"", priority:1, sections:[
+      { id:"s1", name:"IL", group_id:"g1", row_key:"emb_il", max_workers:1, required:true },
+      { id:"s2", name:"PE", group_id:"g2", row_key:"emb_pe", max_workers:2, required:true } ] },
+    { id:"wp2", name:"דירה", active:true, notes:"", priority:2, sections:[
+      { id:"s3", name:"IL", group_id:"g1", row_key:"apt_il", max_workers:1, required:false },
+      { id:"s4", name:"PE", group_id:"g2", row_key:"apt_pe", max_workers:1, required:false } ] },
+    { id:"wp3", name:"", active:false, notes:"", priority:3, sections:[] },
+    { id:"wp4", name:"", active:false, notes:"", priority:4, sections:[] },
+    { id:"wp5", name:"", active:false, notes:"", priority:5, sections:[] }
   ],
   work_days: {
     days: ["monday","tuesday","wednesday","thursday","friday"],
@@ -565,10 +578,15 @@ function migrateConfig(cfg, raw){
   while (cfg.groups.length < MAX_GROUPS)
     cfg.groups.push({id:"g"+(cfg.groups.length+1), name:"", color:"#eef2f7", employees:[], active:false});
   while (cfg.workplaces.length < MAX_WORKPLACES)
-    cfg.workplaces.push({id:"wp"+(cfg.workplaces.length+1), name:"", active:false, notes:"", sections:[]});
+    cfg.workplaces.push({id:"wp"+(cfg.workplaces.length+1), name:"", active:false, notes:"",
+      priority:cfg.workplaces.length+1, sections:[]});
   cfg.groups.forEach(g=>{ g.employees=(g.employees||[]).filter(Boolean); });
-  cfg.workplaces.forEach(w=>{
+  cfg.workplaces.forEach((w,i)=>{
+    /* an older config has no priority; the list order becomes it */
+    if(w.priority==null) w.priority=i+1;
+    w.priority=Math.max(1,Math.min(MAX_WORKPLACES,parseInt(w.priority,10)||i+1));
     w.sections=(w.sections||[]).filter(x=>x&&x.row_key);
+    w.sections.forEach(sec=>{ sec.required=!!sec.required; });
     /* allow_pair was a two-state flag; max_workers is a count */
     w.sections.forEach(sec=>{
       if(sec.max_workers==null) sec.max_workers=sec.allow_pair?2:1;
@@ -708,7 +726,13 @@ function defaultVacBudget(){ return DEFAULT_VAC_BUDGET; }
 
 /* ── workplaces & their sections ────────────────────────────────────────── */
 function workplacesAll(){ return CFG.workplaces||[]; }
-function activeWorkplaces(){ return workplacesAll().filter(w=>w&&w.active); }
+/* active workplaces in staffing order; the list order breaks a priority tie */
+function activeWorkplaces(){
+  return workplacesAll().filter(w=>w&&w.active)
+    .map((w,i)=>({w,i}))
+    .sort((a,b)=>((a.w.priority||0)-(b.w.priority||0))||(a.i-b.i))
+    .map(x=>x.w);
+}
 function wpName(w){ return w?((w.name||"").trim()||w.id.toUpperCase()):""; }
 function wpSections(w){ return (w.sections||[]).filter(x=>x&&x.row_key); }
 /* [{wp, sec}] across every active workplace, in display order */
@@ -903,6 +927,12 @@ function fieldPcts(key){
   return any?out:def;
 }
 /* ═══════════════ history & auto-assign (port of schedule_logic.py) ═══════════════ */
+/* 90-day window: covers ~13 weeks so year-boundary never creates a cold start */
+const HISTORY_DAYS = 90;
+function historyFloor(){
+  const start=(S.days&&Object.keys(S.days).sort()[0])||S.weekStart;
+  return addDays(start, -HISTORY_DAYS);
+}
 function buildHistory(sinceIso){
   const hist={}; const arch=loadArchive(); const hf=historyFields();
   for(const wk in arch){ if(sinceIso&&wk<sinceIso) continue; const days=arch[wk];
@@ -983,8 +1013,9 @@ function applyWeeklyTargets(keys, hist){
 
 function autoAssign(){
   if(!S.days) return;
-  const hist=buildHistory();
   const keys=Object.keys(S.days).sort();
+  /* 90-day window: covers ~13 weeks so year-boundary never creates a cold start */
+  const hist=buildHistory(addDays(keys[0], -HISTORY_DAYS));
   const sv=CFG.special_values;
   const holiday=sv.holiday, VS=sv.vehicle_special;
   const axisVals=opts("axis"), waitVals=opts("wait_spot");
@@ -1010,24 +1041,48 @@ function autoAssign(){
     if(free("entry")&&!day.entry) day.entry=leastUsed(opts("entry").filter(o=>o!==holiday),H("entry"),"entry");
     if(free("exit")&&!day.exit)   day.exit =leastUsed(opts("exit").filter(o=>o!==holiday),H("exit"),"exit");
 
-    /* Workplace sections, in configured order. Each draws from its own group,
-       skipping anyone on vacation, on another task, or already placed today —
-       so nobody is booked twice in one day whatever the station's shape is.
-       max_workers decides how many names the row holds: 0 skips it, 1 is a
-       single employee, 2+ join with "+". */
+    /* Workplaces in priority order. Each section draws from its own group,
+       skipping anyone on vacation, on another task, or already placed today,
+       so nobody is booked twice in one day. max_workers decides how many names
+       the row holds: 0 skips it, 1 is a single employee, 2+ join with "+".
+       A workplace whose required sections cannot all be filled is skipped
+       whole — its optional rows stay empty too, and the people it would have
+       used stay free for the workplaces below it. */
     const taken=new Set();
-    secs.forEach(x=>{
-      const rk=x.sec.row_key, g=groupById(x.sec.group_id), size=sectionSize(x.sec);
-      if(day[rk]){ String(day[rk]).split("+").forEach(e=>taken.add(e)); return; }
-      if(!size||!free(rk)) return;
+    /* whatever is already on the day (manual or quota-placed) is spoken for */
+    secs.forEach(x=>{ const v=day[x.sec.row_key];
+      if(v) String(v).split("+").forEach(e=>taken.add(e)); });
+    const pickFor=(sec,busy)=>{
+      const g=groupById(sec.group_id), size=sectionSize(sec);
+      if(!size) return "";
       const vac=g?(day[vacField(g)]||""):"";
       const pool=(g?groupEmps(g.id):allEmps())
-        .filter(e=>e!==vac&&e!==other&&!taken.has(e));
-      if(!pool.length) return;
-      const choice=size===1?leastUsed(pool,H(rk))
-                           :leastUsed(combos(pool,Math.min(size,pool.length)),H(rk));
-      day[rk]=choice;
-      String(choice).split("+").forEach(e=>taken.add(e));
+        .filter(e=>e!==vac&&e!==other&&!busy.has(e));
+      if(!pool.length) return "";
+      return size===1?leastUsed(pool,H(sec.row_key))
+                     :leastUsed(combos(pool,Math.min(size,pool.length)),H(sec.row_key));
+    };
+    activeWorkplaces().forEach(w=>{
+      const list=wpSections(w).filter(sec=>free(sec.row_key)&&sectionSize(sec)>0);
+      const open=list.filter(sec=>!day[sec.row_key]);
+      /* required rows first, on a trial set we can throw away */
+      const trial=new Map(), busy=new Set(taken);
+      let ok=true;
+      for(const sec of open.filter(x=>x.required)){
+        const c=pickFor(sec,busy);
+        if(!c){ ok=false; break; }
+        trial.set(sec.row_key,c);
+        String(c).split("+").forEach(e=>busy.add(e));
+      }
+      if(!ok) return;                       // whole workplace skipped today
+      trial.forEach((v,rk)=>{ day[rk]=v; });
+      busy.forEach(e=>taken.add(e));
+      for(const sec of open.filter(x=>!x.required)){
+        const c=pickFor(sec,taken);
+        if(!c) continue;
+        day[sec.row_key]=c;
+        String(c).split("+").forEach(e=>taken.add(e));
+      }
     });
 
     if(free("arrival_point")&&!day.arrival_point) day.arrival_point=leastUsed(opts("arrival_point"),H("arrival_point"),"arrival_point");
@@ -1091,6 +1146,12 @@ function validate(){
       else if((e.noon_values||[]).includes(v)) exCount[rk].n++;
     });
     const other=day.other_empl||"";
+    activeWorkplaces().forEach(w=>{
+      const missing=wpSections(w).find(sec=>
+        sec.required&&sectionSize(sec)>0&&!day[sec.row_key]);
+      if(missing) errs.push({lvl:"warn", msg:d+": "+
+        t("warn_wp_skipped",{w:wpName(w), s:sectionLabel({wp:w,sec:missing})})});
+    });
     const placed={};                          // employee → the section holding them
     secs.forEach(x=>{
       const rk=x.sec.row_key, g=groupById(x.sec.group_id), lbl=sectionLabel(x);
@@ -1102,7 +1163,7 @@ function validate(){
         if(placed[e]) errs.push({lvl:"warn",msg:d+": "+t("warn_sec_dup",{e,s:placed[e],s2:lbl})});
         else placed[e]=lbl;
       });
-      if(!people.length){
+      if(!people.length&&!x.sec.required&&sectionSize(x.sec)>0){
         const pool=(g?groupEmps(g.id):allEmps()).filter(e=>e!==vac&&e!==other);
         if(!pool.length) errs.push({lvl:"err",msg:"❌ "+d+": "+
           t("err_sec_none",{s:lbl,g:g?groupName(g):"—"})});
@@ -1280,11 +1341,19 @@ function groupsPanel(){
 /* workplaces and the roles (sections) inside each one */
 function workplacesPanel(){
   const act=activeWorkplaces();
-  let h=`<div class="hint">${t("wp_notes_hint")}</div>`;
+  let h=`<div class="hint">${t("wp_prio_hint")}</div><div class="hint">${t("wp_notes_hint")}</div>`;
   if(!act.length) h+=`<div class="msg warn">${t("wp_none")}</div>`;
-  act.forEach(w=>{
+  act.forEach((w,i)=>{
     h+=`<div class="pct-box">
-    <label>${t("wp_name")}<br><input data-wpname="${esc(w.id)}" value="${esc(w.name||"")}"></label>
+    <div class="grid2">
+      <label>${t("wp_name")}<br><input data-wpname="${esc(w.id)}" value="${esc(w.name||"")}"></label>
+      <label>${t("wp_priority")}<br><span class="row-flex">
+        <input type="number" min="1" max="${MAX_WORKPLACES}" style="width:70px"
+          data-wpprio="${esc(w.id)}" value="${w.priority||i+1}">
+        <button class="btn small" data-wpup="${esc(w.id)}" ${i===0?"disabled":""}>↑</button>
+        <button class="btn small" data-wpdn="${esc(w.id)}" ${i===act.length-1?"disabled":""}>↓</button>
+      </span></label>
+    </div>
     <h3 style="font-size:.9rem">${t("wp_sections")}</h3>`;
     wpSections(w).forEach(sc=>{
       h+=`<div class="sec-row">
@@ -1295,6 +1364,8 @@ function workplacesPanel(){
         <label class="chk">${t("wp_sec_size")}
           <input type="number" min="0" max="10" style="width:64px"
             data-scsize="${esc(sc.id)}" data-wp="${esc(w.id)}" value="${sectionSize(sc)}"></label>
+        <label class="chk"><input type="checkbox" data-screq="${esc(sc.id)}" data-wp="${esc(w.id)}"
+          ${sc.required?"checked":""}> ${t("wp_sec_required")}</label>
         <button class="btn small warn" data-scremove="${esc(sc.id)}" data-wp="${esc(w.id)}">🗑</button>
       </div>`;
     });
@@ -1850,6 +1921,9 @@ function wireSettings(){
   const readWps=()=>{
     document.querySelectorAll("[data-wpname]").forEach(inp=>{
       const w=workplacesAll().find(x=>x.id===inp.dataset.wpname); if(w) w.name=inp.value.trim(); });
+    document.querySelectorAll("[data-wpprio]").forEach(inp=>{
+      const w=workplacesAll().find(x=>x.id===inp.dataset.wpprio);
+      if(w) w.priority=Math.max(1,Math.min(MAX_WORKPLACES,parseInt(inp.value,10)||1)); });
     document.querySelectorAll("[data-wpnotes]").forEach(ta=>{
       const w=workplacesAll().find(x=>x.id===ta.dataset.wpnotes); if(w) w.notes=ta.value; });
     const sec=(id,wp)=>{ const w=workplacesAll().find(x=>x.id===wp);
@@ -1861,6 +1935,8 @@ function wireSettings(){
     document.querySelectorAll("[data-scsize]").forEach(inp=>{
       const x=sec(inp.dataset.scsize,inp.dataset.wp);
       if(x) x.max_workers=Math.max(0,Math.min(10,parseInt(inp.value,10)||0)); });
+    document.querySelectorAll("[data-screq]").forEach(cb=>{
+      const x=sec(cb.dataset.screq,cb.dataset.wp); if(x) x.required=cb.checked; });
   };
   if($("saveWps")) $("saveWps").onclick=()=>{
     readWps(); saveConfig(); resyncDays(); render(); reopen("workplaces"); };
@@ -1869,6 +1945,9 @@ function wireSettings(){
     const w=workplacesAll().find(x=>!x.active);
     if(!w){ toast("⚠️ "+t("wp_max")); return; }
     w.active=true; if(!w.name) w.name=w.id.toUpperCase();
+    /* a newly switched-on workplace goes to the end of the staffing order */
+    w.priority=Math.min(MAX_WORKPLACES,
+      Math.max(0,...workplacesAll().filter(x=>x.active).map(x=>x.priority||0))+1);
     saveConfig(); resyncDays(); render(); reopen("workplaces");
   };
   document.querySelectorAll("[data-wpremove]").forEach(b=>b.onclick=()=>{
@@ -1877,12 +1956,26 @@ function wireSettings(){
     w.active=false;
     saveConfig(); resyncDays(); render(); reopen("workplaces");
   });
+  /* ↑↓ swap a workplace with its neighbour in staffing order */
+  const moveWp=(id,delta)=>{
+    readWps();
+    const order=activeWorkplaces();
+    const i=order.findIndex(w=>w.id===id), j=i+delta;
+    if(i<0||j<0||j>=order.length) return;
+    const a=order[i], b=order[j], pa=a.priority, pb=b.priority;
+    a.priority=pb; b.priority=pa;
+    if(pa===pb) a.priority=Math.max(1,Math.min(MAX_WORKPLACES,pb+delta));
+    saveConfig(); render(); reopen("workplaces");
+  };
+  document.querySelectorAll("[data-wpup]").forEach(b=>b.onclick=()=>moveWp(b.dataset.wpup,-1));
+  document.querySelectorAll("[data-wpdn]").forEach(b=>b.onclick=()=>moveWp(b.dataset.wpdn,+1));
   document.querySelectorAll("[data-scadd]").forEach(b=>b.onclick=()=>{
     readWps();
     const w=workplacesAll().find(x=>x.id===b.dataset.scadd); if(!w) return;
     const g=activeGroups()[0];
     w.sections=w.sections||[];
-    w.sections.push({id:newId("s_"), name:"", group_id:g?g.id:"", row_key:newId("sec_"), max_workers:1});
+    w.sections.push({id:newId("s_"), name:"", group_id:g?g.id:"",
+      row_key:newId("sec_"), max_workers:1, required:false});
     saveConfig(); resyncDays(); render(); reopen("workplaces");
   });
   document.querySelectorAll("[data-scremove]").forEach(b=>b.onclick=()=>{

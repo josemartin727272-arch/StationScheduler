@@ -21,29 +21,35 @@ try:
     HAS_SORTABLES = True
 except ImportError:
     HAS_SORTABLES = False  # settings page falls back to ↑/↓ buttons
-from stats import compute_stats, load_period_schedules, EMPLOYEE_ROLES, EMPLOYEE_ROLE_LABELS, VALUE_FIELDS, vacation_budget
+from stats import (compute_stats, load_period_schedules, load_recent_schedules,
+                   HISTORY_DAYS, EMPLOYEE_ROLES, EMPLOYEE_ROLE_LABELS,
+                   VALUE_FIELDS, vacation_budget)
 
 # ── Page config ────────────────────────────────────────────────────────────
 st.set_page_config(page_title="Schedule 🚕", layout="wide",
                    initial_sidebar_state="collapsed")
 
 # ── Session state ──────────────────────────────────────────────────────────
+def build_history(week_start) -> dict:
+    """Usage counts over the 90 days before `week_start`.
+    90-day window: covers ~13 weeks so year-boundary never creates a cold start."""
+    history = {}
+    for sched in load_recent_schedules(week_start, HISTORY_DAYS):
+        update_history(history, sched)
+    return history
+
+
 def _init():
     ss = st.session_state
     if "lang" not in ss:           ss.lang = "he"
     if "schedule" not in ss:       ss.schedule = None
-    if "history" not in ss:
-        # Rebuild cumulative history from ALL archived schedules so pre-planning
-        # picks truly least-used options even after restarting the app.
-        from stats import load_period_schedules as _lps
-        ss.history = {}
-        for _s in _lps():
-            update_history(ss.history, _s)
     if "page" not in ss:           ss.page = "schedule"
     if "week_start" not in ss:
         today = date.today()
         diff = (7 - today.weekday()) % 7 or 7
         ss.week_start = today + timedelta(days=diff)
+    if "history" not in ss:
+        ss.history = build_history(ss.week_start)
 _init()
 
 lang = st.session_state.lang
@@ -203,6 +209,7 @@ if st.session_state.page == "settings":
 
     # ── Tab 2: Workplaces and the roles inside them ────────────────────────
     with tab_wp:
+        st.caption(t("wp_prio_hint", lang))
         st.caption(t("wp_notes_hint", lang))
         act_wps = [w for w in config["workplaces"] if w.get("active")]
         act_gids = [g["id"] for g in config["groups"] if g.get("active")]
@@ -211,12 +218,17 @@ if st.session_state.page == "settings":
         for w in act_wps:
             wid = w["id"]
             with st.expander(cfg.workplace_name(w), expanded=True):
-                st.text_input(t("wp_name", lang), value=w.get("name", ""),
-                              key=f"wpname_{wid}")
+                wc1, wc2 = st.columns([3, 1])
+                wc1.text_input(t("wp_name", lang), value=w.get("name", ""),
+                               key=f"wpname_{wid}")
+                wc2.number_input(t("wp_priority", lang), min_value=1,
+                                 max_value=cfg.MAX_WORKPLACES,
+                                 value=int(w.get("priority") or 1),
+                                 key=f"wpprio_{wid}")
                 st.markdown("**" + t("wp_sections", lang) + "**")
                 for sec in w.get("sections", []):
                     sid = sec["id"]
-                    s1, s2, s3, s4 = st.columns([3, 2, 2, 1])
+                    s1, s2, s3, s5, s4 = st.columns([3, 2, 2, 2, 1])
                     s1.text_input(t("wp_sec_name", lang), value=sec.get("name", ""),
                                   key=f"scname_{sid}")
                     s2.selectbox(t("wp_sec_group", lang), act_gids,
@@ -224,6 +236,8 @@ if st.session_state.page == "settings":
                         key=f"scgroup_{sid}", format_func=lambda g: cfg.group_name(cfg.group_by_id(g)))
                     s3.number_input(t("wp_sec_size", lang), min_value=0, max_value=10,
                                     value=cfg.section_size(sec), key=f"scsize_{sid}")
+                    s5.checkbox(t("wp_sec_required", lang),
+                                value=cfg.section_required(sec), key=f"screq_{sid}")
                     if s4.button("🗑", key=f"screm_{sid}"):
                         w["sections"] = [x for x in w["sections"] if x["id"] != sid]
                         cfg.save_config(config)
@@ -233,7 +247,7 @@ if st.session_state.page == "settings":
                     w.setdefault("sections", []).append({
                         "id": f"s_{uid}", "name": "",
                         "group_id": act_gids[0] if act_gids else "",
-                        "row_key": f"sec_{uid}", "max_workers": 1})
+                        "row_key": f"sec_{uid}", "max_workers": 1, "required": False})
                     cfg.save_config(config)
                     st.rerun()
                 st.text_area(t("wp_notes", lang), value=w.get("notes", ""),
@@ -247,12 +261,15 @@ if st.session_state.page == "settings":
                 if not w.get("active"):
                     continue
                 w["name"] = st.session_state.get(f"wpname_{w['id']}", w.get("name", "")).strip()
+                w["priority"] = int(st.session_state.get(f"wpprio_{w['id']}",
+                                                         w.get("priority") or 1))
                 w["notes"] = st.session_state.get(f"wpnotes_{w['id']}", w.get("notes", ""))
                 for sec in w.get("sections", []):
                     sid = sec["id"]
                     sec["name"] = st.session_state.get(f"scname_{sid}", sec.get("name", "")).strip()
                     sec["group_id"] = st.session_state.get(f"scgroup_{sid}", sec.get("group_id"))
                     sec["max_workers"] = int(st.session_state.get(f"scsize_{sid}", 1))
+                    sec["required"] = bool(st.session_state.get(f"screq_{sid}"))
             cfg.save_config(config)
             st.success("✅ " + t("settings_saved", lang))
             st.rerun()
@@ -260,6 +277,10 @@ if st.session_state.page == "settings":
         if st.button(t("wp_add", lang), disabled=free_wp is None, key="add_wp"):
             free_wp["active"] = True
             free_wp["name"] = free_wp["name"] or free_wp["id"].upper()
+            # a newly switched-on workplace goes to the end of the staffing order
+            free_wp["priority"] = min(cfg.MAX_WORKPLACES, 1 + max(
+                [x.get("priority") or 0 for x in config["workplaces"]
+                 if x.get("active")] or [0]))
             cfg.save_config(config)
             st.rerun()
         if free_wp is None:
@@ -1140,7 +1161,9 @@ ac1, ac2, ac3, ac4, ac5 = st.columns(5)
 
 with ac1:
     if st.button("⚡ " + t("auto_assign", lang), type="primary", use_container_width=True):
-        global_hist = st.session_state.history
+        # 90-day window, recomputed for the week being generated
+        global_hist = build_history(week_start)
+        st.session_state.history = global_hist
         # Workplace sections, employee groups and working days all come from the
         # configuration, so auto_assign_day fills them; nothing is pre-planned
         # for a particular station shape here.
@@ -1165,15 +1188,7 @@ with ac1:
                     weekly_hist.setdefault(field, {})
                     weekly_hist[field][val] = weekly_hist[field].get(val, 0) + 1
 
-        # Monthly history (last ~35 days of archive) drives the YELLOW
-        # morning/noon split decision
-        month_floor = (week_start - timedelta(days=35)).isoformat()
-        monthly_hist = {}
-        for _s in load_period_schedules():
-            wk_keys = sorted(_s.keys())
-            if wk_keys and wk_keys[0] >= month_floor:
-                update_history(monthly_hist, _s)
-        schedule = auto_assign_week_vehicles_udex(schedule, global_hist, monthly_hist)
+        schedule = auto_assign_week_vehicles_udex(schedule, global_hist)
         st.session_state.schedule = schedule
         # Clear widget keys so they re-init from index= (avoids session-state conflict warning)
         for dk in day_keys:
