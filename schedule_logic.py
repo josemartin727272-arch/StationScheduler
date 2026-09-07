@@ -109,6 +109,17 @@ def validate_schedule(schedule: dict, lang: str = "he") -> list:
 
         other_empl = day.get("other_empl", "")
         d_str = day.get("date").strftime("%d/%m") if day.get("date") else day_key
+        # the axis must be one the day's entry/exit permits
+        for value_field, axis_field in (("entry", "axis_morning"),
+                                        ("exit", "axis_noon")):
+            value, axis = day.get(value_field, ""), day.get(axis_field, "")
+            if not value or not axis:
+                continue
+            if cfg.axis_letter_of(axis) not in cfg.allowed_axes_for(value_field, value):
+                errors.append(f"{d_str}: " + t(
+                    "warn_axis_rule", lang, f=cfg.row_label(axis_field, lang),
+                    a=axis, e=cfg.row_label(value_field, lang), v=value))
+
         for wp in cfg.active_workplaces():
             missing = next((s for s in cfg.workplace_sections(wp)
                             if cfg.section_required(s) and cfg.section_size(s)
@@ -145,6 +156,23 @@ def validate_schedule(schedule: dict, lang: str = "he") -> list:
                     errors.append(f"❌ {d_str}: " + t(
                         "err_sec_none", lang, s=label,
                         g=cfg.group_name(group) if group else "—"))
+
+    # configuration-level faults, reported once rather than per day
+    for a in cfg.active_axes():
+        total = (a.get("pct_u") or 0) + (a.get("pct_d") or 0)
+        if total != 100:
+            errors.append("❌ " + t("err_axis_ud", lang,
+                                    a=cfg.axis_label(a), n=total))
+    for kind in ("entry", "exit"):
+        for value, rule in cfg.axis_rules(kind).items():
+            ids = rule.get("axes") or []
+            if not ids:
+                continue
+            total = sum((rule.get("pcts") or {}).get(x, 0) for x in ids)
+            if total != 100:
+                errors.append("❌ " + t("err_axis_rule_pct", lang,
+                                        f=cfg.row_label(kind, lang),
+                                        v=value, n=total))
 
     for q in quotas:
         if q["seen"] == q["count"]:
@@ -183,23 +211,28 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
     """
     day = day.copy()
     other_empl = day.get("other_empl", "")
-    axis_vals = cfg.options("axis")
     gov = cfg.governed_fields()          # quota-governed rows are filled later
 
-    # ── entry/exit and both axes: independent, each balanced against its own
-    #    target percentages ───────────────────────────────────────────────────
-    if "axis_morning" not in gov and not day.get("axis_morning") and axis_vals:
-        day["axis_morning"] = _least_used(
-            axis_vals, history.get("axis_morning", {}), "axis_morning")
-    if "axis_noon" not in gov and not day.get("axis_noon") and axis_vals:
-        day["axis_noon"] = _least_used(
-            axis_vals, history.get("axis_noon", {}), "axis_noon")
-    if "entry" not in gov and not day.get("entry"):
-        day["entry"] = _least_used(
-            entry_auto_options(), history.get("entry", {}), "entry")
-    if "exit" not in gov and not day.get("exit"):
-        day["exit"] = _least_used(
-            exit_auto_options(), history.get("exit", {}), "exit")
+    # ── entry ↔ morning axis, exit ↔ noon axis ──────────────────────────────
+    # The value chooses the axis letter through the station's rules; the axis's
+    # own U/D split chooses the side. Whichever is already filled constrains
+    # the other.
+    for value_field, axis_field, auto_options in (
+            ("entry", "axis_morning", entry_auto_options),
+            ("exit", "axis_noon", exit_auto_options)):
+        pool = auto_options()
+        if value_field not in gov and not day.get(value_field) and pool:
+            candidates = pool
+            if day.get(axis_field):
+                narrowed = cfg.values_allowing_axis(
+                    value_field, cfg.axis_letter_of(day[axis_field]), pool)
+                if narrowed:
+                    candidates = narrowed
+            day[value_field] = _least_used(
+                candidates, history.get(value_field, {}), value_field)
+        if axis_field not in gov and not day.get(axis_field) and cfg.active_axes():
+            day[axis_field] = _pick_axis(
+                value_field, day.get(value_field, ""), history.get(axis_field, {}))
 
     # ── workplaces in priority order ────────────────────────────────────────
     # A workplace whose required sections cannot all be filled is skipped
@@ -403,14 +436,43 @@ def auto_assign_week_vehicles_udex(schedule: dict, history: dict = None) -> dict
     return schedule
 
 
-def _least_used(options: list, counts: dict, field: str = None) -> str:
+def _pick_axis(kind: str, value: str, counts: dict) -> str:
+    """Pick a composite axis for `value`: the letter comes from that value's
+    rule percentages balanced against history, then the chosen axis's own U/D
+    split picks the side — also balanced against history, per letter."""
+    counts = counts or {}
+    letters = cfg.allowed_axes_for(kind, value)
+    if not letters:
+        return ""
+    letter_counts = {}
+    for v, n in counts.items():
+        key = cfg.axis_letter_of(v)
+        letter_counts[key] = letter_counts.get(key, 0) + n
+    letter = _least_used(letters, letter_counts, cfg.axis_pcts_for(kind, value))
+    axis = cfg.axis_by_id(letter)
+    if not axis:
+        return ""
+    dir_counts = {"U": 0, "D": 0}
+    for v, n in counts.items():
+        if cfg.axis_letter_of(v) != letter:
+            continue
+        d = cfg.axis_dir_of(v)
+        if d in dir_counts:
+            dir_counts[d] += n
+    side = _least_used(["U", "D"], dir_counts,
+                       {"U": axis.get("pct_u", 0), "D": axis.get("pct_d", 0)})
+    return f"{letter}-{side}" if side else letter
+
+
+def _least_used(options: list, counts: dict, field=None) -> str:
     """Weighted least-used: pick the option whose share of past use sits
     furthest BELOW its target share. With equal targets — the default — this
     is exactly plain least-used. `field` names an app_config.PCT_FIELDS entry;
     pass None for ad-hoc lists (employees, EMB pairs) that have no table."""
     if not options:
         return ""
-    pcts = cfg.field_pcts(field) if field else None
+    # `field` is either a PCT_FIELDS key or an explicit {value: percent} map
+    pcts = (field if isinstance(field, dict) else cfg.field_pcts(field)) if field else None
     pool = list(options)
     if pcts:  # an explicit 0% target means "never assign"
         positive = [o for o in pool if pcts.get(o) is None or pcts[o] > 0]

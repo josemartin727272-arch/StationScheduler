@@ -193,7 +193,7 @@ warn_wp_skipped:"מקום {w} לא אויש — אין עובדים זמינים
 wd_pick:"סמן את ימי העבודה",wd_label:"תווית בטבלה",wd_none:"⚠️ חייב לבחור לפחות יום עבודה אחד",
 wd_hours_title:"שעות עבודה — אפשרויות",wd_hours_hint:"שורה לכל ערך · אותה רשימה מוצעת בכל ימי העבודה",
 et_add:"➕ הוסף משימה",et_remove:"🗑 מחק משימה",et_max:"הגעת למספר המשימות המרבי (5)",
-et_none:"אין משימות נוספות פעילות — הוסף משימה",map_no_axes:"אין צירים מוגדרים ברשימת האפשרויות",
+et_none:"אין משימות נוספות פעילות — הוסף משימה",
 et_name:"שם המשימה",et_options:"אפשרויות (שורה לכל ערך)",et_morning:"ערכי בוקר (שורה לכל ערך)",
 et_noon:"ערכי צהריים (שורה לכל ערך)",et_tg_m:"כמה פעמים בוקר בשבוע",et_tg_n:"כמה פעמים צהריים בשבוע",
 notes_general:"הערות כלליות לשיבוץ",notes_hint:"טקסט חופשי לתיעוד — המערכת לא קוראת אותו",
@@ -221,12 +221,17 @@ restore_confirm:"השחזור ידרוס את כל הנתונים במכשיר �
 invalid_file:"קובץ לא תקין",export_settings:"📤 ייצוא הגדרות",import_settings:"📥 ייבוא הגדרות",
 import_confirm:"הייבוא ידרוס את ההגדרות הנוכחיות — להמשיך?",import_done:"ההגדרות יובאו",
 clear_week:"נקה",valid_short:"תקין",total_col:"סה״כ שיבוצים",export_csv:"ייצוא CSV",orig_name:"שם מקורי",
-rules_title:"📋 חוקי השיבוץ",rules_manual_note:"חג = ידני בלבד, המערכת לא נוגעת בו",
 pct_title:"📊 אחוזי יעד לכל שדה",pct_value:"ערך",pct_pct:"% יעד",pct_total:"סה״כ",
 pct_err_100:"⚠️ הסכום חייב להיות בדיוק 100% כדי לשמור",pct_reset:"↺ חלוקה שווה",
 pct_hint:"השיבוץ האוטומטי בוחר בכל פעם את הערך הרחוק ביותר מאחוז היעד שלו",
-map_entry_title:"כניסה ↔ ציר",map_exit_title:"יציאה ↔ ציר",map_axes:"צירים",
-map_hint:"מידע עזר בלבד — המערכת לא אוכפת קשר בין ציר לכניסה/יציאה"},
+s_axes:"🧭 צירים וכניסות/יציאות",
+ax_split_title:"חלוקת U / D לכל ציר",ax_split_hint:"לכל ציר: כמה אחוז מהשיבוצים שלו יהיו U וכמה D. הסכום חייב להיות 100%.",
+ax_entry_title:"כניסה ↔ ציר בוקר",ax_exit_title:"יציאה ↔ ציר צהריים",
+ax_rules_hint:"סמן אילו צירים מותרים לכל ערך, וקבע אחוז לכל אחד. הסכום חייב להיות 100%. בלי סימון — כל ציר מותר.",
+ax_add:"➕ הוסף ציר",ax_max:"הגעת למספר הצירים המרבי",ax_none:"אין צירים פעילים — הוסף ציר",
+err_axis_ud:"ציר {a}: סכום U+D הוא {n}%, חייב 100%",
+err_axis_rule_pct:"{f} {v}: סכום אחוזי הצירים הוא {n}%, חייב 100%",
+warn_axis_rule:"{f} {a} לא מותר עבור {e} {v}"},
 en:{app_title:"Weekly Work Schedule",nav_sched:"📋 Schedule",nav_settings:"⚙️ Settings",nav_archive:"📁 Archive",nav_stats:"📊 Statistics",
 week_start:"Week start",generate:"New Schedule",auto_assign:"⚡ Auto Assign",save:"💾 Save",export_excel:"📤 Export Excel",print:"🖨️ Print",
 saved:"Schedule saved to archive",valid:"Schedule is valid ✓",replace_q:"A schedule exists for this week — replace?",yes:"Yes",no:"Cancel",
@@ -261,7 +266,7 @@ warn_wp_skipped:"{w} was not staffed — no employee available for the required 
 wd_pick:"Select the working days",wd_label:"Label in the table",wd_none:"⚠️ At least one working day is required",
 wd_hours_title:"Work hours — options",wd_hours_hint:"One value per line · the same list is offered on every working day",
 et_add:"➕ Add task",et_remove:"🗑 Delete task",et_max:"Maximum number of tasks reached (5)",
-et_none:"No active extra tasks — add one",map_no_axes:"No axes defined in the options list",
+et_none:"No active extra tasks — add one",
 et_name:"Task name",et_options:"Options (one per line)",et_morning:"Morning values (one per line)",
 et_noon:"Noon values (one per line)",et_tg_m:"Morning times per week",et_tg_n:"Noon times per week",
 notes_general:"General assignment notes",notes_hint:"Free text for documentation — the app never reads it",
@@ -289,12 +294,17 @@ restore_confirm:"Restore will overwrite all data on this device — continue?",r
 invalid_file:"Invalid file",export_settings:"📤 Export settings",import_settings:"📥 Import settings",
 import_confirm:"Import will overwrite current settings — continue?",import_done:"Settings imported",
 clear_week:"Clear",valid_short:"Valid",total_col:"Total assignments",export_csv:"Export CSV",orig_name:"Original name",
-rules_title:"📋 Assignment rules",rules_manual_note:"חג (holiday) is manual only — never auto-assigned",
 pct_title:"📊 Target % per field",pct_value:"Value",pct_pct:"Target %",pct_total:"Total",
 pct_err_100:"⚠️ Total must be exactly 100% to save",pct_reset:"↺ Equal split",
 pct_hint:"Auto-assign always picks the value furthest below its target share",
-map_entry_title:"Entry ↔ Axis",map_exit_title:"Exit ↔ Axis",map_axes:"Axes",
-map_hint:"Reference only — the app does not enforce any axis ↔ entry/exit link"},
+s_axes:"🧭 Axes & entry/exit rules",
+ax_split_title:"U / D split per axis",ax_split_hint:"For each axis: what share of its assignments are U and what share D. Must total 100%.",
+ax_entry_title:"Entry ↔ morning axis",ax_exit_title:"Exit ↔ noon axis",
+ax_rules_hint:"Tick the axes each value may use and set a share for each. Must total 100%. Nothing ticked means any axis is allowed.",
+ax_add:"➕ Add axis",ax_max:"Maximum number of axes reached",ax_none:"No active axes — add one",
+err_axis_ud:"Axis {a}: U+D totals {n}%, must be 100%",
+err_axis_rule_pct:"{f} {v}: axis shares total {n}%, must be 100%",
+warn_axis_rule:"{f} {a} is not allowed for {e} {v}"},
 es:{app_title:"Horario Semanal de Trabajo",nav_sched:"📋 Horario",nav_settings:"⚙️ Configuración",nav_archive:"📁 Archivo",nav_stats:"📊 Estadísticas",
 week_start:"Inicio de semana",generate:"Nuevo Horario",auto_assign:"⚡ Asignación Automática",save:"💾 Guardar",export_excel:"📤 Exportar Excel",print:"🖨️ Imprimir",
 saved:"Horario guardado en archivo",valid:"El horario es válido ✓",replace_q:"Existe un horario para esta semana — ¿reemplazar?",yes:"Sí",no:"Cancelar",
@@ -329,7 +339,7 @@ warn_wp_skipped:"{w} no fue cubierto — no hay empleado disponible para el pues
 wd_pick:"Selecciona los días laborables",wd_label:"Etiqueta en la tabla",wd_none:"⚠️ Se requiere al menos un día laborable",
 wd_hours_title:"Horas de trabajo — opciones",wd_hours_hint:"Un valor por línea · la misma lista se ofrece todos los días laborables",
 et_add:"➕ Agregar tarea",et_remove:"🗑 Eliminar tarea",et_max:"Número máximo de tareas alcanzado (5)",
-et_none:"No hay tareas extra activas — agrega una",map_no_axes:"No hay rutas definidas en la lista de opciones",
+et_none:"No hay tareas extra activas — agrega una",
 et_name:"Nombre de la tarea",et_options:"Opciones (una por línea)",et_morning:"Valores de mañana (uno por línea)",
 et_noon:"Valores de mediodía (uno por línea)",et_tg_m:"Veces por semana (mañana)",et_tg_n:"Veces por semana (mediodía)",
 notes_general:"Notas generales de asignación",notes_hint:"Texto libre para documentar — la app nunca lo lee",
@@ -357,12 +367,17 @@ restore_confirm:"La restauración sobrescribirá todos los datos del dispositivo
 invalid_file:"Archivo inválido",export_settings:"📤 Exportar configuración",import_settings:"📥 Importar configuración",
 import_confirm:"La importación sobrescribirá la configuración actual — ¿continuar?",import_done:"Configuración importada",
 clear_week:"Limpiar",valid_short:"Válido",total_col:"Total asignaciones",export_csv:"Exportar CSV",orig_name:"Nombre original",
-rules_title:"📋 Reglas de asignación",rules_manual_note:"חג (feriado) es solo manual — nunca se asigna automáticamente",
 pct_title:"📊 % objetivo por campo",pct_value:"Valor",pct_pct:"% meta",pct_total:"Total",
 pct_err_100:"⚠️ El total debe ser exactamente 100% para guardar",pct_reset:"↺ División igual",
 pct_hint:"La asignación automática elige el valor más lejano de su % meta",
-map_entry_title:"Ingreso ↔ Ruta",map_exit_title:"Salida ↔ Ruta",map_axes:"Rutas",
-map_hint:"Solo referencia — la app no impone ninguna relación ruta ↔ ingreso/salida"}
+s_axes:"🧭 Rutas y reglas de ingreso/salida",
+ax_split_title:"División U / D por ruta",ax_split_hint:"Para cada ruta: qué parte de sus asignaciones son U y cuál D. Debe sumar 100%.",
+ax_entry_title:"Ingreso ↔ ruta mañana",ax_exit_title:"Salida ↔ ruta mediodía",
+ax_rules_hint:"Marca las rutas que cada valor puede usar y asigna un porcentaje. Debe sumar 100%. Sin marcar, cualquier ruta vale.",
+ax_add:"➕ Agregar ruta",ax_max:"Número máximo de rutas alcanzado",ax_none:"No hay rutas activas — agrega una",
+err_axis_ud:"Ruta {a}: U+D suma {n}%, debe ser 100%",
+err_axis_rule_pct:"{f} {v}: los porcentajes de rutas suman {n}%, debe ser 100%",
+warn_axis_rule:"{f} {a} no está permitido para {e} {v}"}
 };
 
 /* ═══════════════ default config (mirrors ~/Agenda app_config.py) ═══════════════ */
@@ -427,12 +442,36 @@ const DEFAULT_CONFIG = {
     arrival_point:["CHILE","BRAZIL","COLOMBIA","BOLIVIA"],
     theater:["משקפת","רדיו","תמונות"],
     vehicle:["BLACK","YELLOW"],
-    axis:["A-U","A-D","B-U","B-D","C-U","C-D","D-U","D-D"],
     wait_spot:["2","3","4","5"],
     taxi_apt:["ARRIBA","ABAJO"],
     taxi_arrival:["2","3","4","5"],
     taxi_emb:["ARRIBA","ABAJO"],
     taxi_arrival_noon:["2","3","4","5"]
+  },
+  /* Axes are letters with their own U/D split; the cell still holds the
+     composite "A-U" so archived weeks keep reading. */
+  axes: [
+    { id:"A", label:"A", pct_u:50, pct_d:50, active:true },
+    { id:"B", label:"B", pct_u:50, pct_d:50, active:true },
+    { id:"C", label:"C", pct_u:50, pct_d:50, active:true },
+    { id:"D", label:"D", pct_u:50, pct_d:50, active:true }
+  ],
+  /* Which axis letters each entry/exit value may use, and in what proportion.
+     These are enforced, not documentation. Defaults are only an example —
+     every station edits them. A value with no rule may use any axis. */
+  entry_axis_rules: {
+    "10":    { axes:["B","C"], pcts:{B:50, C:50} },
+    "13":    { axes:["A","D"], pcts:{A:50, D:50} },
+    "10-T":  { axes:["B","C"], pcts:{B:50, C:50} },
+    "13-D":  { axes:["B"],     pcts:{B:100} },
+    "SPLIT": { axes:["A","B","C","D"], pcts:{A:25, B:25, C:25, D:25} }
+  },
+  exit_axis_rules: {
+    "10":    { axes:["B","C"], pcts:{B:50, C:50} },
+    "13":    { axes:["A","D"], pcts:{A:50, D:50} },
+    "13-T":  { axes:["A","D"], pcts:{A:50, D:50} },
+    "10-D":  { axes:["B","C"], pcts:{B:50, C:50} },
+    "SPLIT": { axes:["A","B","C","D"], pcts:{A:25, B:25, C:25, D:25} }
   },
   special_values: { holiday:"חג", vehicle_special:"YELLOW" },
   /* Weekly quotas, any number of them. `value:""` means "this row is filled",
@@ -445,9 +484,6 @@ const DEFAULT_CONFIG = {
     { field:"theater",         value:"",       count:3 }
   ],
   targets: { field_pcts:{} },
-  /* manual reference maps, never enforced: entry/exit value -> [axis letters] */
-  entry_axis_map: {},
-  exit_axis_map: {},
   /* free-text station notes; documentation only, never read by the logic */
   assign_notes: "",
   row_order: [],
@@ -459,16 +495,13 @@ const PCT_FIELDS = [
   {key:"entry",         opt:"entry",         skipHoliday:true},
   {key:"exit",          opt:"exit",          skipHoliday:true},
   {key:"arrival_point", opt:"arrival_point"},
-  {key:"axis_morning",  opt:"axis"},
-  {key:"axis_noon",     opt:"axis"},
   {key:"vehicle",       opt:"vehicle"},
   {key:"wait_spot",     opt:"wait_spot"},
   {key:"taxi_apt",      opt:"taxi_apt"},
   {key:"taxi_arrival",  opt:"taxi_arrival"}
 ];
 const PCT_LABELS = {entry:()=>rowLabel("entry"), exit:()=>rowLabel("exit"),
-  arrival_point:()=>rowLabel("arrival_point"), axis_morning:()=>rowLabel("axis_morning"),
-  axis_noon:()=>rowLabel("axis_noon"), vehicle:()=>t("opt_vehicle"),
+  arrival_point:()=>rowLabel("arrival_point"), vehicle:()=>t("opt_vehicle"),
   wait_spot:()=>t("opt_wait"), taxi_apt:()=>rowLabel("taxi_apt"),
   taxi_arrival:()=>rowLabel("taxi_arrival")};
 /* Rows that exist regardless of configuration. Workplace-section rows and
@@ -557,16 +590,53 @@ function migrateConfig(cfg, raw){
   wd.hour_options=(wd.hour_options||[]).filter(Boolean);
   if (cfg.options){ delete cfg.options.work_hours_weekday; delete cfg.options.work_hours_friday; }
   delete cfg.work_day_labels;
-  /* axis reference maps: free text ("D, B") → a list of axis letters */
-  ["entry_axis_map","exit_axis_map"].forEach(k=>{
-    const m=cfg[k]||{}, out={};
-    for(const v in m){
-      const raw2=m[v];
-      const list=Array.isArray(raw2)?raw2:String(raw2||"").split(/[,\s]+/);
-      const letters=[];
-      list.forEach(x=>{ const L=String(x||"").trim().charAt(0).toUpperCase();
-        if(L&&!letters.includes(L)) letters.push(L); });
-      if(letters.length) out[v]=letters;
+  /* Axes: an older config held composite strings in options.axis
+     ("A-U","A-D",…); the letters behind them become the axis list. */
+  if(!raw.axes){
+    const letters=[];
+    ((raw.options||{}).axis||[]).forEach(v=>{
+      const L=String(v||"").trim().charAt(0).toUpperCase();
+      if(L&&!letters.includes(L)) letters.push(L); });
+    if(letters.length)
+      cfg.axes=letters.map(L=>({id:L, label:L, pct_u:50, pct_d:50, active:true}));
+  }
+  if(cfg.options) delete cfg.options.axis;
+  cfg.axes=(cfg.axes||[]).filter(a=>a&&a.id).map(a=>({
+    id:String(a.id).toUpperCase(), label:(a.label||a.id),
+    pct_u:Math.max(0,Math.min(100,parseInt(a.pct_u,10)||0)),
+    pct_d:Math.max(0,Math.min(100,parseInt(a.pct_d,10)||0)),
+    active:a.active!==false }));
+  /* The old free-text/letter reference maps become real rules, split evenly
+     across the letters they named. */
+  [["entry_axis_map","entry_axis_rules"],["exit_axis_map","exit_axis_rules"]].forEach(([oldKey,newKey])=>{
+    const legacy=raw[oldKey];
+    if(legacy && !raw[newKey]){
+      const out={};
+      for(const v in legacy){
+        const src=legacy[v];
+        const list=Array.isArray(src)?src:String(src||"").split(/[,\s]+/);
+        const ids=[];
+        list.forEach(x=>{ const L=String(x||"").trim().charAt(0).toUpperCase();
+          if(L&&!ids.includes(L)) ids.push(L); });
+        if(!ids.length) continue;
+        const share=Math.round(100/ids.length), pcts={};
+        let sum=0;
+        ids.forEach((id,i)=>{ const p=(i===ids.length-1)?(100-sum):share; pcts[id]=p; sum+=p; });
+        out[v]={axes:ids, pcts};
+      }
+      if(Object.keys(out).length) cfg[newKey]=out;
+    }
+    delete cfg[oldKey];
+  });
+  ["entry_axis_rules","exit_axis_rules"].forEach(k=>{
+    const src=cfg[k]||{}, out={};
+    for(const v in src){
+      const r=src[v]||{};
+      const ids=(r.axes||[]).map(x=>String(x).toUpperCase()).filter(Boolean);
+      if(!ids.length) continue;
+      const pcts={};
+      ids.forEach(id=>{ pcts[id]=Math.max(0,Math.min(100,parseInt((r.pcts||{})[id],10)||0)); });
+      out[v]={axes:ids, pcts};
     }
     cfg[k]=out;
   });
@@ -776,9 +846,10 @@ function weeklyTargets(){
 }
 /* the fields a quota governs — auto-assign leaves these to the quota pass */
 function governedFields(){ return new Set(weeklyTargets().map(x=>x.field)); }
-/* pickable values of any row that can carry a quota */
+/* pickable values of any row — the single source for dropdowns and quotas */
 function targetFieldValues(key){
   if(key==="work_hours") return hourOptions();
+  if(key==="axis_morning"||key==="axis_noon") return axisValues();
   const ex=extraByRow(key); if(ex) return (ex.options||[]).filter(Boolean);
   const sx=sectionByRow(key);
   if(sx){ const g=groupById(sx.sec.group_id); return g?groupEmps(g.id):allEmps(); }
@@ -816,17 +887,62 @@ function extraLabel(et, lang){
 function extraTargets(et){
   return {morning:+((et||{}).target_morning)||0, noon:+((et||{}).target_noon)||0};
 }
-/* distinct axis letters behind the configured axis values (A-U, A-D → A) */
-function axisLetters(){
+/* ── axes ───────────────────────────────────────────────────────────────── */
+/* An axis is a letter with its own U/D split. The schedule cell still holds
+   the composite "A-U", so archived weeks keep reading unchanged. */
+const MAX_AXES = 8;
+function axesAll(){ return CFG.axes||[]; }
+function activeAxes(){ return axesAll().filter(a=>a&&a.active); }
+function axisById(id){ return axesAll().find(a=>a&&a.id===id)||null; }
+function axisLetters(){ return activeAxes().map(a=>a.id); }
+function axisLabel(a){ return (a&&(a.label||a.id))||""; }
+function axisValues(){
   const out=[];
-  opts("axis").forEach(a=>{ const L=String(a).trim().charAt(0).toUpperCase();
-    if(L&&!out.includes(L)) out.push(L); });
+  activeAxes().forEach(a=>{ out.push(a.id+"-U"); out.push(a.id+"-D"); });
   return out;
 }
-function axisMap(key){
-  const m=CFG[key]||{}, out={};
-  for(const v in m) out[v]=Array.isArray(m[v])?m[v].slice():[];
-  return out;
+function axisLetterOf(v){ return String(v||"").split("-")[0].trim().toUpperCase(); }
+function axisDirOf(v){ return (String(v||"").split("-")[1]||"").trim().toUpperCase(); }
+
+/* ── entry/exit → axis rules ─────────────────────────────────────────────── */
+const AXIS_RULE_KEY = {entry:"entry_axis_rules", exit:"exit_axis_rules"};
+function axisRules(kind){ return CFG[AXIS_RULE_KEY[kind]]||{}; }
+/* the axis letters a value may use; no rule means every active axis */
+function allowedAxesFor(kind, value){
+  const ids=axisLetters();
+  const r=axisRules(kind)[value];
+  if(!r||!Array.isArray(r.axes)||!r.axes.length) return ids;
+  const narrowed=r.axes.filter(x=>ids.includes(x));
+  return narrowed.length?narrowed:ids;
+}
+function axisPctsFor(kind, value){
+  const r=axisRules(kind)[value];
+  return (r&&r.pcts)||null;
+}
+/* which of `pool` may use this axis letter */
+function valuesAllowingAxis(kind, letter, pool){
+  return pool.filter(v=>allowedAxesFor(kind,v).includes(letter));
+}
+/* Pick a composite axis for `value`: the letter comes from that value's rule
+   percentages balanced against history, then the chosen axis's own U/D split
+   picks the side — also balanced against history, per letter. */
+function pickAxis(kind, value, counts){
+  counts=counts||{};
+  const letters=allowedAxesFor(kind, value);
+  if(!letters.length) return "";
+  const letterCounts={};
+  for(const v in counts){ const L=axisLetterOf(v); letterCounts[L]=(letterCounts[L]||0)+counts[v]; }
+  const letter=leastUsed(letters, letterCounts, axisPctsFor(kind, value));
+  const ax=axisById(letter);
+  if(!ax) return "";
+  const dirCounts={U:0, D:0};
+  for(const v in counts){
+    if(axisLetterOf(v)!==letter) continue;
+    const d=axisDirOf(v);
+    if(dirCounts[d]!=null) dirCounts[d]+=counts[v];
+  }
+  const dir=leastUsed(["U","D"], dirCounts, {U:+ax.pct_u||0, D:+ax.pct_d||0});
+  return dir?letter+"-"+dir:letter;
 }
 
 /* ── rows ───────────────────────────────────────────────────────────────── */
@@ -948,7 +1064,8 @@ function buildHistory(sinceIso){
 function leastUsed(options, counts, field){
   if(!options||!options.length) return "";
   counts=counts||{};
-  const pcts=field?fieldPcts(field):null;
+  /* `field` is either a PCT_FIELDS key or an explicit {value: percent} map */
+  const pcts=field?(typeof field==="object"?field:fieldPcts(field)):null;
   let pool=options.slice();
   if(pcts){                       // an explicit 0% target means "never assign"
     const pos=pool.filter(o=>pcts[o]==null||(Number(pcts[o])||0)>0);
@@ -1018,7 +1135,7 @@ function autoAssign(){
   const hist=buildHistory(addDays(keys[0], -HISTORY_DAYS));
   const sv=CFG.special_values;
   const holiday=sv.holiday, VS=sv.vehicle_special;
-  const axisVals=opts("axis"), waitVals=opts("wait_spot");
+  const waitVals=opts("wait_spot");
   const secs=allSections();
   const hFields=historyFields();
   const gov=governedFields();
@@ -1034,12 +1151,22 @@ function autoAssign(){
     const day=S.days[dk];
     const other=day.other_empl||"";
 
-    /* entry/exit and both axes are independent — each balanced against its
-       own target percentages, no cross-field constraint */
-    if(free("axis_morning")&&!day.axis_morning&&axisVals.length) day.axis_morning=leastUsed(axisVals,H("axis_morning"),"axis_morning");
-    if(free("axis_noon")&&!day.axis_noon&&axisVals.length) day.axis_noon=leastUsed(axisVals,H("axis_noon"),"axis_noon");
-    if(free("entry")&&!day.entry) day.entry=leastUsed(opts("entry").filter(o=>o!==holiday),H("entry"),"entry");
-    if(free("exit")&&!day.exit)   day.exit =leastUsed(opts("exit").filter(o=>o!==holiday),H("exit"),"exit");
+    /* entry ↔ morning axis and exit ↔ noon axis. The value chooses the axis
+       letter through the station's rules; the axis's own U/D split chooses the
+       side. Whichever of the two is already filled constrains the other. */
+    [["entry","axis_morning"],["exit","axis_noon"]].forEach(([vf,af])=>{
+      const pool=opts(vf).filter(o=>o!==holiday);
+      if(free(vf)&&!day[vf]&&pool.length){
+        let cand=pool;
+        if(day[af]){
+          const narrowed=valuesAllowingAxis(vf, axisLetterOf(day[af]), pool);
+          if(narrowed.length) cand=narrowed;
+        }
+        day[vf]=leastUsed(cand,H(vf),vf);
+      }
+      if(free(af)&&!day[af]&&activeAxes().length)
+        day[af]=pickAxis(vf, day[vf], H(af));
+    });
 
     /* Workplaces in priority order. Each section draws from its own group,
        skipping anyone on vacation, on another task, or already placed today,
@@ -1146,6 +1273,13 @@ function validate(){
       else if((e.noon_values||[]).includes(v)) exCount[rk].n++;
     });
     const other=day.other_empl||"";
+    /* the axis must be one the day's entry/exit permits */
+    [["entry","axis_morning"],["exit","axis_noon"]].forEach(([vf,af])=>{
+      if(!day[vf]||!day[af]) return;
+      if(!allowedAxesFor(vf, day[vf]).includes(axisLetterOf(day[af])))
+        errs.push({lvl:"warn", msg:d+": "+t("warn_axis_rule",
+          {f:rowLabel(af), a:day[af], e:rowLabel(vf), v:day[vf]})});
+    });
     activeWorkplaces().forEach(w=>{
       const missing=wpSections(w).find(sec=>
         sec.required&&sectionSize(sec)>0&&!day[sec.row_key]);
@@ -1170,6 +1304,21 @@ function validate(){
       }
     });
   }
+  /* configuration-level faults, reported once rather than per day */
+  activeAxes().forEach(a=>{
+    const sum=(+a.pct_u||0)+(+a.pct_d||0);
+    if(sum!==100) errs.push({lvl:"err",msg:"❌ "+t("err_axis_ud",{a:axisLabel(a),n:sum})});
+  });
+  ["entry","exit"].forEach(kind=>{
+    const rules=axisRules(kind);
+    for(const v in rules){
+      const r=rules[v];
+      if(!r||!(r.axes||[]).length) continue;
+      const sum=r.axes.reduce((x,id)=>x+(+((r.pcts||{})[id])||0),0);
+      if(sum!==100) errs.push({lvl:"err",msg:"❌ "+
+        t("err_axis_rule_pct",{f:rowLabel(kind), v, n:sum})});
+    }
+  });
   quotas.forEach(q=>{
     if(q.seen===q.count) return;
     const f=targetFieldLabel(q.field);
@@ -1301,6 +1450,11 @@ function renderRow(rk,keys){
       h+=`<td><input type="text" data-dk="${dk}" data-f="${rk}" value="${esc(day[rk]||"")}"></td>`;
     } else if(cr){
       h+=selCell(dk,rk,(cr.options||[]).filter(Boolean),day[rk]);
+    } else if(rk==="axis_morning"||rk==="axis_noon"){
+      /* only the axes this day's entry/exit actually permits */
+      const kind=rk==="axis_morning"?"entry":"exit";
+      const allowed=day[kind]?allowedAxesFor(kind,day[kind]):axisLetters();
+      h+=selCell(dk,rk,axisValues().filter(v=>allowed.includes(axisLetterOf(v))),day[rk]);
     } else {
       const cls=(rk==="vehicle_morning"||rk==="vehicle_noon")&&day[rk]===CFG.special_values.vehicle_special?"cell-yellow":"";
       h+=selCell(dk,rk,opts(ROW_OPTS[rk]||""),day[rk],cls);
@@ -1467,7 +1621,7 @@ function viewSettings(){
   /* options */
   const groups=[["entry",rowLabel("entry")],["exit",rowLabel("exit")],["escort",t("opt_escort")],
     ["arrival_point",rowLabel("arrival_point")],["theater",rowLabel("theater")],
-    ["vehicle",t("opt_vehicle")],["axis",t("opt_axis")],["wait_spot",t("opt_wait")],
+    ["vehicle",t("opt_vehicle")],["wait_spot",t("opt_wait")],
     ["taxi_apt",rowLabel("taxi_apt")],["taxi_arrival",rowLabel("taxi_arrival")],
     ["taxi_emb",rowLabel("taxi_emb")],["taxi_arrival_noon",rowLabel("taxi_arrival_noon")]];
   let op=`<div class="hint">${t("one_per_line")}</div><div class="grid3">`;
@@ -1477,8 +1631,10 @@ function viewSettings(){
     <label>${t("sv_vehicle")}<br><input id="svVehicle" value="${esc(CFG.special_values.vehicle_special)}"></label>
   </div><p><button class="btn primary" id="saveOpts">${t("save_settings")}</button></p>`;
   h+=sect("options",t("s_options"),op);
+  h+=sect("axes",t("s_axes"),
+    axesPanel()+axisRulesPanel("entry")+axisRulesPanel("exit"));
   /* targets */
-  const tgt=`${targetsPanel()}${pctTables()}${mapTables()}`;
+  const tgt=`${targetsPanel()}${pctTables()}`;
   h+=sect("targets",t("s_targets"),tgt);
   h+=sect("notes",t("s_notes"),notesPanel());
   /* custom rows */
@@ -1569,30 +1725,55 @@ function pctTables(){
   return h;
 }
 
-/* manual, never-enforced reference maps: entry↔axis and exit↔axis.
-   One checkbox per axis LETTER, rebuilt from opts("axis") every render, so
-   adding or removing an axis updates the boxes on its own. */
-function mapTables(){
-  const letters=axisLetters();
-  const block=(optKey,cfgKey,title)=>{
-    const list=opts(optKey), m=axisMap(cfgKey);
-    let x=`<div class="pct-box"><b>${esc(title)}</b>
-      <table class="stats"><tr><th>${esc(rowLabel(optKey))}</th><th>${t("map_axes")}</th></tr>`;
-    if(!letters.length) x+=`<tr><td colspan="2" class="hint">${t("map_no_axes")}</td></tr>`;
-    list.forEach(v=>{
-      const on=m[v]||[];
-      x+=`<tr><td style="font-weight:600">${esc(v)}</td><td><div class="chk-row">`;
-      letters.forEach(L=>{ x+=`<label class="chk"><input type="checkbox" data-map="${cfgKey}"`+
-        ` data-val="${esc(v)}" data-letter="${esc(L)}" ${on.includes(L)?"checked":""}> ${esc(L)}</label>`; });
-      x+=`</div></td></tr>`;
+/* ═══ axes, and the entry/exit rules that pick them ═══════════════════════ */
+/* part A: each axis's own U/D split */
+function axesPanel(){
+  let h=`<h3>${t("ax_split_title")}</h3><div class="hint">${t("ax_split_hint")}</div>`;
+  const act=activeAxes();
+  if(!act.length) h+=`<div class="msg warn">${t("ax_none")}</div>`;
+  else {
+    h+=`<table class="stats"><tr><th>${t("opt_axis")}</th><th>% U</th><th>% D</th>
+      <th>${t("pct_total")}</th><th></th></tr>`;
+    act.forEach(a=>{
+      const sum=(+a.pct_u||0)+(+a.pct_d||0);
+      h+=`<tr><td><input data-axlabel="${esc(a.id)}" value="${esc(axisLabel(a))}" style="width:80px"></td>
+        <td><input type="number" min="0" max="100" data-axu="${esc(a.id)}" value="${+a.pct_u||0}"></td>
+        <td><input type="number" min="0" max="100" data-axd="${esc(a.id)}" value="${+a.pct_d||0}"></td>
+        <td><span class="pct-tot ${sum===100?"ok":"bad"}" data-axtot="${esc(a.id)}">${sum}%</span></td>
+        <td><button class="btn small warn" data-axremove="${esc(a.id)}">🗑</button></td></tr>`;
     });
-    x+=`</table><p><button class="btn small primary" data-mapsave="${cfgKey}">💾 ${t("save_settings")}</button></p></div>`;
-    return x;
-  };
-  return `<h3>${t("rules_title")}</h3><div class="hint">${t("map_hint")}</div>`
-    + block("entry","entry_axis_map",t("map_entry_title"))
-    + block("exit","exit_axis_map",t("map_exit_title"))
-    + `<div class="hint">⚠️ ${t("rules_manual_note")}</div>`;
+    h+=`</table>`;
+  }
+  h+=`<p class="row-flex">
+    <button class="btn" id="addAxis" ${act.length<MAX_AXES?"":"disabled"}>${t("ax_add")}</button>
+    <button class="btn primary" id="saveAxes">${t("save_settings")}</button></p>`;
+  return h;
+}
+/* parts B and C: which axes each entry/exit value may use, and in what share */
+function axisRulesPanel(kind){
+  const letters=axisLetters(), holiday=CFG.special_values.holiday;
+  const values=opts(kind).filter(v=>v!==holiday);
+  const rules=axisRules(kind);
+  let h=`<h3>${t(kind==="entry"?"ax_entry_title":"ax_exit_title")}</h3>
+    <div class="hint">${t("ax_rules_hint")}</div>`;
+  if(!letters.length) return h+`<div class="msg warn">${t("ax_none")}</div>`;
+  values.forEach(v=>{
+    const r=rules[v]||{}, on=r.axes||[], pcts=r.pcts||{};
+    const sum=on.reduce((x,id)=>x+(+pcts[id]||0),0);
+    h+=`<div class="sec-row"><b style="min-width:70px">${esc(v)}</b><div class="chk-row">`;
+    letters.forEach(L=>{
+      const chk=on.includes(L);
+      h+=`<label class="chk"><input type="checkbox" data-arax="${kind}" data-val="${esc(v)}"
+          data-letter="${esc(L)}" ${chk?"checked":""}> ${esc(L)}
+        <input type="number" min="0" max="100" style="width:62px" data-arpct="${kind}"
+          data-val="${esc(v)}" data-letter="${esc(L)}" value="${+pcts[L]||0}"
+          ${chk?"":"disabled"}></label>`;
+    });
+    h+=`</div><span class="pct-tot ${on.length&&sum===100?"ok":"bad"}"
+      data-artot="${kind}" data-val="${esc(v)}">${sum}%</span></div>`;
+  });
+  h+=`<p><button class="btn primary" data-arsave="${kind}">${t("save_settings")}</button></p>`;
+  return h;
 }
 
 /* ═══════════════ screen 3: archive ═══════════════ */
@@ -1806,7 +1987,7 @@ function wire(){
     document.querySelectorAll("table.sched select,table.sched input").forEach(el=>{
       el.onchange=()=>{ S.days[el.dataset.dk][el.dataset.f]=el.value; S.dirty=true; saveDraft();
         const rerender=vacFields().concat(sectionRowKeys(), extraRowKeys(),
-          ["vehicle_morning","vehicle_noon","theater","other_empl"]);
+          ["vehicle_morning","vehicle_noon","theater","other_empl","entry","exit"]);
         if(rerender.includes(el.dataset.f)) render();
         else updateStatus(); };
     });
@@ -2163,13 +2344,96 @@ function wireSettings(){
     CFG.targets.field_pcts[key]=o;
     saveConfig(); render();
     reopen("targets"); });
-  /* ── manual entry/exit ↔ axis reference maps ── */
-  document.querySelectorAll("[data-mapsave]").forEach(b=>b.onclick=()=>{
-    const k=b.dataset.mapsave, o={};
-    document.querySelectorAll(`[data-map="${k}"]:checked`).forEach(i=>{
-      (o[i.dataset.val]=o[i.dataset.val]||[]).push(i.dataset.letter); });
-    CFG[k]=o; saveConfig(); render();
-    reopen("targets"); });
+  /* ── axes: each one's U/D split ── */
+  const axTot=id=>{
+    const u=document.querySelector(`[data-axu="${id}"]`), dd=document.querySelector(`[data-axd="${id}"]`);
+    return (u?parseInt(u.value,10)||0:0)+(dd?parseInt(dd.value,10)||0:0);
+  };
+  const paintAx=id=>{
+    const el=document.querySelector(`[data-axtot="${id}"]`); if(!el) return;
+    const n=axTot(id); el.textContent=n+"%"; el.className="pct-tot "+(n===100?"ok":"bad");
+  };
+  document.querySelectorAll("[data-axu],[data-axd]").forEach(inp=>{
+    inp.oninput=()=>paintAx(inp.dataset.axu||inp.dataset.axd); });
+  const readAxes=()=>{
+    document.querySelectorAll("[data-axlabel]").forEach(inp=>{
+      const a=axisById(inp.dataset.axlabel); if(a) a.label=inp.value.trim()||a.id; });
+    document.querySelectorAll("[data-axu]").forEach(inp=>{
+      const a=axisById(inp.dataset.axu);
+      if(a) a.pct_u=Math.max(0,Math.min(100,parseInt(inp.value,10)||0)); });
+    document.querySelectorAll("[data-axd]").forEach(inp=>{
+      const a=axisById(inp.dataset.axd);
+      if(a) a.pct_d=Math.max(0,Math.min(100,parseInt(inp.value,10)||0)); });
+  };
+  if($("saveAxes")) $("saveAxes").onclick=()=>{
+    readAxes();
+    const bad=activeAxes().find(a=>((+a.pct_u||0)+(+a.pct_d||0))!==100);
+    if(bad){ toast("⚠️ "+t("err_axis_ud",{a:axisLabel(bad),n:(+bad.pct_u||0)+(+bad.pct_d||0)})); return; }
+    saveConfig(); render(); reopen("axes");
+  };
+  if($("addAxis")) $("addAxis").onclick=()=>{
+    readAxes();
+    const used=new Set(axesAll().map(a=>a.id));
+    /* reactivate a retired letter before minting a new one */
+    let slot=axesAll().find(a=>!a.active);
+    if(!slot){
+      const next="ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").find(L=>!used.has(L));
+      if(!next||activeAxes().length>=MAX_AXES){ toast("⚠️ "+t("ax_max")); return; }
+      slot={id:next, label:next, pct_u:50, pct_d:50, active:false};
+      CFG.axes=axesAll().concat([slot]);
+    }
+    slot.active=true;
+    saveConfig(); render(); reopen("axes");
+  };
+  document.querySelectorAll("[data-axremove]").forEach(b=>b.onclick=()=>{
+    readAxes();
+    const a=axisById(b.dataset.axremove); if(!a) return;
+    a.active=false;                       // retired, its split is kept
+    saveConfig(); render(); reopen("axes");
+  });
+  /* ── entry/exit → axis rules ── */
+  const arTot=(kind,val)=>{
+    let n=0;
+    document.querySelectorAll(`[data-arax="${kind}"][data-val="${val}"]:checked`).forEach(cb=>{
+      const p=document.querySelector(
+        `[data-arpct="${kind}"][data-val="${val}"][data-letter="${cb.dataset.letter}"]`);
+      n+=p?parseInt(p.value,10)||0:0; });
+    return n;
+  };
+  const paintAr=(kind,val)=>{
+    const el=document.querySelector(`[data-artot="${kind}"][data-val="${val}"]`);
+    if(!el) return;
+    const any=document.querySelector(`[data-arax="${kind}"][data-val="${val}"]:checked`);
+    const n=arTot(kind,val);
+    el.textContent=n+"%"; el.className="pct-tot "+(any&&n===100?"ok":"bad");
+  };
+  document.querySelectorAll("[data-arax]").forEach(cb=>cb.onchange=()=>{
+    const p=document.querySelector(
+      `[data-arpct="${cb.dataset.arax}"][data-val="${cb.dataset.val}"][data-letter="${cb.dataset.letter}"]`);
+    if(p){ p.disabled=!cb.checked; if(!cb.checked) p.value=0; }
+    paintAr(cb.dataset.arax, cb.dataset.val);
+  });
+  document.querySelectorAll("[data-arpct]").forEach(inp=>{
+    inp.oninput=()=>paintAr(inp.dataset.arpct, inp.dataset.val); });
+  document.querySelectorAll("[data-arsave]").forEach(b=>b.onclick=()=>{
+    const kind=b.dataset.arsave, out={};
+    const vals=new Set();
+    document.querySelectorAll(`[data-arax="${kind}"]`).forEach(cb=>vals.add(cb.dataset.val));
+    for(const v of vals){
+      const ids=[], pcts={};
+      document.querySelectorAll(`[data-arax="${kind}"][data-val="${v}"]:checked`).forEach(cb=>{
+        const L=cb.dataset.letter;
+        const p=document.querySelector(`[data-arpct="${kind}"][data-val="${v}"][data-letter="${L}"]`);
+        ids.push(L); pcts[L]=p?Math.max(0,Math.min(100,parseInt(p.value,10)||0)):0;
+      });
+      if(!ids.length) continue;               // no axes ticked ⇒ no rule, any axis
+      const sum=ids.reduce((x,L)=>x+pcts[L],0);
+      if(sum!==100){ toast("⚠️ "+t("err_axis_rule_pct",{f:rowLabel(kind), v, n:sum})); return; }
+      out[v]={axes:ids, pcts};
+    }
+    CFG[AXIS_RULE_KEY[kind]]=out;
+    saveConfig(); render(); reopen("axes");
+  });
   $("addRow").onclick=()=>{
     const he=$("crHe").value.trim();
     if(!he){ toast("⚠️ "+t("name_required")); return; }

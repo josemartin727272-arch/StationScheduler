@@ -31,6 +31,7 @@ FIXED_ROW_ORDER = [
 MAX_GROUPS = 5
 MAX_WORKPLACES = 5
 MAX_EXTRAS = 5
+MAX_AXES = 8
 DEFAULT_VAC_BUDGET = 14
 
 # Monday-based, because a week always starts on a Monday here.
@@ -47,7 +48,6 @@ ROW_OPTS = {
     "escort_morning": "escort", "escort_noon": "escort",
     "arrival_point": "arrival_point", "theater": "theater",
     "vehicle_morning": "vehicle", "vehicle_noon": "vehicle",
-    "axis_morning": "axis", "axis_noon": "axis",
     "wait_morning": "wait_spot", "wait_noon": "wait_spot",
     "taxi_apt": "taxi_apt", "taxi_arrival": "taxi_arrival",
     "taxi_emb": "taxi_emb", "taxi_arrival_noon": "taxi_arrival_noon",
@@ -128,7 +128,6 @@ DEFAULTS = {
         "arrival_point": ["CHILE", "BRAZIL", "COLOMBIA", "BOLIVIA"],
         "theater":       ["משקפת", "רדיו", "תמונות"],
         "vehicle":       ["BLACK", "YELLOW"],
-        "axis":          ["A-U", "A-D", "B-U", "B-D", "C-U", "C-D", "D-U", "D-D"],
         "wait_spot":     ["2", "3", "4", "5"],
         "taxi_apt":          ["ARRIBA", "ABAJO"],
         "taxi_arrival":      ["2", "3", "4", "5"],
@@ -137,6 +136,33 @@ DEFAULTS = {
     },
     # Values with special meaning to auto-assign/validation. Editable so that
     # renaming an option in "options" doesn't silently break the logic.
+    # Axes are letters with their own U/D split; the cell still holds the
+    # composite "A-U" so archived weeks keep reading.
+    "axes": [
+        {"id": "A", "label": "A", "pct_u": 50, "pct_d": 50, "active": True},
+        {"id": "B", "label": "B", "pct_u": 50, "pct_d": 50, "active": True},
+        {"id": "C", "label": "C", "pct_u": 50, "pct_d": 50, "active": True},
+        {"id": "D", "label": "D", "pct_u": 50, "pct_d": 50, "active": True},
+    ],
+    # Which axis letters each entry/exit value may use, and in what proportion.
+    # These are enforced, not documentation. Defaults are only an example —
+    # every station edits them. A value with no rule may use any axis.
+    "entry_axis_rules": {
+        "10":    {"axes": ["B", "C"], "pcts": {"B": 50, "C": 50}},
+        "13":    {"axes": ["A", "D"], "pcts": {"A": 50, "D": 50}},
+        "10-T":  {"axes": ["B", "C"], "pcts": {"B": 50, "C": 50}},
+        "13-D":  {"axes": ["B"],      "pcts": {"B": 100}},
+        "SPLIT": {"axes": ["A", "B", "C", "D"],
+                  "pcts": {"A": 25, "B": 25, "C": 25, "D": 25}},
+    },
+    "exit_axis_rules": {
+        "10":    {"axes": ["B", "C"], "pcts": {"B": 50, "C": 50}},
+        "13":    {"axes": ["A", "D"], "pcts": {"A": 50, "D": 50}},
+        "13-T":  {"axes": ["A", "D"], "pcts": {"A": 50, "D": 50}},
+        "10-D":  {"axes": ["B", "C"], "pcts": {"B": 50, "C": 50}},
+        "SPLIT": {"axes": ["A", "B", "C", "D"],
+                  "pcts": {"A": 25, "B": 25, "C": 25, "D": 25}},
+    },
     "special_values": {
         "holiday": "חג",              # excluded from entry/exit auto-assign
         "vehicle_special": "YELLOW",  # counted vehicle; enables taxi rows
@@ -156,11 +182,6 @@ DEFAULTS = {
         # (which behaves exactly like plain least-used).
         "field_pcts": {},
     },
-    # Manual reference maps edited on the Settings page:
-    # {entry/exit value: [axis letters]}. Documentation only — auto-assign and
-    # validation never read these.
-    "entry_axis_map": {},
-    "exit_axis_map": {},
     # Free-text station notes; documentation only, never read by the logic.
     "assign_notes": "",
     # Display order of schedule rows (keys). Empty ⇒ natural order.
@@ -257,19 +278,70 @@ def _migrate(cfg: dict, raw: dict) -> dict:
         cfg.get("options", {}).pop(k, None)
     cfg.pop("work_day_labels", None)
 
-    # axis reference maps: free text ("D, B") → a list of axis letters
-    for key in ("entry_axis_map", "exit_axis_map"):
+    # Axes: an older config held composite strings in options.axis
+    # ("A-U","A-D",…); the letters behind them become the axis list.
+    if not raw.get("axes"):
+        letters = []
+        for v in (raw.get("options") or {}).get("axis", []) or []:
+            letter = str(v or "").strip()[:1].upper()
+            if letter and letter not in letters:
+                letters.append(letter)
+        if letters:
+            cfg["axes"] = [{"id": L, "label": L, "pct_u": 50, "pct_d": 50,
+                            "active": True} for L in letters]
+    cfg.get("options", {}).pop("axis", None)
+    clean_axes = []
+    for a in cfg.get("axes") or []:
+        if not (a and a.get("id")):
+            continue
+        def _pct(v):
+            try:
+                return max(0, min(100, int(v)))
+            except (TypeError, ValueError):
+                return 0
+        clean_axes.append({"id": str(a["id"]).upper(), "label": a.get("label") or a["id"],
+                           "pct_u": _pct(a.get("pct_u")), "pct_d": _pct(a.get("pct_d")),
+                           "active": a.get("active") is not False})
+    cfg["axes"] = clean_axes
+
+    # The old free-text/letter reference maps become real rules, split evenly
+    # across the letters they named.
+    for old_key, new_key in (("entry_axis_map", "entry_axis_rules"),
+                             ("exit_axis_map", "exit_axis_rules")):
+        legacy = raw.get(old_key)
+        if legacy and not raw.get(new_key):
+            out = {}
+            for value, src in legacy.items():
+                items = src if isinstance(src, list) else re.split(r"[,\s]+", str(src or ""))
+                ids = []
+                for x in items:
+                    letter = str(x or "").strip()[:1].upper()
+                    if letter and letter not in ids:
+                        ids.append(letter)
+                if not ids:
+                    continue
+                share, total, pcts = round(100 / len(ids)), 0, {}
+                for i, letter in enumerate(ids):
+                    p = 100 - total if i == len(ids) - 1 else share
+                    pcts[letter], total = p, total + p
+                out[value] = {"axes": ids, "pcts": pcts}
+            if out:
+                cfg[new_key] = out
+        cfg.pop(old_key, None)
+    for key in ("entry_axis_rules", "exit_axis_rules"):
         out = {}
-        for value, raw_axes in (cfg.get(key) or {}).items():
-            items = raw_axes if isinstance(raw_axes, list) else \
-                re.split(r"[,\s]+", str(raw_axes or ""))
-            letters = []
-            for x in items:
-                letter = str(x or "").strip()[:1].upper()
-                if letter and letter not in letters:
-                    letters.append(letter)
-            if letters:
-                out[value] = letters
+        for value, rule in (cfg.get(key) or {}).items():
+            ids = [str(x).upper() for x in (rule or {}).get("axes", []) if x]
+            if not ids:
+                continue
+            src = (rule or {}).get("pcts") or {}
+            pcts = {}
+            for letter in ids:
+                try:
+                    pcts[letter] = max(0, min(100, int(src.get(letter) or 0)))
+                except (TypeError, ValueError):
+                    pcts[letter] = 0
+            out[value] = {"axes": ids, "pcts": pcts}
         cfg[key] = out
 
     cfg.pop("employees", None)
@@ -526,6 +598,8 @@ def target_field_values(key: str) -> list:
     """Pickable values of any row that can carry a quota."""
     if key == "work_hours":
         return hour_options()
+    if key in ("axis_morning", "axis_noon"):
+        return axis_values()
     et = extra_by_row(key)
     if et:
         return [o for o in et.get("options", []) if o]
@@ -555,14 +629,69 @@ def target_fields() -> list:
     return out
 
 
+# ── axes ───────────────────────────────────────────────────────────────────
+
+def axes() -> list:
+    return list(get_config()["axes"])
+
+
+def active_axes() -> list:
+    return [a for a in axes() if a.get("active")]
+
+
+def axis_by_id(axis_id: str):
+    return next((a for a in axes() if a.get("id") == axis_id), None)
+
+
 def axis_letters() -> list:
-    """Distinct axis letters behind the configured axis values (A-U, A-D → A)."""
+    return [a["id"] for a in active_axes()]
+
+
+def axis_label(a: dict) -> str:
+    return (a or {}).get("label") or (a or {}).get("id") or ""
+
+
+def axis_values() -> list:
+    """The composite values a schedule cell can hold: A-U, A-D, B-U, …"""
     out = []
-    for a in options("axis"):
-        letter = str(a).strip()[:1].upper()
-        if letter and letter not in out:
-            out.append(letter)
+    for a in active_axes():
+        out += [a["id"] + "-U", a["id"] + "-D"]
     return out
+
+
+def axis_letter_of(value: str) -> str:
+    return str(value or "").split("-")[0].strip().upper()
+
+
+def axis_dir_of(value: str) -> str:
+    parts = str(value or "").split("-")
+    return (parts[1] if len(parts) > 1 else "").strip().upper()
+
+
+AXIS_RULE_KEY = {"entry": "entry_axis_rules", "exit": "exit_axis_rules"}
+
+
+def axis_rules(kind: str) -> dict:
+    return dict(get_config().get(AXIS_RULE_KEY[kind]) or {})
+
+
+def allowed_axes_for(kind: str, value: str) -> list:
+    """The axis letters a value may use; no rule means every active axis."""
+    ids = axis_letters()
+    rule = axis_rules(kind).get(value)
+    if not rule or not rule.get("axes"):
+        return ids
+    narrowed = [x for x in rule["axes"] if x in ids]
+    return narrowed or ids
+
+
+def axis_pcts_for(kind: str, value: str):
+    rule = axis_rules(kind).get(value)
+    return (rule or {}).get("pcts") or None
+
+
+def values_allowing_axis(kind: str, letter: str, pool: list) -> list:
+    return [v for v in pool if letter in allowed_axes_for(kind, v)]
 
 
 def assign_notes() -> str:
@@ -591,8 +720,6 @@ PCT_FIELDS = [
     {"key": "entry",         "opt": "entry", "skip_holiday": True},
     {"key": "exit",          "opt": "exit",  "skip_holiday": True},
     {"key": "arrival_point", "opt": "arrival_point"},
-    {"key": "axis_morning",  "opt": "axis"},
-    {"key": "axis_noon",     "opt": "axis"},
     {"key": "vehicle",       "opt": "vehicle"},
     {"key": "wait_spot",     "opt": "wait_spot"},
     {"key": "taxi_apt",      "opt": "taxi_apt"},
@@ -661,11 +788,6 @@ def pct_label(key: str, lang: str) -> str:
     if key == "wait_spot":
         return row_label("wait_morning", lang) + " / " + row_label("wait_noon", lang)
     return row_label(key, lang)
-
-
-def reference_map(name: str) -> dict:
-    """entry_axis_map / exit_axis_map — {value: [axis letters]}, never enforced."""
-    return {k: list(v) for k, v in (get_config().get(name) or {}).items()}
 
 
 def default_vacation_budget(emp: str = "") -> int:

@@ -69,7 +69,7 @@ ARRIVAL_POINT_OPTIONS = cfg.options_with_blank("arrival_point")
 THEATER_OPTIONS = cfg.options_with_blank("theater")
 EXTRA_ROW_KEYS = cfg.extra_row_keys()
 VEHICLE_OPTIONS = cfg.options_with_blank("vehicle")
-AXIS_OPTIONS = cfg.options_with_blank("axis")
+AXIS_OPTIONS = [""] + cfg.axis_values()
 WAIT_SPOT_OPTIONS = cfg.options_with_blank("wait_spot")
 CUSTOM_ROWS = cfg.custom_rows()
 CUSTOM_ROW_MAP = {r["key"]: r for r in CUSTOM_ROWS}
@@ -540,7 +540,6 @@ if st.session_state.page == "settings":
             ("arrival_point", t("row_arrival_point", lang)),
             ("theater",       t("row_theater", lang)),
             ("vehicle",       t("row_vehicle_morning", lang) + " / " + t("row_vehicle_noon", lang)),
-            ("axis",          t("row_axis_morning", lang) + " / " + t("row_axis_noon", lang)),
             ("wait_spot",     t("row_wait_morning", lang) + " / " + t("row_wait_noon", lang)),
             ("taxi_apt",          cfg.row_label("taxi_apt", lang)),
             ("taxi_arrival",      cfg.row_label("taxi_arrival", lang)),
@@ -657,27 +656,84 @@ if st.session_state.page == "settings":
                         st.success("✅ " + t("settings_saved", lang))
                         st.rerun()
 
-        # ── Manual entry/exit ↔ axis reference maps (never enforced) ───────
-        st.markdown("### " + t("map_title", lang))
-        st.caption(t("map_hint", lang))
-        for opt_key, cfg_key, title_key in [
-                ("entry", "entry_axis_map", "map_entry_title"),
-                ("exit", "exit_axis_map", "map_exit_title")]:
-            saved = cfg.reference_map(cfg_key)
-            with st.form(f"map_form_{cfg_key}"):
-                st.markdown(f"**{t(title_key, lang)}**")
-                entered = {}
-                letters = cfg.axis_letters()
-                for v in cfg.options(opt_key):
-                    entered[v] = st.multiselect(
-                        f'{v} → {t("map_axes", lang)}', letters,
-                        default=[L for L in saved.get(v, []) if L in letters],
-                        key=f"map_{cfg_key}_{v}")
-                if st.form_submit_button("💾 " + t("save_settings", lang)):
-                    config[cfg_key] = {k: list(x) for k, x in entered.items() if x}
+        # ── Axes: each one's U/D split ─────────────────────────────────────
+        st.markdown("### " + t("ax_split_title", lang))
+        act_axes = [a for a in config["axes"] if a.get("active")]
+        if not act_axes:
+            st.warning(t("ax_none", lang))
+        with st.form("axes_form"):
+            for a in act_axes:
+                aid = a["id"]
+                c1, c2, c3, c4 = st.columns([2, 2, 2, 1])
+                c1.text_input(t("opt_axis", lang), value=cfg.axis_label(a),
+                              key=f"axlabel_{aid}")
+                c2.number_input("% U", min_value=0, max_value=100,
+                                value=int(a.get("pct_u") or 0), key=f"axu_{aid}")
+                c3.number_input("% D", min_value=0, max_value=100,
+                                value=int(a.get("pct_d") or 0), key=f"axd_{aid}")
+                total = int(a.get("pct_u") or 0) + int(a.get("pct_d") or 0)
+                c4.markdown(("✅ " if total == 100 else "⚠️ ") + f"{total}%")
+            if st.form_submit_button("💾 " + t("save_settings", lang), type="primary"):
+                bad = None
+                for a in config["axes"]:
+                    if not a.get("active"):
+                        continue
+                    aid = a["id"]
+                    a["label"] = st.session_state.get(f"axlabel_{aid}", aid).strip() or aid
+                    a["pct_u"] = int(st.session_state.get(f"axu_{aid}", 0))
+                    a["pct_d"] = int(st.session_state.get(f"axd_{aid}", 0))
+                    if a["pct_u"] + a["pct_d"] != 100:
+                        bad = a
+                if bad:
+                    st.error(t("err_axis_ud", lang, a=cfg.axis_label(bad),
+                               n=bad["pct_u"] + bad["pct_d"]))
+                else:
                     cfg.save_config(config)
                     st.success("✅ " + t("settings_saved", lang))
                     st.rerun()
+
+        # ── Which axes each entry/exit value may use, and in what share ─────
+        letters = cfg.axis_letters()
+        for kind, title_key in (("entry", "ax_entry_title"), ("exit", "ax_exit_title")):
+            st.markdown("### " + t(title_key, lang))
+            rules = cfg.axis_rules(kind)
+            values = [v for v in cfg.options(kind) if v != cfg.special("holiday")]
+            with st.form(f"axrules_{kind}"):
+                for v in values:
+                    rule = rules.get(v) or {}
+                    on, pcts = rule.get("axes", []), rule.get("pcts", {})
+                    cols = st.columns([2] + [2] * len(letters))
+                    cols[0].markdown(f"**{v}**")
+                    for i, letter in enumerate(letters, start=1):
+                        cols[i].checkbox(letter, value=letter in on,
+                                         key=f"arax_{kind}_{v}_{letter}")
+                        cols[i].number_input("%", min_value=0, max_value=100,
+                                             value=int(pcts.get(letter) or 0),
+                                             key=f"arpct_{kind}_{v}_{letter}",
+                                             label_visibility="collapsed")
+                if st.form_submit_button("💾 " + t("save_settings", lang), type="primary"):
+                    out, bad = {}, None
+                    for v in values:
+                        ids, pcts = [], {}
+                        for letter in letters:
+                            if st.session_state.get(f"arax_{kind}_{v}_{letter}"):
+                                ids.append(letter)
+                                pcts[letter] = int(
+                                    st.session_state.get(f"arpct_{kind}_{v}_{letter}", 0))
+                        if not ids:
+                            continue          # nothing ticked ⇒ no rule, any axis
+                        if sum(pcts.values()) != 100:
+                            bad = (v, sum(pcts.values()))
+                            break
+                        out[v] = {"axes": ids, "pcts": pcts}
+                    if bad:
+                        st.error(t("err_axis_rule_pct", lang,
+                                   f=cfg.row_label(kind, lang), v=bad[0], n=bad[1]))
+                    else:
+                        config[cfg.AXIS_RULE_KEY[kind]] = out
+                        cfg.save_config(config)
+                        st.success("✅ " + t("settings_saved", lang))
+                        st.rerun()
 
     st.stop()
 
@@ -1378,9 +1434,16 @@ def render_row(rk: str):
                     key=ck, label_visibility="collapsed")
 
             elif rk in ("axis_morning","axis_noon"):
-                cur = day.get(rk,"")
-                day[rk] = st.selectbox("", AXIS_OPTIONS,
-                    index=AXIS_OPTIONS.index(cur) if cur in AXIS_OPTIONS else 0,
+                _kind = "entry" if rk == "axis_morning" else "exit"
+                _allowed = (cfg.allowed_axes_for(_kind, day[_kind])
+                            if day.get(_kind) else cfg.axis_letters())
+                aopts = [""] + [v for v in cfg.axis_values()
+                                if cfg.axis_letter_of(v) in _allowed]
+                cur = day.get(rk, "")
+                if cur and cur not in aopts:
+                    aopts.append(cur)
+                day[rk] = st.selectbox("", aopts,
+                    index=aopts.index(cur) if cur in aopts else 0,
                     key=ck, label_visibility="collapsed")
 
             elif rk in ("wait_morning","wait_noon"):
