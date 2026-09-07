@@ -85,9 +85,8 @@ def export_to_excel(schedule: dict, week_start: date, lang: str = "he") -> bytes
         d = schedule[dk].get("date")
         if hasattr(d, "weekday"):
             py_to_key = ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"]
-            day_name = t(py_to_key[d.weekday()], lang)
-            if d.weekday() == 4:
-                day_name += " (6h)"
+            day_name = cfg.work_day_label(py_to_key[d.weekday()]) \
+                or t(py_to_key[d.weekday()], lang)
         else:
             day_name = ""
         c = ws.cell(row=2, column=col_idx, value=day_name)
@@ -95,6 +94,12 @@ def export_to_excel(schedule: dict, week_start: date, lang: str = "he") -> bytes
 
     # Rows 3+: schedule rows (base + custom rows from config)
     row_display_keys = [k for k in cfg.all_row_keys() if k not in ("dates", "days")]
+    # each workplace-section row is tinted with its employee group's colour
+    SECTION_GROUP_BG = {}
+    for _w, _sec in cfg.all_sections():
+        _g = cfg.group_by_id(_sec.get("group_id"))
+        if _g and _g.get("color"):
+            SECTION_GROUP_BG[_sec["row_key"]] = str(_g["color"]).lstrip("#").upper()
 
     # Special formatting by row key
     row_bg_map = {
@@ -114,12 +119,10 @@ def export_to_excel(schedule: dict, week_start: date, lang: str = "he") -> bytes
 
         for col_idx, dk in enumerate(day_keys, start=2):
             day = schedule[dk]
-            # vacation combines vacation_il + vacation_pe
+            # vacation combines one column per active employee group
             if rk == "vacation":
-                val_il = day.get("vacation_il", "")
-                val_pe = day.get("vacation_pe", "")
-                parts = [p for p in [val_il, val_pe] if p]
-                val = " / ".join(parts)
+                val = " / ".join(p for p in
+                                 (day.get(f, "") for f in cfg.vac_fields()) if p)
             else:
                 val = day.get(rk, "")
             c = ws.cell(row=excel_row, column=col_idx, value=val)
@@ -130,14 +133,12 @@ def export_to_excel(schedule: dict, week_start: date, lang: str = "he") -> bytes
                 bg = COLOR_VACATION
             elif rk in ("vehicle_morning", "vehicle_noon") and val == "YELLOW":
                 bg = COLOR_YELLOW
-            elif rk == "udex" and val == "EMB-M":
+            elif rk == "udex" and val in cfg.extra_morning_values():
                 bg = COLOR_EMB_M
-            elif rk == "udex" and val == "EMB-T":
+            elif rk == "udex" and val in cfg.extra_noon_values():
                 bg = COLOR_EMB_T
-            elif rk in ("emb_il", "apt_il"):
-                bg = COLOR_IL_BG
-            elif rk in ("emb_pe", "apt_pe"):
-                bg = COLOR_PE_BG
+            elif rk in SECTION_GROUP_BG:
+                bg = SECTION_GROUP_BG[rk]
 
             style_cell(c, bg=bg, center=True)
 
@@ -148,17 +149,22 @@ def export_to_excel(schedule: dict, week_start: date, lang: str = "he") -> bytes
     ws2.column_dimensions["C"].width = 10
 
     # Count YELLOW
+    _vs = cfg.special("vehicle_special")
     yellow_total = sum(
         1 for dk in day_keys
         for f in ("vehicle_morning", "vehicle_noon")
-        if schedule[dk].get(f) == "YELLOW"
+        if schedule[dk].get(f) == _vs
     )
-    udex_m = sum(1 for dk in day_keys if schedule[dk].get("udex") == "EMB-M")
-    udex_t = sum(1 for dk in day_keys if schedule[dk].get("udex") == "EMB-T")
+    extra_m_vals, extra_n_vals = cfg.extra_morning_values(), cfg.extra_noon_values()
+    extra_tg = cfg.extra_targets()
+    extra_m = sum(1 for dk in day_keys if schedule[dk].get("udex") in extra_m_vals)
+    extra_n = sum(1 for dk in day_keys if schedule[dk].get("udex") in extra_n_vals)
+    extra_name = cfg.extra_label(lang)
 
-    ws2.append([f"YELLOW total", yellow_total, "/ 4"])
-    ws2.append(["UDEX EMB-M", udex_m, "/ 3"])
-    ws2.append(["UDEX EMB-T", udex_t, "/ 3"])
+    ws2.append(["YELLOW total", yellow_total,
+                "/ " + str(cfg.targets()["yellow_per_week"])])
+    ws2.append([extra_name + " (AM)", extra_m, "/ " + str(extra_tg["morning"])])
+    ws2.append([extra_name + " (PM)", extra_n, "/ " + str(extra_tg["noon"])])
 
     # Save to bytes
     buf = io.BytesIO()

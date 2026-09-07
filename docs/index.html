@@ -63,7 +63,6 @@ table.sched select,table.sched input[type=text]{width:100%;min-width:92px;min-he
   border:1px solid #e3e8ee;background:#fbfcfe}
 tr.section td{background:#dde5ee;color:#4a5a6d;font-size:.75rem;padding:3px;font-weight:600}
 td.cell-yellow select{background:var(--yellow)}
-td.cell-il select{background:var(--il)} td.cell-pe select{background:var(--pe)}
 .msg{border-radius:10px;padding:10px 12px;margin:8px 0;font-size:.92rem}
 .msg.err{background:#fdecea;color:var(--danger);border:1px solid #f5b7b1}
 .msg.warn{background:#fef9e7;color:#7d6608;border:1px solid #f7dc6f}
@@ -115,6 +114,15 @@ table.stats th{background:#eef2f7}
 .pct-tot.ok{color:#fff;background:var(--ok)}
 .pct-tot.bad{color:#fff;background:var(--danger)}
 .map-inp{width:100%;min-width:120px}
+/* group / workplace / work-day editors */
+.sec-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+  padding:6px 0;border-bottom:1px dashed var(--border)}
+.sec-row:last-of-type{border-bottom:none}
+.sec-row>input[type=text],.sec-row>input:not([type]),.sec-row>select{flex:1;min-width:110px}
+.pct-box>label{display:block;margin-bottom:6px}
+.chk{display:inline-flex;align-items:center;gap:6px;font-size:.88rem;white-space:nowrap}
+.chk input{min-height:auto;width:20px;height:20px}
+.pct-box .grid2>label,.pct-box .grid3>label{display:block}
 #toast{position:fixed;bottom:20px;inset-inline-start:50%;transform:translateX(-50%);
   background:#222;color:#fff;padding:12px 22px;border-radius:12px;opacity:0;
   transition:opacity .3s;z-index:99;pointer-events:none;max-width:90vw;text-align:center}
@@ -160,33 +168,47 @@ row_vehicle_morning:"סוג רכב בוקר",row_axis_morning:"ציר בוקר",
 row_taxi_apt:"מונית מיוחדת לדירה",row_taxi_arrival:"מונית מיוחדת הגעה",row_vehicle_noon:"סוג רכב צהריים",
 row_axis_noon:"ציר צהריים",row_wait_noon:"מקום המתנה צהריים",row_taxi_emb:"מונית מיוחדת EMB",
 row_taxi_arrival_noon:"מונית מיוחדת הגעה צהריים",row_vacation:"חופשות",
-monday:"שני",tuesday:"שלישי",wednesday:"רביעי",thursday:"חמישי",friday:"שישי",
-err_two_il:"שגיאה: שני עובדי IL בחופשה באותו יום",err_two_pe:"שגיאה: שני עובדי PE בחופשה באותו יום",
-warn_yellow:"אזהרה: מספר YELLOW הוא {n}, צריך {t} בשבוע",warn_udex_m:"אזהרה: UDEX בוקר הוא {n}, צריך {t}",
-warn_udex_t:"אזהרה: UDEX צהריים הוא {n}, צריך {t}",warn_theater:"אזהרה: תאטרון הוא {n}, צריך {t} בשבוע",
-err_emb_vac:"{e} שובץ ל-EMB IL אך הוא בחופשה",err_emb_other:"{e} שובץ ל-EMB IL אך הוא במשימת אחר",
-err_no_il:"אין עובד IL פנוי ל-EMB IL (חופשה + משימת אחר)",err_il_unavail:"כל עובדי IL לא זמינים — EMB IL חייב להיות ממולא בעובד PE",edit:"עדכן",row_updated:"השורה עודכנה",
-s_employees:"👤 עובדים ותקציבי חופשה",s_order:"↕️ סדר השורות",s_labels:"🏷️ תוויות שורות",s_options:"📝 אפשרויות בחירה",
+monday:"שני",tuesday:"שלישי",wednesday:"רביעי",thursday:"חמישי",friday:"שישי",saturday:"שבת",sunday:"ראשון",
+warn_yellow:"אזהרה: מספר YELLOW הוא {n}, צריך {t} בשבוע",warn_theater:"אזהרה: תאטרון הוא {n}, צריך {t} בשבוע",
+warn_extra_m:"אזהרה: {f} בוקר הוא {n}, צריך {t}",warn_extra_n:"אזהרה: {f} צהריים הוא {n}, צריך {t}",
+err_sec_vac:"{e} שובץ ל-{s} אך הוא בחופשה",err_sec_other:"{e} שובץ ל-{s} אך הוא במשימת אחר",
+err_sec_none:"אין עובד פנוי מקבוצת {g} עבור {s}",warn_sec_dup:"{e} משובץ גם ל-{s} וגם ל-{s2}",
+edit:"עדכן",row_updated:"השורה עודכנה",
+s_employees:"👤 קבוצות עובדים ותקציבי חופשה",s_workplaces:"🏢 מקומות עבודה",s_workdays:"📆 ימי עבודה",
+s_extra:"➕ משימה נוספת",s_notes:"📝 הערות לוגיקת שיבוץ",
+s_order:"↕️ סדר השורות",s_labels:"🏷️ תוויות שורות",s_options:"📝 אפשרויות בחירה",
 s_targets:"🎯 יעדים שבועיים",s_custom:"➕ שורות מותאמות אישית",
-il_emps:"עובדי IL",pe_emps:"עובדי PE",one_per_line:"ערך אחד בכל שורה",vac_budget:"תקציב חופשה שנתי (ימים)",
+grp_name:"שם הקבוצה",grp_color:"צבע",grp_emps:"עובדים",grp_add:"➕ הוסף קבוצה",grp_remove:"🗑 הסר קבוצה",
+grp_max:"הגעת למספר הקבוצות המרבי (5)",grp_none:"אין קבוצות פעילות — הוסף קבוצה",
+grp_removed:"הקבוצה הוסרה (העובדים נשמרו)",grp_added:"קבוצה נוספה",
+wp_name:"שם מקום העבודה",wp_add:"➕ הוסף מקום עבודה",wp_remove:"🗑 הסר מקום עבודה",
+wp_max:"הגעת למספר מקומות העבודה המרבי (5)",wp_none:"אין מקומות עבודה פעילים",
+wp_sections:"תפקידים במקום העבודה",wp_sec_add:"➕ הוסף תפקיד",wp_sec_name:"שם התפקיד",
+wp_sec_group:"קבוצה",wp_sec_pair:"מאפשר זוג עובדים",wp_notes:"הערות לוגיקת שיבוץ (עזר בלבד)",
+wp_notes_hint:"לוגיקת שיבוץ מפורטת — הגדר בשדה ההערות. המערכת לא אוכפת אותה.",
+wd_pick:"סמן את ימי העבודה",wd_label:"תווית בטבלה",wd_none:"⚠️ חייב לבחור לפחות יום עבודה אחד",
+wd_labels_title:"תוויות סוגי יום (לרשימות שעות העבודה)",wd_lbl_weekday:"יום רגיל",wd_lbl_friday:"יום מקוצר",
+et_name:"שם המשימה",et_options:"אפשרויות (שורה לכל ערך)",et_morning:"ערכי בוקר (שורה לכל ערך)",
+et_noon:"ערכי צהריים (שורה לכל ערך)",et_tg_m:"כמה פעמים בוקר בשבוע",et_tg_n:"כמה פעמים צהריים בשבוע",
+notes_general:"הערות כלליות לשיבוץ",notes_hint:"טקסט חופשי לתיעוד — המערכת לא קוראת אותו",
+one_per_line:"ערך אחד בכל שורה",vac_budget:"תקציב חופשה שנתי (ימים)",
 rename_warn:"שינוי שם עובד לא מעדכן סידורים שמורים בארכיון",
 order_hint:"גרור (⠿) או השתמש בחצים — נשמר אוטומטית",
 save_settings:"💾 שמור הגדרות",settings_saved:"ההגדרות נשמרו",
 lbl_he:"עברית",lbl_en:"English",lbl_es:"Español",
 opt_escort:"ליווי",opt_vehicle:"סוג רכב",opt_axis:"ציר",opt_wait:"מקום המתנה בוקר / צהריים",
 opt_wh_wd:"שעות עבודה (א'-ה')",opt_wh_fr:"שעות עבודה (שישי)",
-special_note:"ערכים עם משמעות בשיבוץ: חג, YELLOW, EMB-M/R-M, EMB-T/R-T — אם שינית אותם ברשימות עדכן גם כאן",
-sv_holiday:"ערך חג",sv_vehicle:"רכב מיוחד",sv_udex_m:"UDEX בוקר (מופרד בפסיק)",sv_udex_t:"UDEX צהריים (מופרד בפסיק)",
-tg_yellow:"רכבי YELLOW בשבוע",tg_udex_m:"UDEX בוקר בשבוע",tg_udex_t:"UDEX צהריים בשבוע",tg_theater:"תאטרון בשבוע",
+special_note:"ערכים עם משמעות בשיבוץ — אם שינית אותם ברשימות עדכן גם כאן",
+sv_holiday:"ערך חג",sv_vehicle:"רכב מיוחד",
+tg_yellow:"רכבי YELLOW בשבוע",tg_theater:"תאטרון בשבוע",
 add_row:"הוסף שורה",row_name:"שם השורה",input_type:"סוג קלט",type_select:"רשימת בחירה",type_text:"טקסט חופשי",
 row_opts:"אפשרויות (שורה לכל ערך)",delete:"מחק",row_added:"השורה נוספה",row_deleted:"השורה נמחקה",name_required:"חובה שם בעברית",
 no_custom:"אין שורות מותאמות עדיין",confirm_q:"בטוח?",
 arch_title:"סידורים שמורים",arch_empty:"אין סידורים שמורים עדיין",load:"טען",loaded:"הסידור נטען",deleted:"נמחק",
 st_period:"תקופה",st_week:"שבוע נוכחי",st_month:"חודשי",st_year:"שנתי",st_no_data:"אין נתונים לתקופה זו",
 st_employees:"חלוקת עובדים",st_vacation:"ניצול תקציב חופשה",st_fields:"חלוקת ערכים",st_weeks:"שבועות",st_days:"ימים",
-st_used:"נוצל",st_budget:"תקציב",st_left:"נותר",st_other:"אחר",st_role_emb_il:"EMB IL",st_role_apt_il:"דירה IL",
-st_role_emb_pe:"EMB PE",st_role_apt_pe:"דירה PE",st_vac_col:"חופשה",
-fri6:"‏6ש",offline_ready:"האפליקציה מוכנה לעבודה ללא אינטרנט",
+st_used:"נוצל",st_budget:"תקציב",st_left:"נותר",st_other:"אחר",st_vac_col:"חופשה",
+offline_ready:"האפליקציה מוכנה לעבודה ללא אינטרנט",
 backup_all:"📤 גיבוי הכול",restore_backup:"📥 שחזור מגיבוי",
 restore_confirm:"השחזור ידרוס את כל הנתונים במכשיר — להמשיך?",restore_done:"השחזור הושלם",
 invalid_file:"קובץ לא תקין",export_settings:"📤 ייצוא הגדרות",import_settings:"📥 ייבוא הגדרות",
@@ -209,33 +231,47 @@ row_vehicle_morning:"Morning Vehicle",row_axis_morning:"Morning Axis",row_wait_m
 row_taxi_apt:"Special Taxi Apartment",row_taxi_arrival:"Special Taxi Arrival",row_vehicle_noon:"Noon Vehicle",
 row_axis_noon:"Noon Axis",row_wait_noon:"Noon Wait Spot",row_taxi_emb:"Special Taxi EMB",
 row_taxi_arrival_noon:"Special Taxi Arrival Noon",row_vacation:"Vacations",
-monday:"Mon",tuesday:"Tue",wednesday:"Wed",thursday:"Thu",friday:"Fri",
-err_two_il:"Error: two IL workers on vacation same day",err_two_pe:"Error: two PE workers on vacation same day",
-warn_yellow:"Warning: YELLOW count is {n}, should be {t}/week",warn_udex_m:"Warning: morning UDEX is {n}, should be {t}",
-warn_udex_t:"Warning: noon UDEX is {n}, should be {t}",warn_theater:"Warning: theater is {n}, should be {t}/week",
-err_emb_vac:"{e} assigned to EMB IL but is on vacation",err_emb_other:"{e} assigned to EMB IL but has another task",
-err_no_il:"No IL employee available for EMB IL (vacation + other task)",err_il_unavail:"All IL employees unavailable — EMB IL must be filled by a PE employee",edit:"Update",row_updated:"Row updated",
-s_employees:"👤 Employees & vacation budgets",s_order:"↕️ Row order",s_labels:"🏷️ Row labels",s_options:"📝 Dropdown options",
+monday:"Mon",tuesday:"Tue",wednesday:"Wed",thursday:"Thu",friday:"Fri",saturday:"Sat",sunday:"Sun",
+warn_yellow:"Warning: YELLOW count is {n}, should be {t}/week",warn_theater:"Warning: theater is {n}, should be {t}/week",
+warn_extra_m:"Warning: morning {f} is {n}, should be {t}",warn_extra_n:"Warning: noon {f} is {n}, should be {t}",
+err_sec_vac:"{e} assigned to {s} but is on vacation",err_sec_other:"{e} assigned to {s} but has another task",
+err_sec_none:"No employee available from group {g} for {s}",warn_sec_dup:"{e} is assigned to both {s} and {s2}",
+edit:"Update",row_updated:"Row updated",
+s_employees:"👤 Employee groups & vacation budgets",s_workplaces:"🏢 Workplaces",s_workdays:"📆 Work days",
+s_extra:"➕ Extra task",s_notes:"📝 Assignment logic notes",
+s_order:"↕️ Row order",s_labels:"🏷️ Row labels",s_options:"📝 Dropdown options",
 s_targets:"🎯 Weekly targets",s_custom:"➕ Custom rows",
-il_emps:"IL employees",pe_emps:"PE employees",one_per_line:"One value per line",vac_budget:"Annual vacation budget (days)",
+grp_name:"Group name",grp_color:"Colour",grp_emps:"Employees",grp_add:"➕ Add group",grp_remove:"🗑 Remove group",
+grp_max:"Maximum number of groups reached (5)",grp_none:"No active groups — add one",
+grp_removed:"Group removed (its employees were kept)",grp_added:"Group added",
+wp_name:"Workplace name",wp_add:"➕ Add workplace",wp_remove:"🗑 Remove workplace",
+wp_max:"Maximum number of workplaces reached (5)",wp_none:"No active workplaces",
+wp_sections:"Roles at this workplace",wp_sec_add:"➕ Add role",wp_sec_name:"Role name",
+wp_sec_group:"Group",wp_sec_pair:"Allows a pair of employees",wp_notes:"Assignment logic notes (reference only)",
+wp_notes_hint:"Detailed assignment logic — write it in the notes field. The app does not enforce it.",
+wd_pick:"Select the working days",wd_label:"Label in the table",wd_none:"⚠️ At least one working day is required",
+wd_labels_title:"Day-type labels (for the work-hours lists)",wd_lbl_weekday:"Regular day",wd_lbl_friday:"Short day",
+et_name:"Task name",et_options:"Options (one per line)",et_morning:"Morning values (one per line)",
+et_noon:"Noon values (one per line)",et_tg_m:"Morning times per week",et_tg_n:"Noon times per week",
+notes_general:"General assignment notes",notes_hint:"Free text for documentation — the app never reads it",
+one_per_line:"One value per line",vac_budget:"Annual vacation budget (days)",
 rename_warn:"Renaming an employee does not update archived schedules",
 order_hint:"Drag (⠿) or use the arrows — saved automatically",
 save_settings:"💾 Save settings",settings_saved:"Settings saved",
 lbl_he:"Hebrew",lbl_en:"English",lbl_es:"Spanish",
 opt_escort:"Escort",opt_vehicle:"Vehicle",opt_axis:"Axis",opt_wait:"Wait spot morning / noon",
 opt_wh_wd:"Work hours (Mon-Thu)",opt_wh_fr:"Work hours (Friday)",
-special_note:"Values with special meaning in auto-assign: חג, YELLOW, EMB-M/R-M, EMB-T/R-T — if renamed in the lists, update here too",
-sv_holiday:"Holiday value",sv_vehicle:"Special vehicle",sv_udex_m:"UDEX morning (comma-separated)",sv_udex_t:"UDEX noon (comma-separated)",
-tg_yellow:"YELLOW vehicles per week",tg_udex_m:"Morning UDEX per week",tg_udex_t:"Noon UDEX per week",tg_theater:"Theater per week",
+special_note:"Values with special meaning in auto-assign — if renamed in the lists, update them here too",
+sv_holiday:"Holiday value",sv_vehicle:"Special vehicle",
+tg_yellow:"YELLOW vehicles per week",tg_theater:"Theater per week",
 add_row:"Add row",row_name:"Row name",input_type:"Input type",type_select:"Dropdown",type_text:"Free text",
 row_opts:"Options (one per line)",delete:"Delete",row_added:"Row added",row_deleted:"Row deleted",name_required:"Hebrew name required",
 no_custom:"No custom rows yet",confirm_q:"Sure?",
 arch_title:"Saved schedules",arch_empty:"No saved schedules yet",load:"Load",loaded:"Schedule loaded",deleted:"Deleted",
 st_period:"Period",st_week:"Current week",st_month:"Monthly",st_year:"Yearly",st_no_data:"No data for this period",
 st_employees:"Employee distribution",st_vacation:"Vacation budget usage",st_fields:"Value distribution",st_weeks:"weeks",st_days:"days",
-st_used:"Used",st_budget:"Budget",st_left:"Left",st_other:"Other",st_role_emb_il:"EMB IL",st_role_apt_il:"Apt IL",
-st_role_emb_pe:"EMB PE",st_role_apt_pe:"Apt PE",st_vac_col:"Vacation",
-fri6:"6h",offline_ready:"App is ready for offline use",
+st_used:"Used",st_budget:"Budget",st_left:"Left",st_other:"Other",st_vac_col:"Vacation",
+offline_ready:"App is ready for offline use",
 backup_all:"📤 Back up everything",restore_backup:"📥 Restore from backup",
 restore_confirm:"Restore will overwrite all data on this device — continue?",restore_done:"Restore complete",
 invalid_file:"Invalid file",export_settings:"📤 Export settings",import_settings:"📥 Import settings",
@@ -258,33 +294,47 @@ row_vehicle_morning:"Vehículo Mañana",row_axis_morning:"Ruta Mañana",row_wait
 row_taxi_apt:"Taxi R",row_taxi_arrival:"Taxi Llegada",row_vehicle_noon:"Vehículo Mediodía",
 row_axis_noon:"Ruta Mediodía",row_wait_noon:"Punta Llegada Mediodía",row_taxi_emb:"Taxi Emb",
 row_taxi_arrival_noon:"Taxi Llegada Mediodía",row_vacation:"Vacaciones",
-monday:"Lun",tuesday:"Mar",wednesday:"Mié",thursday:"Jue",friday:"Vie",
-err_two_il:"Error: dos trabajadores IL de vacaciones el mismo día",err_two_pe:"Error: dos trabajadores PE de vacaciones el mismo día",
-warn_yellow:"Advertencia: YELLOW es {n}, debe ser {t}/semana",warn_udex_m:"Advertencia: UDEX mañana es {n}, debe ser {t}",
-warn_udex_t:"Advertencia: UDEX mediodía es {n}, debe ser {t}",warn_theater:"Advertencia: teatro es {n}, debe ser {t}/semana",
-err_emb_vac:"{e} asignado a EMB IL pero está de vacaciones",err_emb_other:"{e} asignado a EMB IL pero tiene otra tarea",
-err_no_il:"Ningún empleado IL disponible para EMB IL (vacaciones + otra tarea)",err_il_unavail:"Todos los IL no disponibles — EMB IL debe cubrirse con un PE",edit:"Actualizar",row_updated:"Fila actualizada",
-s_employees:"👤 Empleados y presupuestos",s_order:"↕️ Orden de filas",s_labels:"🏷️ Etiquetas de filas",s_options:"📝 Opciones de listas",
+monday:"Lun",tuesday:"Mar",wednesday:"Mié",thursday:"Jue",friday:"Vie",saturday:"Sáb",sunday:"Dom",
+warn_yellow:"Advertencia: YELLOW es {n}, debe ser {t}/semana",warn_theater:"Advertencia: teatro es {n}, debe ser {t}/semana",
+warn_extra_m:"Advertencia: {f} mañana es {n}, debe ser {t}",warn_extra_n:"Advertencia: {f} mediodía es {n}, debe ser {t}",
+err_sec_vac:"{e} asignado a {s} pero está de vacaciones",err_sec_other:"{e} asignado a {s} pero tiene otra tarea",
+err_sec_none:"Ningún empleado disponible del grupo {g} para {s}",warn_sec_dup:"{e} está asignado a {s} y también a {s2}",
+edit:"Actualizar",row_updated:"Fila actualizada",
+s_employees:"👤 Grupos de empleados y presupuestos",s_workplaces:"🏢 Lugares de trabajo",s_workdays:"📆 Días laborables",
+s_extra:"➕ Tarea extra",s_notes:"📝 Notas de lógica de asignación",
+s_order:"↕️ Orden de filas",s_labels:"🏷️ Etiquetas de filas",s_options:"📝 Opciones de listas",
 s_targets:"🎯 Metas semanales",s_custom:"➕ Filas personalizadas",
-il_emps:"Empleados IL",pe_emps:"Empleados PE",one_per_line:"Un valor por línea",vac_budget:"Presupuesto anual de vacaciones (días)",
+grp_name:"Nombre del grupo",grp_color:"Color",grp_emps:"Empleados",grp_add:"➕ Agregar grupo",grp_remove:"🗑 Quitar grupo",
+grp_max:"Número máximo de grupos alcanzado (5)",grp_none:"No hay grupos activos — agrega uno",
+grp_removed:"Grupo quitado (sus empleados se conservaron)",grp_added:"Grupo agregado",
+wp_name:"Nombre del lugar de trabajo",wp_add:"➕ Agregar lugar de trabajo",wp_remove:"🗑 Quitar lugar de trabajo",
+wp_max:"Número máximo de lugares alcanzado (5)",wp_none:"No hay lugares de trabajo activos",
+wp_sections:"Puestos en este lugar",wp_sec_add:"➕ Agregar puesto",wp_sec_name:"Nombre del puesto",
+wp_sec_group:"Grupo",wp_sec_pair:"Permite una pareja de empleados",wp_notes:"Notas de lógica de asignación (solo referencia)",
+wp_notes_hint:"Lógica de asignación detallada — escríbela en las notas. La app no la impone.",
+wd_pick:"Selecciona los días laborables",wd_label:"Etiqueta en la tabla",wd_none:"⚠️ Se requiere al menos un día laborable",
+wd_labels_title:"Etiquetas de tipo de día (para las listas de horas)",wd_lbl_weekday:"Día regular",wd_lbl_friday:"Día corto",
+et_name:"Nombre de la tarea",et_options:"Opciones (una por línea)",et_morning:"Valores de mañana (uno por línea)",
+et_noon:"Valores de mediodía (uno por línea)",et_tg_m:"Veces por semana (mañana)",et_tg_n:"Veces por semana (mediodía)",
+notes_general:"Notas generales de asignación",notes_hint:"Texto libre para documentar — la app nunca lo lee",
+one_per_line:"Un valor por línea",vac_budget:"Presupuesto anual de vacaciones (días)",
 rename_warn:"Renombrar un empleado no actualiza horarios archivados",
 order_hint:"Arrastra (⠿) o usa las flechas — se guarda automáticamente",
 save_settings:"💾 Guardar configuración",settings_saved:"Configuración guardada",
 lbl_he:"Hebreo",lbl_en:"Inglés",lbl_es:"Español",
 opt_escort:"Escolta",opt_vehicle:"Vehículo",opt_axis:"Ruta",opt_wait:"Punta llegada mañana / mediodía",
 opt_wh_wd:"Horas (Lun-Jue)",opt_wh_fr:"Horas (Viernes)",
-special_note:"Valores con significado especial: חג, YELLOW, EMB-M/R-M, EMB-T/R-T — si los renombraste, actualízalos aquí también",
-sv_holiday:"Valor feriado",sv_vehicle:"Vehículo especial",sv_udex_m:"UDEX mañana (coma)",sv_udex_t:"UDEX mediodía (coma)",
-tg_yellow:"Vehículos YELLOW por semana",tg_udex_m:"UDEX mañana por semana",tg_udex_t:"UDEX mediodía por semana",tg_theater:"Teatro por semana",
+special_note:"Valores con significado especial en la asignación — si los renombraste, actualízalos aquí también",
+sv_holiday:"Valor feriado",sv_vehicle:"Vehículo especial",
+tg_yellow:"Vehículos YELLOW por semana",tg_theater:"Teatro por semana",
 add_row:"Agregar fila",row_name:"Nombre de fila",input_type:"Tipo de entrada",type_select:"Lista",type_text:"Texto libre",
 row_opts:"Opciones (una por línea)",delete:"Eliminar",row_added:"Fila agregada",row_deleted:"Fila eliminada",name_required:"Nombre en hebreo obligatorio",
 no_custom:"Aún no hay filas personalizadas",confirm_q:"¿Seguro?",
 arch_title:"Horarios guardados",arch_empty:"No hay horarios guardados",load:"Cargar",loaded:"Horario cargado",deleted:"Eliminado",
 st_period:"Período",st_week:"Semana actual",st_month:"Mensual",st_year:"Anual",st_no_data:"Sin datos para este período",
 st_employees:"Distribución de empleados",st_vacation:"Uso de vacaciones",st_fields:"Distribución de valores",st_weeks:"semanas",st_days:"días",
-st_used:"Usado",st_budget:"Presupuesto",st_left:"Restante",st_other:"Otro",st_role_emb_il:"EMB IL",st_role_apt_il:"R IL",
-st_role_emb_pe:"EMB PE",st_role_apt_pe:"R PE",st_vac_col:"Vacaciones",
-fri6:"6h",offline_ready:"La aplicación está lista para uso sin conexión",
+st_used:"Usado",st_budget:"Presupuesto",st_left:"Restante",st_other:"Otro",st_vac_col:"Vacaciones",
+offline_ready:"La aplicación está lista para uso sin conexión",
 backup_all:"📤 Respaldar todo",restore_backup:"📥 Restaurar respaldo",
 restore_confirm:"La restauración sobrescribirá todos los datos del dispositivo — ¿continuar?",restore_done:"Restauración completa",
 invalid_file:"Archivo inválido",export_settings:"📤 Exportar configuración",import_settings:"📥 Importar configuración",
@@ -300,9 +350,44 @@ map_ph:"Texto libre, p. ej. A-U, B-D"}
 };
 
 /* ═══════════════ default config (mirrors ~/Agenda app_config.py) ═══════════════ */
+/* Nothing about a particular station is baked in: employee groups, workplaces,
+   working days and the extra task are all data. A station in any country
+   reshapes the app entirely from the Settings screen. */
+const MAX_GROUPS = 5, MAX_WORKPLACES = 5;
 const DEFAULT_CONFIG = {
-  schema_version: 1,
-  employees: { il: ["LEON","TORO"], pe: ["HALCON","CHCHORRO","BUHO"] },
+  schema_version: 2,
+  groups: [
+    { id:"g1", name:"IL", color:"#D6E4F0", employees:["LEON","TORO"], active:true },
+    { id:"g2", name:"PE", color:"#FAD7A0", employees:["HALCON","CHCHORRO","BUHO"], active:true },
+    { id:"g3", name:"",   color:"#D5F5E3", employees:[], active:false },
+    { id:"g4", name:"",   color:"#FADBD8", employees:[], active:false },
+    { id:"g5", name:"",   color:"#E8DAEF", employees:[], active:false }
+  ],
+  workplaces: [
+    { id:"wp1", name:"EMB", active:true, notes:"", sections:[
+      { id:"s1", name:"IL", group_id:"g1", row_key:"emb_il" },
+      { id:"s2", name:"PE", group_id:"g2", row_key:"emb_pe", allow_pair:true } ] },
+    { id:"wp2", name:"דירה", active:true, notes:"", sections:[
+      { id:"s3", name:"IL", group_id:"g1", row_key:"apt_il" },
+      { id:"s4", name:"PE", group_id:"g2", row_key:"apt_pe" } ] },
+    { id:"wp3", name:"", active:false, notes:"", sections:[] },
+    { id:"wp4", name:"", active:false, notes:"", sections:[] },
+    { id:"wp5", name:"", active:false, notes:"", sections:[] }
+  ],
+  work_days: {
+    days: ["monday","tuesday","wednesday","thursday","friday"],
+    labels: { sunday:"ראשון", monday:"שני", tuesday:"שלישי", wednesday:"רביעי",
+              thursday:"חמישי", friday:"שישי 🕕", saturday:"שבת" }
+  },
+  /* headings of the two work-hours option lists */
+  work_day_labels: { weekday:"א'-ה'", friday:"שישי" },
+  extra_task: {
+    label: { he:"משימה נוספת", en:"Extra Task", es:"Tarea Extra" },
+    options: ["EMB-M","EMB-T","R-M","R-T"],
+    targets: { morning:3, noon:2 },
+    morning_values: ["EMB-M","R-M"],
+    noon_values: ["EMB-T","R-T"]
+  },
   vacation_budget: { LEON:14, TORO:14, HALCON:30, CHCHORRO:30, BUHO:30 },
   options: {
     work_hours_weekday: ["7:30-16:00","8:00-16:30","8:30-17:00"],
@@ -312,7 +397,6 @@ const DEFAULT_CONFIG = {
     escort:["200","201","300","301","400","500"],
     arrival_point:["CHILE","BRAZIL","COLOMBIA","BOLIVIA"],
     theater:["משקפת","רדיו","תמונות"],
-    udex:["EMB-M","EMB-T","R-M","R-T"],
     vehicle:["BLACK","YELLOW"],
     axis:["A-U","A-D","B-U","B-D","C-U","C-D","D-U","D-D"],
     wait_spot:["2","3","4","5"],
@@ -321,14 +405,13 @@ const DEFAULT_CONFIG = {
     taxi_emb:["ARRIBA","ABAJO"],
     taxi_arrival_noon:["2","3","4","5"]
   },
-  special_values: {
-    holiday:"חג", vehicle_special:"YELLOW",
-    udex_morning:["EMB-M","R-M"], udex_noon:["EMB-T","R-T"]
-  },
-  targets: { yellow_per_week:3, udex_m:3, udex_t:2, theater_per_week:3, field_pcts:{} },
+  special_values: { holiday:"חג", vehicle_special:"YELLOW" },
+  targets: { yellow_per_week:3, theater_per_week:3, field_pcts:{} },
   /* manual reference maps (free text, never enforced): value -> axes text */
   entry_axis_map: {},
   exit_axis_map: {},
+  /* free-text station notes; documentation only, never read by the logic */
+  assign_notes: "",
   row_order: [],
   row_labels: {},
   custom_rows: []
@@ -350,19 +433,24 @@ const PCT_LABELS = {entry:()=>rowLabel("entry"), exit:()=>rowLabel("exit"),
   axis_noon:()=>rowLabel("axis_noon"), vehicle:()=>t("opt_vehicle"),
   wait_spot:()=>t("opt_wait"), taxi_apt:()=>rowLabel("taxi_apt"),
   taxi_arrival:()=>rowLabel("taxi_arrival")};
-const BASE_ROW_KEYS = ["work_hours","entry","exit","escort_morning","school","escort_noon",
-  "emb_il","emb_pe","other_empl","arrival_point","theater","udex","apt_il","apt_pe",
+/* Rows that exist regardless of configuration. Workplace-section rows and
+   custom rows are injected at "@workplaces" / "@custom" when the natural
+   order is built (see naturalRowKeys). */
+const FIXED_ROW_ORDER = ["work_hours","entry","exit","escort_morning","school","escort_noon",
+  "@workplaces","other_empl","arrival_point","theater","udex",
   "vehicle_morning","axis_morning","wait_morning","taxi_apt","taxi_arrival",
-  "vehicle_noon","axis_noon","wait_noon","taxi_emb","taxi_arrival_noon","vacation"];
+  "vehicle_noon","axis_noon","wait_noon","taxi_emb","taxi_arrival_noon","@custom","vacation"];
 /* which config option list feeds each select row */
 const ROW_OPTS = {work_hours:null, entry:"entry", exit:"exit", escort_morning:"escort",
-  escort_noon:"escort", arrival_point:"arrival_point", theater:"theater", udex:"udex",
+  escort_noon:"escort", arrival_point:"arrival_point", theater:"theater",
   vehicle_morning:"vehicle", vehicle_noon:"vehicle", axis_morning:"axis", axis_noon:"axis",
   wait_morning:"wait_spot", wait_noon:"wait_spot", taxi_apt:"taxi_apt", taxi_arrival:"taxi_arrival",
   taxi_emb:"taxi_emb", taxi_arrival_noon:"taxi_arrival_noon"};
 const TEXT_ROWS = new Set(["school"]);
-const SECTIONS = {emb_il:"EMB", arrival_point:"◈", apt_il:"◈", vehicle_morning:"◈", vehicle_noon:"◈", vacation:"◈"};
-const HISTORY_FIELDS = ["entry","exit","emb_il","emb_pe","arrival_point","theater","apt_il","apt_pe",
+/* fixed rows that carry a "◈" divider above them; workplaces add their own
+   heading, named after the workplace */
+const FIXED_DIVIDERS = ["arrival_point","vehicle_morning","vehicle_noon","vacation"];
+const FIXED_HISTORY_FIELDS = ["entry","exit","arrival_point","theater",
   "axis_morning","axis_noon","wait_morning","wait_noon","taxi_apt","taxi_arrival",
   "vehicle_morning","vehicle_noon","udex","taxi_emb","taxi_arrival_noon"];
 
@@ -376,10 +464,43 @@ function deepMerge(base, over){
   }
   return base;
 }
+/* v1 → v2: employees {il,pe} became groups, and UDEX became the extra task.
+   Reads the RAW stored object, because deepMerge has already folded whatever
+   it contained on top of the v2 defaults. */
+function migrateConfig(cfg, raw){
+  raw = raw || {};
+  if (raw.employees && !raw.groups){
+    const il=(raw.employees.il||[]).filter(Boolean), pe=(raw.employees.pe||[]).filter(Boolean);
+    cfg.groups[0].employees=il; cfg.groups[0].active=true;
+    cfg.groups[1].employees=pe; cfg.groups[1].active=pe.length>0;
+  }
+  if (!raw.extra_task){
+    const o=(raw.options||{}).udex, sv=raw.special_values||{}, tg=raw.targets||{};
+    if (Array.isArray(o) && o.length) cfg.extra_task.options=o.filter(Boolean);
+    if (Array.isArray(sv.udex_morning)) cfg.extra_task.morning_values=sv.udex_morning.filter(Boolean);
+    if (Array.isArray(sv.udex_noon))    cfg.extra_task.noon_values=sv.udex_noon.filter(Boolean);
+    if (tg.udex_m!=null) cfg.extra_task.targets.morning=+tg.udex_m||0;
+    if (tg.udex_t!=null) cfg.extra_task.targets.noon=+tg.udex_t||0;
+  }
+  delete cfg.employees;
+  if (cfg.options) delete cfg.options.udex;
+  if (cfg.special_values){ delete cfg.special_values.udex_morning; delete cfg.special_values.udex_noon; }
+  if (cfg.targets){ delete cfg.targets.udex_m; delete cfg.targets.udex_t; }
+  /* a group or workplace slot the stored config never knew about */
+  while (cfg.groups.length < MAX_GROUPS)
+    cfg.groups.push({id:"g"+(cfg.groups.length+1), name:"", color:"#eef2f7", employees:[], active:false});
+  while (cfg.workplaces.length < MAX_WORKPLACES)
+    cfg.workplaces.push({id:"wp"+(cfg.workplaces.length+1), name:"", active:false, notes:"", sections:[]});
+  cfg.groups.forEach(g=>{ g.employees=(g.employees||[]).filter(Boolean); });
+  cfg.workplaces.forEach(w=>{ w.sections=(w.sections||[]).filter(x=>x&&x.row_key); });
+  cfg.schema_version = 2;
+  return cfg;
+}
 function loadConfig(){
   const cfg = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-  try{ const u = JSON.parse(localStorage.getItem(LS.config)||"{}"); deepMerge(cfg,u); }catch(e){}
-  return cfg;
+  let raw = {};
+  try{ raw = JSON.parse(localStorage.getItem(LS.config)||"{}")||{}; deepMerge(cfg,raw); }catch(e){}
+  return migrateConfig(cfg, raw);
 }
 function saveConfig(){ localStorage.setItem(LS.config, JSON.stringify(CFG)); toast(t("settings_saved")); }
 function loadArchive(){ try{ return JSON.parse(localStorage.getItem(LS.archive)||"{}"); }catch(e){ return {}; } }
@@ -447,36 +568,144 @@ function snapMonday(isoStr){ const x=new Date(isoStr+"T12:00:00"); const dow=(x.
 function iso(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
 function addDays(isoStr,n){ const x=new Date(isoStr+"T12:00:00"); x.setDate(x.getDate()+n); return iso(x); }
 function fmtDM(isoStr){ const p=isoStr.split("-"); return p[2]+"/"+p[1]; }
-function dayName(isoStr){ const names=["monday","tuesday","wednesday","thursday","friday"];
-  const dow=(new Date(isoStr+"T12:00:00").getDay()+6)%7; return t(names[dow]||"monday"); }
-function empsIL(){ return CFG.employees.il.slice(); }
-function empsPE(){ return CFG.employees.pe.slice(); }
-function allEmps(){ return empsIL().concat(empsPE()); }
+/* ── working days ───────────────────────────────────────────────────────── */
+/* Monday-based, because a week always starts on a Monday here. Sunday lands
+   at the end of its week rather than the start. */
+const DOW_ORDER = ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"];
+const DOW_JS    = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"];
+function dowName(isoStr){ return DOW_JS[new Date(isoStr+"T12:00:00").getDay()]; }
+function workDays(){
+  const picked=((CFG.work_days||{}).days)||[];
+  const sel=DOW_ORDER.filter(d=>picked.includes(d));
+  return sel.length?sel:["monday"];          // never produce an empty week
+}
+function dayLabel(isoStr){
+  const n=dowName(isoStr);
+  return (((CFG.work_days||{}).labels)||{})[n] || t(n) || n;
+}
+function isShortDay(isoStr){ return dowName(isoStr)==="friday"; }
+function workHoursList(isoStr){ return opts(isShortDay(isoStr)?"work_hours_friday":"work_hours_weekday"); }
+
+/* ── employee groups ────────────────────────────────────────────────────── */
+function groupsAll(){ return CFG.groups||[]; }
+function activeGroups(){ return groupsAll().filter(g=>g&&g.active); }
+function groupById(id){ return groupsAll().find(g=>g&&g.id===id)||null; }
+function groupName(g){ return g?((g.name||"").trim()||g.id.toUpperCase()):""; }
+function groupEmps(id){ const g=groupById(id);
+  return g&&g.active?(g.employees||[]).filter(Boolean):[]; }
+function allEmps(){
+  const out=[],seen=new Set();
+  activeGroups().forEach(g=>(g.employees||[]).forEach(e=>{
+    e=(e||"").trim(); if(e&&!seen.has(e)){ seen.add(e); out.push(e); } }));
+  return out;
+}
+/* The two groups that shipped as IL/PE keep their original vacation field
+   names so that already-archived weeks stay readable. */
+const LEGACY_VAC = {g1:"vacation_il", g2:"vacation_pe"};
+function vacField(g){ return LEGACY_VAC[g.id]||("vacation_"+g.id); }
+function vacFields(){ return activeGroups().map(vacField); }
+function defaultVacBudget(emp){
+  const g=activeGroups().find(x=>(x.employees||[]).includes(emp));
+  return g&&g.id==="g1"?14:30;
+}
+
+/* ── workplaces & their sections ────────────────────────────────────────── */
+function workplacesAll(){ return CFG.workplaces||[]; }
+function activeWorkplaces(){ return workplacesAll().filter(w=>w&&w.active); }
+function wpName(w){ return w?((w.name||"").trim()||w.id.toUpperCase()):""; }
+function wpSections(w){ return (w.sections||[]).filter(x=>x&&x.row_key); }
+/* [{wp, sec}] across every active workplace, in display order */
+function allSections(){
+  const out=[];
+  activeWorkplaces().forEach(w=>wpSections(w).forEach(sec=>out.push({wp:w,sec})));
+  return out;
+}
+function sectionRowKeys(){ return allSections().map(x=>x.sec.row_key); }
+function sectionByRow(rk){ return allSections().find(x=>x.sec.row_key===rk)||null; }
+function sectionLabel(x){
+  const n=(x.sec.name||"").trim();
+  return wpName(x.wp)+(n?" "+n:"");
+}
+function newId(prefix){ return prefix+Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
+
+/* ── extra task (was UDEX) ──────────────────────────────────────────────── */
+function extraCfg(){ return CFG.extra_task||{}; }
+function extraLabel(lang){
+  const l=extraCfg().label||{};
+  lang=lang||S.lang;
+  return l[lang]||l.he||l.en||"udex";
+}
+function extraOptions(){ return (extraCfg().options||[]).filter(Boolean); }
+function extraMorning(){ return (extraCfg().morning_values||[]).filter(Boolean); }
+function extraNoon(){ return (extraCfg().noon_values||[]).filter(Boolean); }
+function extraTargets(){ const t=extraCfg().targets||{};
+  return {morning:+t.morning||0, noon:+t.noon||0}; }
+
+/* ── rows ───────────────────────────────────────────────────────────────── */
 function opts(name){ return (CFG.options[name]||[]).filter(Boolean); }
 function customRows(){ return (CFG.custom_rows||[]).filter(r=>r&&r.key); }
 function customKeys(){ return customRows().map(r=>r.key); }
+/* fixed rows with workplace sections and custom rows spliced in at their anchors */
+function naturalRowKeys(){
+  const out=[];
+  FIXED_ROW_ORDER.forEach(k=>{
+    if(k==="@workplaces") out.push(...sectionRowKeys());
+    else if(k==="@custom") out.push(...customKeys());
+    else out.push(k);
+  });
+  return out;
+}
 function reorderableKeys(){
-  const natural = BASE_ROW_KEYS.concat(customKeys());
+  const natural = naturalRowKeys();
   const order = (CFG.row_order||[]).filter(k=>natural.includes(k));
   return order.concat(natural.filter(k=>!order.includes(k)));
 }
+/* every field a day object carries */
+function scheduleFields(){
+  return naturalRowKeys().filter(k=>k!=="vacation").concat(vacFields());
+}
+/* the counters auto-assign balances against */
+function historyFields(){ return FIXED_HISTORY_FIELDS.concat(sectionRowKeys()); }
+/* row key → the divider text shown above it */
+function rowDividers(){
+  const m={};
+  activeWorkplaces().forEach(w=>{ const secs=wpSections(w);
+    if(secs.length) m[secs[0].row_key]="— "+wpName(w)+" —"; });
+  FIXED_DIVIDERS.forEach(k=>{ if(!m[k]) m[k]="◈"; });
+  return m;
+}
+/* Row labels come from one place each: sections are named by their workplace,
+   the extra task by its own tab, custom rows by their editor. */
 function rowLabel(key, lang){
   lang = lang||S.lang;
   const ov=(CFG.row_labels||{})[key];
   if (ov && ov[lang]) return ov[lang];
+  if (key==="udex") return extraLabel(lang);
+  const sx=sectionByRow(key);
+  if (sx) return sectionLabel(sx);
   const cr=customRows().find(r=>r.key===key);
   if (cr) return (cr.labels&&(cr.labels[lang]||cr.labels.he))||key;
   return (I18N[lang]&&I18N[lang]["row_"+key])||I18N.he["row_"+key]||key;
 }
 function emptyWeek(weekStart){
-  const fields = ["work_hours","entry","exit","escort_morning","school","escort_noon",
-    "emb_il","emb_pe","other_empl","arrival_point","theater","udex","apt_il","apt_pe",
-    "vehicle_morning","axis_morning","wait_morning","taxi_apt","taxi_arrival",
-    "vehicle_noon","axis_noon","wait_noon","taxi_emb","taxi_arrival_noon",
-    "vacation_il","vacation_pe"].concat(customKeys());
-  const days={};
-  for(let i=0;i<5;i++){ const d=addDays(weekStart,i); days[d]={}; fields.forEach(f=>days[d][f]=""); }
+  const fields=scheduleFields(), days={};
+  workDays().forEach(n=>{
+    const d=addDays(weekStart, DOW_ORDER.indexOf(n));
+    days[d]={}; fields.forEach(f=>days[d][f]="");
+  });
   return days;
+}
+/* Reshape the open week after the configuration changed (days added/removed,
+   a workplace section created) while keeping every value already entered. */
+function resyncDays(){
+  if(!S.days) return;
+  const wk=snapMonday(Object.keys(S.days).sort()[0]||S.weekStart);
+  const fresh=emptyWeek(wk);
+  for(const dk in fresh){
+    const old=S.days[dk]; if(!old) continue;
+    for(const f in fresh[dk]) if(old[f]!=null) fresh[dk][f]=old[f];
+  }
+  S.days=fresh; saveDraft();
 }
 
 /* ═══════════════ target percentages per balanced field ═══════════════ */
@@ -526,10 +755,10 @@ function yellowFromPcts(pcts){
 
 /* ═══════════════ history & auto-assign (port of schedule_logic.py) ═══════════════ */
 function buildHistory(sinceIso){
-  const hist={}; const arch=loadArchive();
+  const hist={}; const arch=loadArchive(); const hf=historyFields();
   for(const wk in arch){ if(sinceIso&&wk<sinceIso) continue; const days=arch[wk];
     for(const d in days){ const day=days[d];
-      for(const f of HISTORY_FIELDS){ const v=day[f];
+      for(const f of hf){ const v=day[f];
         if(v){ hist[f]=hist[f]||{}; hist[f][v]=(hist[f][v]||0)+1; } } } }
   return hist;
 }
@@ -568,37 +797,19 @@ function autoAssign(){
   if(!S.days) return;
   const hist=buildHistory();
   const keys=Object.keys(S.days).sort();
-  const IL=empsIL(), PE=empsPE();
   const sv=CFG.special_values, tg=CFG.targets;
   const holiday=sv.holiday, VS=sv.vehicle_special;
-
-  /* pre-plan EMB IL: alternate the two least-used (3:2) */
-  const ilHist=hist.emb_il||{};
-  let sortedIL=IL.slice().sort((a,b)=>(ilHist[a]||0)-(ilHist[b]||0));
-  if(sortedIL.length>=2 && (ilHist[sortedIL[0]]||0)===(ilHist[sortedIL[1]]||0)) shuffle(sortedIL);
-  const embIlPlan=keys.map((_,i)=>sortedIL[i%Math.max(sortedIL.length,1)]||"");
-
-  /* pre-plan Apt PE: 2:2:1 by least-used */
-  const peHist=hist.apt_pe||{};
-  const sortedPE=PE.slice().sort((a,b)=>(peHist[a]||0)-(peHist[b]||0));
-  let aptPePlan=[];
-  if(sortedPE.length>=3) aptPePlan=[sortedPE[0],sortedPE[0],sortedPE[1],sortedPE[1],sortedPE[2]];
-  else if(sortedPE.length) aptPePlan=keys.map((_,i)=>sortedPE[i%sortedPE.length]);
-  shuffle(aptPePlan);
-
-  /* axis + wait: straight least-used vs cumulative history (weekly counts added per-day) */
-  const axisVals=opts("axis");
-  const waitVals=opts("wait_spot");
+  const axisVals=opts("axis"), waitVals=opts("wait_spot");
+  const secs=allSections();
+  const hFields=historyFields();
 
   const weekly={};                    // in-week usage so days differ
   const H=f=>{ const c={...(hist[f]||{})}; const w=weekly[f]||{};
     for(const v in w) c[v]=(c[v]||0)+w[v]; return c; };
 
-  keys.forEach((dk,i)=>{
+  keys.forEach(dk=>{
     const day=S.days[dk];
-    const vacIl=day.vacation_il||"", vacPe=day.vacation_pe||"", other=day.other_empl||"";
-    const actIL=IL.filter(e=>e!==vacIl&&e!==other);
-    const actPE=PE.filter(e=>e!==vacPe&&e!==other);
+    const other=day.other_empl||"";
 
     /* entry/exit and both axes are independent — each balanced against its
        own target percentages, no cross-field constraint */
@@ -607,43 +818,32 @@ function autoAssign(){
     if(!day.entry) day.entry=leastUsed(opts("entry").filter(o=>o!==holiday),H("entry"),"entry");
     if(!day.exit)  day.exit =leastUsed(opts("exit").filter(o=>o!==holiday),H("exit"),"exit");
 
-    if(!day.emb_il){
-      let planned=embIlPlan[i]||"";
-      if(planned===vacIl||planned===other||!planned){
-        const others=actIL.length?actIL:actPE;
-        planned=others.length?leastUsed(others,H("emb_il")):"";
-      }
-      day.emb_il=planned;
-    }
-    const embIl=day.emb_il;
-    if(!day.apt_il){
-      const c=actIL.filter(e=>e!==embIl);
-      if(c.length) day.apt_il=leastUsed(c,H("apt_il"));
-    }
-    if(!day.apt_pe){
-      let planned=aptPePlan[i]||"";
-      const embIlPe=PE.includes(embIl)?embIl:"";
-      if(!planned||planned===vacPe||planned===embIlPe){
-        const c=actPE.filter(e=>e!==embIlPe);
-        planned=c.length?leastUsed(c,H("apt_pe")):"";
-      }
-      day.apt_pe=planned;
-    }
-    if(!day.emb_pe){
-      const embIlPe=PE.includes(embIl)?embIl:"";
-      const avail=actPE.filter(e=>e!==day.apt_pe&&e!==embIlPe);
-      if(avail.length>=2){
+    /* Workplace sections, in configured order. Each draws from its own group,
+       skipping anyone on vacation, on another task, or already placed today —
+       so nobody is booked twice in one day whatever the station's shape is. */
+    const taken=new Set();
+    secs.forEach(x=>{
+      const rk=x.sec.row_key, g=groupById(x.sec.group_id);
+      if(day[rk]){ String(day[rk]).split("+").forEach(e=>taken.add(e)); return; }
+      const vac=g?(day[vacField(g)]||""):"";
+      const pool=(g?groupEmps(g.id):allEmps())
+        .filter(e=>e!==vac&&e!==other&&!taken.has(e));
+      if(!pool.length) return;
+      let choice;
+      if(x.sec.allow_pair&&pool.length>=2){
         const pairs=[];
-        for(let a=0;a<PE.length;a++) for(let b=a+1;b<PE.length;b++)
-          if(avail.includes(PE[a])&&avail.includes(PE[b])) pairs.push(PE[a]+"+"+PE[b]);
-        if(pairs.length) day.emb_pe=leastUsed(pairs,H("emb_pe"));
-      } else if(avail.length===1) day.emb_pe=avail[0];
-    }
+        for(let a=0;a<pool.length;a++) for(let b=a+1;b<pool.length;b++) pairs.push(pool[a]+"+"+pool[b]);
+        choice=leastUsed(pairs,H(rk));
+      } else choice=leastUsed(pool,H(rk));
+      day[rk]=choice;
+      String(choice).split("+").forEach(e=>taken.add(e));
+    });
+
     if(!day.arrival_point) day.arrival_point=leastUsed(opts("arrival_point"),H("arrival_point"),"arrival_point");
     if(!day.wait_morning) day.wait_morning=leastUsed(waitVals,H("wait_morning"),"wait_spot");
     if(!day.wait_noon)    day.wait_noon   =leastUsed(waitVals,H("wait_noon"),"wait_spot");
 
-    for(const f of HISTORY_FIELDS) bump(weekly,f,day[f]);
+    for(const f of hFields) bump(weekly,f,day[f]);
   });
 
   /* vehicles: N special slots over morning+noon (default 3 of 10 = 70/30).
@@ -673,14 +873,14 @@ function autoAssign(){
   keys.forEach(k=>{ ["vehicle_morning","vehicle_noon"].forEach(f=>{
     if(!S.days[k][f]) S.days[k][f]=vehRegular; }); });
 
-  /* UDEX: m-type + t-type targets, balanced within type */
-  const mVals=sv.udex_morning.slice(), tVals=sv.udex_noon.slice();
-  let udexFree=shuffle(keys.filter(k=>!S.days[k].udex));
-  let mNeed=tg.udex_m-keys.filter(k=>mVals.includes(S.days[k].udex)).length;
-  let tNeed=tg.udex_t-keys.filter(k=>tVals.includes(S.days[k].udex)).length;
+  /* extra task: morning-type + noon-type targets, balanced within each type */
+  const mVals=extraMorning(), tVals=extraNoon(), et=extraTargets();
+  let extraFree=shuffle(keys.filter(k=>!S.days[k].udex));
+  let mNeed=et.morning-keys.filter(k=>mVals.includes(S.days[k].udex)).length;
+  let tNeed=et.noon   -keys.filter(k=>tVals.includes(S.days[k].udex)).length;
   const mh={...(hist.udex||{})}, th={...(hist.udex||{})};
-  while(mNeed-->0&&udexFree.length){ const c=leastUsed(mVals,mh); mh[c]=(mh[c]||0)+1; S.days[udexFree.shift()].udex=c; }
-  while(tNeed-->0&&udexFree.length){ const c=leastUsed(tVals,th); th[c]=(th[c]||0)+1; S.days[udexFree.shift()].udex=c; }
+  while(mNeed-->0&&extraFree.length&&mVals.length){ const c=leastUsed(mVals,mh); mh[c]=(mh[c]||0)+1; S.days[extraFree.shift()].udex=c; }
+  while(tNeed-->0&&extraFree.length&&tVals.length){ const c=leastUsed(tVals,th); th[c]=(th[c]||0)+1; S.days[extraFree.shift()].udex=c; }
 
   /* theater: exactly N days */
   const thVals=opts("theater");
@@ -701,32 +901,40 @@ function autoAssign(){
 /* ═══════════════ validation (port of validate_schedule) ═══════════════ */
 function validate(){
   if(!S.days) return [];
-  const errs=[]; const IL=empsIL(), PE=empsPE();
+  const errs=[];
   const sv=CFG.special_values, tg=CFG.targets, VS=sv.vehicle_special;
+  const mV=extraMorning(), nV=extraNoon(), et=extraTargets();
+  const secs=allSections();
   let yellow=0,um=0,ut=0,th=0;
   for(const dk of Object.keys(S.days).sort()){
-    const day=S.days[dk];
+    const day=S.days[dk], d=fmtDM(dk);
     if(day.vehicle_morning===VS) yellow++;
     if(day.vehicle_noon===VS) yellow++;
-    if(sv.udex_morning.includes(day.udex)) um++;
-    else if(sv.udex_noon.includes(day.udex)) ut++;
+    if(mV.includes(day.udex)) um++;
+    else if(nV.includes(day.udex)) ut++;
     if(day.theater) th++;
-    const d=fmtDM(dk);
-    if((day.vacation_il||"").includes(",")) errs.push({lvl:"err",msg:d+": "+t("err_two_il")});
-    if((day.vacation_pe||"").includes(",")) errs.push({lvl:"err",msg:d+": "+t("err_two_pe")});
-    const emb=day.emb_il;
-    if(emb&&IL.includes(emb)){
-      if(emb===day.vacation_il) errs.push({lvl:"err",msg:"❌ "+d+": "+t("err_emb_vac",{e:emb})});
-      else if(emb===day.other_empl) errs.push({lvl:"err",msg:"❌ "+d+": "+t("err_emb_other",{e:emb})});
-    }
-    const availIL=IL.filter(e=>e!==day.vacation_il&&e!==day.other_empl);
-    if(!availIL.length&&!emb) errs.push({lvl:"err",msg:"❌ "+d+": "+t("err_no_il")});
-    else if(!availIL.length&&emb&&!PE.includes(emb)&&IL.length)
-      errs.push({lvl:"err",msg:"❌ "+d+": "+t("err_il_unavail")});
+    const other=day.other_empl||"";
+    const placed={};                          // employee → the section holding them
+    secs.forEach(x=>{
+      const rk=x.sec.row_key, g=groupById(x.sec.group_id), lbl=sectionLabel(x);
+      const vac=g?(day[vacField(g)]||""):"";
+      const people=String(day[rk]||"").split("+").filter(Boolean);
+      people.forEach(e=>{
+        if(e===vac) errs.push({lvl:"err",msg:"❌ "+d+": "+t("err_sec_vac",{e,s:lbl})});
+        else if(e===other) errs.push({lvl:"err",msg:"❌ "+d+": "+t("err_sec_other",{e,s:lbl})});
+        if(placed[e]) errs.push({lvl:"warn",msg:d+": "+t("warn_sec_dup",{e,s:placed[e],s2:lbl})});
+        else placed[e]=lbl;
+      });
+      if(!people.length){
+        const pool=(g?groupEmps(g.id):allEmps()).filter(e=>e!==vac&&e!==other);
+        if(!pool.length) errs.push({lvl:"err",msg:"❌ "+d+": "+
+          t("err_sec_none",{s:lbl,g:g?groupName(g):"—"})});
+      }
+    });
   }
   if(yellow!==tg.yellow_per_week) errs.push({lvl:"warn",msg:t("warn_yellow",{n:yellow,t:tg.yellow_per_week})});
-  if(um!==tg.udex_m) errs.push({lvl:"warn",msg:t("warn_udex_m",{n:um,t:tg.udex_m})});
-  if(ut!==tg.udex_t) errs.push({lvl:"warn",msg:t("warn_udex_t",{n:ut,t:tg.udex_t})});
+  if(um!==et.morning) errs.push({lvl:"warn",msg:t("warn_extra_m",{n:um,t:et.morning,f:extraLabel()})});
+  if(ut!==et.noon)    errs.push({lvl:"warn",msg:t("warn_extra_n",{n:ut,t:et.noon,f:extraLabel()})});
   if(th!==tg.theater_per_week) errs.push({lvl:"warn",msg:t("warn_theater",{n:th,t:tg.theater_per_week})});
   return errs;
 }
@@ -775,11 +983,12 @@ function viewSched(){
       <button class="btn small" id="clearNo">✗</button></div>`;
   if(!S.days) return h;
   const keys=Object.keys(S.days).sort();
+  const dividers=rowDividers();
   h+=`<div class="tbl-wrap"><table class="sched"><thead><tr><th>${esc(t("row_dates"))}</th>`;
-  keys.forEach((dk,i)=>{ h+=`<th>${dayName(dk)}${i===4?" ⏱"+t("fri6"):""}<br><small>${fmtDM(dk)}</small></th>`; });
+  keys.forEach(dk=>{ h+=`<th>${esc(dayLabel(dk))}<br><small>${fmtDM(dk)}</small></th>`; });
   h+=`</tr></thead><tbody>`;
   for(const rk of reorderableKeys()){
-    if(SECTIONS[rk]) h+=`<tr class="section"><td colspan="6">— ${rk==="emb_il"?"EMB":esc(rowLabel(rk))} —</td></tr>`;
+    if(dividers[rk]) h+=`<tr class="section"><td colspan="${keys.length+1}">${esc(dividers[rk])}</td></tr>`;
     h+=renderRow(rk,keys);
   }
   h+=`</tbody></table></div>`;
@@ -805,36 +1014,41 @@ function updateStatus(){
   const dot=document.getElementById("saveDot");
   if(dot) dot.style.display=S.dirty?"inline-block":"none";
 }
-function selCell(dk,field,options,val,cls){
+function selCell(dk,field,options,val,cls,bg){
   let o=`<option value=""></option>`;
   const list=options.slice();
   if(val&&!list.includes(val)) list.push(val);
   list.forEach(v=>{ o+=`<option value="${esc(v)}" ${v===val?"selected":""}>${esc(v)}</option>`; });
-  return `<td class="${cls||""}"><select data-dk="${dk}" data-f="${field}">${o}</select></td>`;
+  const st=bg?` style="background:${esc(bg)}"`:"";
+  return `<td class="${cls||""}"><select data-dk="${dk}" data-f="${field}"${st}>${o}</select></td>`;
 }
 function renderRow(rk,keys){
   const cr=customRows().find(r=>r.key===rk);
+  const sx=sectionByRow(rk);
   let h=`<tr><td class="label">${esc(rowLabel(rk))}</td>`;
   for(let i=0;i<keys.length;i++){
     const dk=keys[i], day=S.days[dk];
     if(rk==="work_hours"){
-      const list=opts(i===4?"work_hours_friday":"work_hours_weekday");
-      h+=selCell(dk,"work_hours",list,day.work_hours);
+      h+=selCell(dk,"work_hours",workHoursList(dk),day.work_hours);
     } else if(rk==="vacation"){
-      const vIL=`<select data-dk="${dk}" data-f="vacation_il"><option value=""></option>${empsIL().map(e=>`<option ${e===day.vacation_il?"selected":""}>${esc(e)}</option>`).join("")}</select>`;
-      const vPE=`<select data-dk="${dk}" data-f="vacation_pe"><option value=""></option>${empsPE().map(e=>`<option ${e===day.vacation_pe?"selected":""}>${esc(e)}</option>`).join("")}</select>`;
-      h+=`<td>${vIL}${vPE}</td>`;
-    } else if(rk==="emb_il"||rk==="apt_il"){
-      const avail=empsIL().filter(e=>e!==day.vacation_il);
-      h+=selCell(dk,rk,avail,day[rk],"cell-il");
-    } else if(rk==="apt_pe"){
-      const avail=empsPE().filter(e=>e!==day.vacation_pe);
-      h+=selCell(dk,rk,avail,day[rk],"cell-pe");
-    } else if(rk==="emb_pe"){
-      const PE=empsPE().filter(e=>e!==day.vacation_pe);
-      const pairs=[];
-      for(let a=0;a<PE.length;a++) for(let b=a+1;b<PE.length;b++) pairs.push(PE[a]+"+"+PE[b]);
-      h+=selCell(dk,rk,PE.concat(pairs),day[rk],"cell-pe");
+      /* one picker per active group, tinted with that group's colour */
+      let c="";
+      activeGroups().forEach(g=>{ const f=vacField(g);
+        c+=`<select data-dk="${dk}" data-f="${f}" title="${esc(groupName(g))}"`+
+           ` style="background:${esc(g.color||"#fff")}"><option value=""></option>`+
+           groupEmps(g.id).map(e=>`<option ${e===day[f]?"selected":""}>${esc(e)}</option>`).join("")+
+           `</select>`; });
+      h+=`<td>${c||"&nbsp;"}</td>`;
+    } else if(sx){
+      const g=groupById(sx.sec.group_id);
+      const vac=g?(day[vacField(g)]||""):"";
+      const avail=(g?groupEmps(g.id):allEmps()).filter(e=>e!==vac);
+      const list=avail.slice();
+      if(sx.sec.allow_pair)
+        for(let a=0;a<avail.length;a++) for(let b=a+1;b<avail.length;b++) list.push(avail[a]+"+"+avail[b]);
+      h+=selCell(dk,rk,list,day[rk],"",g?g.color:"");
+    } else if(rk==="udex"){
+      h+=selCell(dk,rk,extraOptions(),day[rk]);
     } else if(rk==="other_empl"){
       h+=selCell(dk,rk,allEmps(),day[rk]);
     } else if(TEXT_ROWS.has(rk)||(cr&&cr.input!=="select")){
@@ -850,8 +1064,109 @@ function renderRow(rk,keys){
 }
 
 /* ═══════════════ screen 2: settings ═══════════════ */
+function sect(key,title,body,open){
+  return `<details class="sect" data-sect="${key}" ${open?"open":""}><summary>${title}</summary>
+    <div class="inner">${body}</div></details>`;
+}
+/* employee groups: name, colour and roster, up to MAX_GROUPS */
+function groupsPanel(){
+  const act=activeGroups();
+  let h="";
+  if(!act.length) h+=`<div class="msg warn">${t("grp_none")}</div>`;
+  act.forEach(g=>{
+    h+=`<div class="pct-box"><div class="grid2">
+      <label>${t("grp_name")}<br><input data-gname="${esc(g.id)}" value="${esc(g.name||"")}"></label>
+      <label>${t("grp_color")}<br><input type="color" data-gcolor="${esc(g.id)}" value="${esc(g.color||"#eef2f7")}" style="width:100%;padding:2px"></label>
+    </div>
+    <label>${t("grp_emps")}<br><textarea data-gemps="${esc(g.id)}">${esc((g.employees||[]).join("\n"))}</textarea></label>
+    <div class="row-flex"><button class="btn small warn" data-gremove="${esc(g.id)}">${t("grp_remove")}</button></div>
+    </div>`;
+  });
+  const free=groupsAll().find(g=>!g.active);
+  h+=`<p class="row-flex"><button class="btn" id="addGroup" ${free?"":"disabled"}>${t("grp_add")}</button>
+    ${free?"":`<span class="hint">${t("grp_max")}</span>`}</p>`;
+  h+=`<div class="hint">⚠️ ${t("rename_warn")} · ${t("one_per_line")}</div>`;
+  h+=`<h3>${t("vac_budget")}</h3><div class="grid3">`;
+  allEmps().forEach(e=>{ const v=CFG.vacation_budget[e]!=null?CFG.vacation_budget[e]:defaultVacBudget(e);
+    h+=`<label>${esc(e)}<br><input type="number" min="0" max="365" data-vb="${esc(e)}" value="${v}"></label>`; });
+  h+=`</div><p><button class="btn primary" id="saveGroups">${t("save_settings")}</button></p>`;
+  return h;
+}
+/* workplaces and the roles (sections) inside each one */
+function workplacesPanel(){
+  const act=activeWorkplaces();
+  let h=`<div class="hint">${t("wp_notes_hint")}</div>`;
+  if(!act.length) h+=`<div class="msg warn">${t("wp_none")}</div>`;
+  act.forEach(w=>{
+    h+=`<div class="pct-box">
+    <label>${t("wp_name")}<br><input data-wpname="${esc(w.id)}" value="${esc(w.name||"")}"></label>
+    <h3 style="font-size:.9rem">${t("wp_sections")}</h3>`;
+    wpSections(w).forEach(sc=>{
+      h+=`<div class="sec-row">
+        <input data-scname="${esc(sc.id)}" data-wp="${esc(w.id)}" value="${esc(sc.name||"")}" placeholder="${t("wp_sec_name")}">
+        <select data-scgroup="${esc(sc.id)}" data-wp="${esc(w.id)}">
+          ${activeGroups().map(g=>`<option value="${esc(g.id)}" ${g.id===sc.group_id?"selected":""}>${esc(groupName(g))}</option>`).join("")}
+        </select>
+        <label class="chk"><input type="checkbox" data-scpair="${esc(sc.id)}" data-wp="${esc(w.id)}" ${sc.allow_pair?"checked":""}> ${t("wp_sec_pair")}</label>
+        <button class="btn small warn" data-scremove="${esc(sc.id)}" data-wp="${esc(w.id)}">🗑</button>
+      </div>`;
+    });
+    h+=`<p><button class="btn small" data-scadd="${esc(w.id)}">${t("wp_sec_add")}</button></p>
+      <label>${t("wp_notes")}<br><textarea data-wpnotes="${esc(w.id)}" style="min-height:70px">${esc(w.notes||"")}</textarea></label>
+      <div class="row-flex"><button class="btn small warn" data-wpremove="${esc(w.id)}">${t("wp_remove")}</button></div>
+    </div>`;
+  });
+  const free=workplacesAll().find(w=>!w.active);
+  h+=`<p class="row-flex"><button class="btn" id="addWp" ${free?"":"disabled"}>${t("wp_add")}</button>
+    ${free?"":`<span class="hint">${t("wp_max")}</span>`}</p>`;
+  h+=`<p><button class="btn primary" id="saveWps">${t("save_settings")}</button></p>`;
+  return h;
+}
+/* which weekdays the week is built from, and how each is labelled */
+function workDaysPanel(){
+  const picked=workDays(), labels=((CFG.work_days||{}).labels)||{};
+  let h=`<div class="hint">${t("wd_pick")}</div>`;
+  DOW_ORDER.forEach(d=>{
+    const on=picked.includes(d);
+    h+=`<div class="sec-row">
+      <label class="chk"><input type="checkbox" data-wd="${d}" ${on?"checked":""}> <b>${esc(t(d))}</b></label>
+      <input data-wdlbl="${d}" value="${esc(labels[d]||t(d))}" placeholder="${t("wd_label")}">
+    </div>`;
+  });
+  h+=`<div class="msg warn" id="wdWarn" style="display:none">${t("wd_none")}</div>`;
+  h+=`<h3>${t("wd_labels_title")}</h3><div class="grid2">
+    <label>${t("wd_lbl_weekday")}<br><input id="wdlWeekday" value="${esc((CFG.work_day_labels||{}).weekday||"")}"></label>
+    <label>${t("wd_lbl_friday")}<br><input id="wdlFriday" value="${esc((CFG.work_day_labels||{}).friday||"")}"></label>
+  </div>
+  <p><button class="btn primary" id="saveWorkDays">${t("save_settings")}</button></p>`;
+  return h;
+}
+/* the extra task — name, its values, which are morning/noon, and the targets */
+function extraPanel(){
+  const et=extraCfg(), tg=extraTargets(), l=et.label||{};
+  return `<div class="grid3">
+    <label>${t("et_name")} (${t("lbl_he")})<br><input id="etHe" value="${esc(l.he||"")}"></label>
+    <label>${t("et_name")} (${t("lbl_en")})<br><input id="etEn" value="${esc(l.en||"")}"></label>
+    <label>${t("et_name")} (${t("lbl_es")})<br><input id="etEs" value="${esc(l.es||"")}"></label>
+  </div>
+  <div class="grid3">
+    <label>${t("et_options")}<br><textarea id="etOpts">${esc(extraOptions().join("\n"))}</textarea></label>
+    <label>${t("et_morning")}<br><textarea id="etM">${esc(extraMorning().join("\n"))}</textarea></label>
+    <label>${t("et_noon")}<br><textarea id="etN">${esc(extraNoon().join("\n"))}</textarea></label>
+  </div>
+  <div class="grid2">
+    <label>${t("et_tg_m")}<br><input type="number" id="etTgM" min="0" max="7" value="${tg.morning}"></label>
+    <label>${t("et_tg_n")}<br><input type="number" id="etTgN" min="0" max="7" value="${tg.noon}"></label>
+  </div>
+  <p><button class="btn primary" id="saveExtra">${t("save_settings")}</button></p>`;
+}
+function notesPanel(){
+  return `<div class="hint">${t("notes_hint")}</div>
+    <label>${t("notes_general")}<br><textarea id="assignNotes" style="min-height:140px">${esc(CFG.assign_notes||"")}</textarea></label>
+    <p><button class="btn primary" id="saveNotes">${t("save_settings")}</button></p>`;
+}
+
 function viewSettings(){
-  const emps=allEmps();
   let h=`<h2>${t("nav_settings")}</h2>`;
   h+=`<div class="card row-flex">
     <button class="btn primary" id="btnCfgExport">${t("export_settings")}</button>
@@ -862,60 +1177,51 @@ function viewSettings(){
     h+=`<div class="msg warn">⚠️ ${t("import_confirm")}
       <button class="btn small warn" id="importCfgYes">✓ ${t("yes")}</button>
       <button class="btn small" id="importCfgNo">✗ ${t("no")}</button></div>`;
-  /* employees */
-  h+=`<details class="sect" open><summary>${t("s_employees")}</summary><div class="inner">
-    <div class="grid2">
-      <label>${t("il_emps")}<br><textarea id="empIL">${esc(CFG.employees.il.join("\n"))}</textarea></label>
-      <label>${t("pe_emps")}<br><textarea id="empPE">${esc(CFG.employees.pe.join("\n"))}</textarea></label>
-    </div>
-    <div class="hint">⚠️ ${t("rename_warn")} · ${t("one_per_line")}</div>
-    <h3>${t("vac_budget")}</h3><div class="grid3">`;
-  emps.forEach(e=>{ h+=`<label>${esc(e)}<br><input type="number" min="0" max="365" id="vb_${esc(e)}" value="${CFG.vacation_budget[e]!=null?CFG.vacation_budget[e]:(CFG.employees.il.includes(e)?14:30)}"></label>`; });
-  h+=`</div><p><button class="btn primary" id="saveEmps">${t("save_settings")}</button></p></div></details>`;
+  h+=sect("groups",t("s_employees"),groupsPanel(),true);
+  h+=sect("workplaces",t("s_workplaces"),workplacesPanel());
+  h+=sect("workdays",t("s_workdays"),workDaysPanel());
+  h+=sect("extra",t("s_extra"),extraPanel());
   /* row order */
-  h+=`<details class="sect"><summary>${t("s_order")}</summary><div class="inner">
-    <div class="hint">${t("order_hint")}</div><ul id="orderList">`;
+  let ord=`<div class="hint">${t("order_hint")}</div><ul id="orderList">`;
   const rk=reorderableKeys();
-  rk.forEach((k,i)=>{ h+=`<li data-key="${esc(k)}"><span class="handle">⠿</span><span>${esc(rowLabel(k))}</span>
+  rk.forEach((k,i)=>{ ord+=`<li data-key="${esc(k)}"><span class="handle">⠿</span><span>${esc(rowLabel(k))}</span>
     <span class="updown"><button class="btn small" data-up="${i}" ${i===0?"disabled":""}>↑</button>
     <button class="btn small" data-dn="${i}" ${i===rk.length-1?"disabled":""}>↓</button></span></li>`; });
-  h+=`</ul></div></details>`;
-  /* labels */
-  h+=`<details class="sect"><summary>${t("s_labels")}</summary><div class="inner">
-    <div class="lbl-row"><b class="orig-lbl">${t("orig_name")}</b><b>${t("lbl_he")}</b><b>${t("lbl_en")}</b><b>${t("lbl_es")}</b></div>`;
-  BASE_ROW_KEYS.forEach(k=>{ h+=`<div class="lbl-row">
+  h+=sect("order",t("s_order"),ord+`</ul>`);
+  /* labels — only rows whose name has no other home */
+  let lab=`<div class="lbl-row"><b class="orig-lbl">${t("orig_name")}</b><b>${t("lbl_he")}</b><b>${t("lbl_en")}</b><b>${t("lbl_es")}</b></div>`;
+  labelledRowKeys().forEach(k=>{ lab+=`<div class="lbl-row">
     <span class="orig-lbl">${esc(I18N.he["row_"+k]||k)}</span>
     <input data-lbl="${k}" data-lang="he" value="${esc(rowLabel(k,"he"))}">
     <input data-lbl="${k}" data-lang="en" value="${esc(rowLabel(k,"en"))}">
     <input data-lbl="${k}" data-lang="es" value="${esc(rowLabel(k,"es"))}"></div>`; });
-  h+=`<p><button class="btn primary" id="saveLabels">${t("save_settings")}</button></p></div></details>`;
+  h+=sect("labels",t("s_labels"),lab+`<p><button class="btn primary" id="saveLabels">${t("save_settings")}</button></p>`);
   /* options */
+  const wdl=CFG.work_day_labels||{};
   const groups=[["entry",rowLabel("entry")],["exit",rowLabel("exit")],["escort",t("opt_escort")],
-    ["arrival_point",rowLabel("arrival_point")],["theater",rowLabel("theater")],["udex","UDEX"],
+    ["arrival_point",rowLabel("arrival_point")],["theater",rowLabel("theater")],
     ["vehicle",t("opt_vehicle")],["axis",t("opt_axis")],["wait_spot",t("opt_wait")],
     ["taxi_apt",rowLabel("taxi_apt")],["taxi_arrival",rowLabel("taxi_arrival")],
     ["taxi_emb",rowLabel("taxi_emb")],["taxi_arrival_noon",rowLabel("taxi_arrival_noon")],
-    ["work_hours_weekday",t("opt_wh_wd")],["work_hours_friday",t("opt_wh_fr")]];
-  h+=`<details class="sect"><summary>${t("s_options")}</summary><div class="inner">
-    <div class="hint">${t("one_per_line")}</div><div class="grid3">`;
-  groups.forEach(([k,lbl])=>{ h+=`<label>${esc(lbl)}<br><textarea data-opt="${k}">${esc((CFG.options[k]||[]).join("\n"))}</textarea></label>`; });
-  h+=`</div><div class="hint">⚠️ ${t("special_note")}</div><div class="grid2">
+    ["work_hours_weekday",rowLabel("work_hours")+" ("+(wdl.weekday||"")+")"],
+    ["work_hours_friday", rowLabel("work_hours")+" ("+(wdl.friday||"")+")"]];
+  let op=`<div class="hint">${t("one_per_line")}</div><div class="grid3">`;
+  groups.forEach(([k,lbl])=>{ op+=`<label>${esc(lbl)}<br><textarea data-opt="${k}">${esc((CFG.options[k]||[]).join("\n"))}</textarea></label>`; });
+  op+=`</div><div class="hint">⚠️ ${t("special_note")}</div><div class="grid2">
     <label>${t("sv_holiday")}<br><input id="svHoliday" value="${esc(CFG.special_values.holiday)}"></label>
     <label>${t("sv_vehicle")}<br><input id="svVehicle" value="${esc(CFG.special_values.vehicle_special)}"></label>
-    <label>${t("sv_udex_m")}<br><input id="svUdexM" value="${esc(CFG.special_values.udex_morning.join(","))}"></label>
-    <label>${t("sv_udex_t")}<br><input id="svUdexT" value="${esc(CFG.special_values.udex_noon.join(","))}"></label>
-  </div><p><button class="btn primary" id="saveOpts">${t("save_settings")}</button></p></div></details>`;
+  </div><p><button class="btn primary" id="saveOpts">${t("save_settings")}</button></p>`;
+  h+=sect("options",t("s_options"),op);
   /* targets */
-  h+=`<details class="sect"><summary>${t("s_targets")}</summary><div class="inner"><div class="grid2">
-    <label>${t("tg_yellow")}<br><input type="number" id="tgY" min="0" max="10" value="${CFG.targets.yellow_per_week}"></label>
-    <label>${t("tg_theater")}<br><input type="number" id="tgTh" min="0" max="5" value="${CFG.targets.theater_per_week}"></label>
-    <label>${t("tg_udex_m")}<br><input type="number" id="tgM" min="0" max="5" value="${CFG.targets.udex_m}"></label>
-    <label>${t("tg_udex_t")}<br><input type="number" id="tgT" min="0" max="5" value="${CFG.targets.udex_t}"></label>
+  const tgt=`<div class="grid2">
+    <label>${t("tg_yellow")}<br><input type="number" id="tgY" min="0" max="14" value="${CFG.targets.yellow_per_week}"></label>
+    <label>${t("tg_theater")}<br><input type="number" id="tgTh" min="0" max="7" value="${CFG.targets.theater_per_week}"></label>
   </div><p><button class="btn primary" id="saveTargets">${t("save_settings")}</button></p>
-  ${pctTables()}${mapTables()}</div></details>`;
+  ${pctTables()}${mapTables()}`;
+  h+=sect("targets",t("s_targets"),tgt);
+  h+=sect("notes",t("s_notes"),notesPanel());
   /* custom rows */
-  h+=`<details class="sect"><summary>${t("s_custom")}</summary><div class="inner">
-    <div class="grid3">
+  let cus=`<div class="grid3">
       <label>${t("row_name")} (${t("lbl_he")})<br><input id="crHe"></label>
       <label>${t("row_name")} (${t("lbl_en")})<br><input id="crEn"></label>
       <label>${t("row_name")} (${t("lbl_es")})<br><input id="crEs"></label>
@@ -924,11 +1230,11 @@ function viewSettings(){
       <label>${t("row_opts")}<br><textarea id="crOpts" style="min-height:70px"></textarea></label>
     </div><p><button class="btn primary" id="addRow">➕ ${t("add_row")}</button></p><hr>`;
   const crs=customRows();
-  if(!crs.length) h+=`<div class="hint">${t("no_custom")}</div>`;
+  if(!crs.length) cus+=`<div class="hint">${t("no_custom")}</div>`;
   crs.forEach(r=>{
     const conf=S.pendingConfirm==="delrow_"+r.key;
     const lb=r.labels||{};
-    h+=`<div style="padding:8px 0;border-bottom:1px solid var(--border)">
+    cus+=`<div style="padding:8px 0;border-bottom:1px solid var(--border)">
       <div class="row-flex"><b>📌 ${esc(lb[S.lang]||lb.he||r.key)}</b>
         <span class="chip">${r.input==="select"?t("type_select"):t("type_text")}</span></div>
       <div class="grid3" style="margin-top:6px">
@@ -947,8 +1253,14 @@ function viewSettings(){
       </div>
     </div>`;
   });
-  h+=`</div></details>`;
+  h+=sect("custom",t("s_custom"),cus);
   return h;
+}
+/* rows renamed on the Labels tab: not sections (named by their workplace),
+   not the extra task (its own tab), not custom rows (their own editor) */
+function labelledRowKeys(){
+  const secKeys=new Set(sectionRowKeys()), cKeys=new Set(customKeys());
+  return naturalRowKeys().filter(k=>k!=="udex"&&!secKeys.has(k)&&!cKeys.has(k));
 }
 
 /* editable target-% table per balanced field, shown under Targets */
@@ -1031,10 +1343,11 @@ function viewArchive(){
 
 /* ═══════════════ screen 4: stats ═══════════════ */
 function computeStats(schedules){
-  const roles=["emb_il","apt_il","emb_pe","apt_pe"];
+  const roles=sectionRowKeys();                 // one column per workplace role
   const emps=allEmps();
-  const empC={}; emps.forEach(e=>{ empC[e]={emb_il:0,apt_il:0,emb_pe:0,apt_pe:0}; });
+  const empC={}; emps.forEach(e=>{ empC[e]={}; roles.forEach(r=>empC[e][r]=0); });
   const vac={}, oth={}; emps.forEach(e=>{vac[e]=0;oth[e]=0;});
+  const vFields=vacFields();
   const fields=["entry","exit","escort_morning","escort_noon","arrival_point","theater","udex",
     "vehicle_morning","axis_morning","wait_morning","taxi_apt","taxi_arrival",
     "vehicle_noon","axis_noon","wait_noon","taxi_emb","taxi_arrival_noon"]
@@ -1042,10 +1355,10 @@ function computeStats(schedules){
   const fieldC={}; fields.forEach(f=>fieldC[f]={});
   let nd=0;
   schedules.forEach(days=>{ for(const dk in days){ const day=days[dk]; nd++;
-    ["emb_il","apt_il","apt_pe"].forEach(r=>{ const v=day[r]; if(empC[v]) empC[v][r]++; });
-    (day.emb_pe||"").split("+").forEach(e=>{ if(e&&empC[e]) empC[e].emb_pe++; });
+    /* a section may hold a pair ("A+B") — credit both */
+    roles.forEach(r=>String(day[r]||"").split("+").forEach(e=>{ if(e&&empC[e]) empC[e][r]++; }));
     fields.forEach(f=>{ const v=day[f]; if(v) fieldC[f][v]=(fieldC[f][v]||0)+1; });
-    ["vacation_il","vacation_pe"].forEach(f=>{ const v=day[f]; if(v&&vac[v]!=null) vac[v]++; });
+    vFields.forEach(f=>{ const v=day[f]; if(v&&vac[v]!=null) vac[v]++; });
     const o=day.other_empl; if(o&&oth[o]!=null) oth[o]++;
   }});
   return {empC,fieldC,nd,vac,oth,roles};
@@ -1081,7 +1394,7 @@ function viewStats(){
   allEmps().forEach(e=>{ totals[e]=st.roles.reduce((s,r)=>s+(st.empC[e]?st.empC[e][r]:0),0); sumTot+=totals[e]; });
   const avgTot=allEmps().length?sumTot/allEmps().length:0;
   h+=`<div class="card"><h3>👤 ${t("st_employees")}</h3><div class="tbl-wrap"><table class="stats"><tr><th></th>`;
-  st.roles.forEach(r=>h+=`<th>${t("st_role_"+r)}</th>`);
+  st.roles.forEach(r=>h+=`<th>${esc(rowLabel(r))}</th>`);
   h+=`<th>${t("total_col")}</th><th>${t("st_vac_col")}</th><th>${t("st_other")}</th></tr>`;
   allEmps().forEach(e=>{ h+=`<tr><th>${esc(e)}</th>`;
     st.roles.forEach(r=>{ const c=st.empC[e]?st.empC[e][r]:0; const p=st.nd?Math.round(c/st.nd*100):0;
@@ -1118,10 +1431,10 @@ function viewStats(){
 function scheduleCsv(days){
   const keys=Object.keys(days).sort();
   const BOM="﻿"; const q=v=>`"${String(v==null?"":v).replace(/"/g,'""')}"`;
-  let rows=[[t("row_dates"),...keys.map(fmtDM)],[t("row_days"),...keys.map(dayName)]];
+  let rows=[[t("row_dates"),...keys.map(fmtDM)],[t("row_days"),...keys.map(dayLabel)]];
   for(const rk of reorderableKeys()){
     if(rk==="vacation"){
-      rows.push([rowLabel(rk),...keys.map(k=>[days[k].vacation_il,days[k].vacation_pe].filter(Boolean).join(" / "))]);
+      rows.push([rowLabel(rk),...keys.map(k=>vacFields().map(f=>days[k][f]).filter(Boolean).join(" / "))]);
     } else rows.push([rowLabel(rk),...keys.map(k=>days[k][rk]||"")]);
   }
   return BOM+rows.map(r=>r.map(q).join(",")).join("\r\n");
@@ -1130,7 +1443,7 @@ function statsCsv(st,label){
   const q=v=>`"${String(v==null?"":v).replace(/"/g,'""')}"`;
   const lines=[[label],[],
     [t("st_employees")],
-    ["",...st.roles.map(r=>t("st_role_"+r)),t("total_col"),t("st_vac_col"),t("st_other")]];
+    ["",...st.roles.map(r=>rowLabel(r)),t("total_col"),t("st_vac_col"),t("st_other")]];
   allEmps().forEach(e=>{
     const tot=st.roles.reduce((s,r)=>s+(st.empC[e]?st.empC[e][r]:0),0);
     lines.push([e,...st.roles.map(r=>st.empC[e]?st.empC[e][r]:0),tot,st.vac[e]||0,st.oth[e]||0]);
@@ -1157,12 +1470,12 @@ function doPrint(){
   if(!S.days) return;
   const keys=Object.keys(S.days).sort();
   const VS=CFG.special_values.vehicle_special;
-  let h=`<h2>📅 ${esc(t("app_title"))} — ${keys[0]} → ${keys[4]}</h2><table><tr><th></th>`;
-  keys.forEach((dk,i)=>h+=`<th>${dayName(dk)}<br>${fmtDM(dk)}</th>`);
+  let h=`<h2>📅 ${esc(t("app_title"))} — ${keys[0]} → ${keys[keys.length-1]}</h2><table><tr><th></th>`;
+  keys.forEach(dk=>h+=`<th>${esc(dayLabel(dk))}<br>${fmtDM(dk)}</th>`);
   h+=`</tr>`;
   for(const rk of reorderableKeys()){
     if(rk==="vacation"){
-      h+=`<tr><td class="label">${esc(rowLabel(rk))}</td>${keys.map(k=>`<td>${esc([S.days[k].vacation_il,S.days[k].vacation_pe].filter(Boolean).join(" / "))}</td>`).join("")}</tr>`;
+      h+=`<tr><td class="label">${esc(rowLabel(rk))}</td>${keys.map(k=>`<td>${esc(vacFields().map(f=>S.days[k][f]).filter(Boolean).join(" / "))}</td>`).join("")}</tr>`;
     } else {
       h+=`<tr><td class="label">${esc(rowLabel(rk))}</td>${keys.map(k=>{
         const v=S.days[k][rk]||"";
@@ -1201,7 +1514,9 @@ function wire(){
       if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); };
     document.querySelectorAll("table.sched select,table.sched input").forEach(el=>{
       el.onchange=()=>{ S.days[el.dataset.dk][el.dataset.f]=el.value; S.dirty=true; saveDraft();
-        if(["vacation_il","vacation_pe","vehicle_morning","vehicle_noon","udex","theater","emb_il","other_empl"].includes(el.dataset.f)) render();
+        const rerender=vacFields().concat(sectionRowKeys(),
+          ["vehicle_morning","vehicle_noon","udex","theater","other_empl"]);
+        if(rerender.includes(el.dataset.f)) render();
         else updateStatus(); };
     });
   }
@@ -1253,6 +1568,11 @@ function wire(){
   lb.querySelectorAll("button").forEach(b=>b.onclick=()=>{
     S.lang=b.dataset.langBtn; localStorage.setItem(LS.lang,S.lang); render(); });
 }
+/* re-open a settings panel by key after a save re-rendered the screen */
+function reopen(key){
+  const el=document.querySelector(`details.sect[data-sect="${key}"]`);
+  if(el) el.open=true;
+}
 function wireSettings(){
   const $=id=>document.getElementById(id);
   $("btnCfgExport").onclick=()=>downloadJson(cfgSnapshot(),
@@ -1273,14 +1593,112 @@ function wireSettings(){
     CFG=loadConfig(); toast("✅ "+t("import_done")); render(); };
   const icn=$("importCfgNo"); if(icn) icn.onclick=()=>{
     window.__importCfg=null; S.pendingConfirm=null; render(); };
-  $("saveEmps").onclick=()=>{
-    const il=$("empIL").value.split("\n").map(s=>s.trim()).filter(Boolean);
-    const pe=$("empPE").value.split("\n").map(s=>s.trim()).filter(Boolean);
+  /* ── employee groups ── */
+  const readGroups=()=>{
+    document.querySelectorAll("[data-gname]").forEach(inp=>{
+      const g=groupById(inp.dataset.gname); if(g) g.name=inp.value.trim(); });
+    document.querySelectorAll("[data-gcolor]").forEach(inp=>{
+      const g=groupById(inp.dataset.gcolor); if(g) g.color=inp.value; });
+    document.querySelectorAll("[data-gemps]").forEach(ta=>{
+      const g=groupById(ta.dataset.gemps);
+      if(g) g.employees=ta.value.split("\n").map(x=>x.trim()).filter(Boolean); });
+  };
+  if($("saveGroups")) $("saveGroups").onclick=()=>{
+    readGroups();
     const vb={};
-    il.concat(pe).forEach(e=>{ const inp=$("vb_"+e);
-      vb[e]=inp?parseInt(inp.value||0,10):(il.includes(e)?14:30); });
-    CFG.employees.il=il; CFG.employees.pe=pe; CFG.vacation_budget=vb;
-    saveConfig(); render();
+    document.querySelectorAll("[data-vb]").forEach(inp=>{ vb[inp.dataset.vb]=parseInt(inp.value||0,10)||0; });
+    allEmps().forEach(e=>{ if(vb[e]==null) vb[e]=defaultVacBudget(e); });
+    CFG.vacation_budget=vb;
+    saveConfig(); resyncDays(); render(); reopen("groups");
+  };
+  if($("addGroup")) $("addGroup").onclick=()=>{
+    readGroups();
+    const g=groupsAll().find(x=>!x.active);
+    if(!g){ toast("⚠️ "+t("grp_max")); return; }
+    g.active=true; if(!g.name) g.name=g.id.toUpperCase();
+    saveConfig(); resyncDays(); toast("✅ "+t("grp_added")); render(); reopen("groups");
+  };
+  document.querySelectorAll("[data-gremove]").forEach(b=>b.onclick=()=>{
+    readGroups();
+    const g=groupById(b.dataset.gremove); if(!g) return;
+    g.active=false;                       // switched off, never deleted
+    saveConfig(); resyncDays(); toast("🗑 "+t("grp_removed")); render(); reopen("groups");
+  });
+  /* ── workplaces & their sections ── */
+  const readWps=()=>{
+    document.querySelectorAll("[data-wpname]").forEach(inp=>{
+      const w=workplacesAll().find(x=>x.id===inp.dataset.wpname); if(w) w.name=inp.value.trim(); });
+    document.querySelectorAll("[data-wpnotes]").forEach(ta=>{
+      const w=workplacesAll().find(x=>x.id===ta.dataset.wpnotes); if(w) w.notes=ta.value; });
+    const sec=(id,wp)=>{ const w=workplacesAll().find(x=>x.id===wp);
+      return w?(w.sections||[]).find(x=>x.id===id):null; };
+    document.querySelectorAll("[data-scname]").forEach(inp=>{
+      const x=sec(inp.dataset.scname,inp.dataset.wp); if(x) x.name=inp.value.trim(); });
+    document.querySelectorAll("[data-scgroup]").forEach(sl=>{
+      const x=sec(sl.dataset.scgroup,sl.dataset.wp); if(x) x.group_id=sl.value; });
+    document.querySelectorAll("[data-scpair]").forEach(cb=>{
+      const x=sec(cb.dataset.scpair,cb.dataset.wp); if(x) x.allow_pair=cb.checked; });
+  };
+  if($("saveWps")) $("saveWps").onclick=()=>{
+    readWps(); saveConfig(); resyncDays(); render(); reopen("workplaces"); };
+  if($("addWp")) $("addWp").onclick=()=>{
+    readWps();
+    const w=workplacesAll().find(x=>!x.active);
+    if(!w){ toast("⚠️ "+t("wp_max")); return; }
+    w.active=true; if(!w.name) w.name=w.id.toUpperCase();
+    saveConfig(); resyncDays(); render(); reopen("workplaces");
+  };
+  document.querySelectorAll("[data-wpremove]").forEach(b=>b.onclick=()=>{
+    readWps();
+    const w=workplacesAll().find(x=>x.id===b.dataset.wpremove); if(!w) return;
+    w.active=false;
+    saveConfig(); resyncDays(); render(); reopen("workplaces");
+  });
+  document.querySelectorAll("[data-scadd]").forEach(b=>b.onclick=()=>{
+    readWps();
+    const w=workplacesAll().find(x=>x.id===b.dataset.scadd); if(!w) return;
+    const g=activeGroups()[0];
+    w.sections=w.sections||[];
+    w.sections.push({id:newId("s_"), name:"", group_id:g?g.id:"", row_key:newId("sec_")});
+    saveConfig(); resyncDays(); render(); reopen("workplaces");
+  });
+  document.querySelectorAll("[data-scremove]").forEach(b=>b.onclick=()=>{
+    readWps();
+    const w=workplacesAll().find(x=>x.id===b.dataset.wp); if(!w) return;
+    w.sections=(w.sections||[]).filter(x=>x.id!==b.dataset.scremove);
+    saveConfig(); resyncDays(); render(); reopen("workplaces");
+  });
+  /* ── working days ── */
+  const wdCount=()=>document.querySelectorAll("[data-wd]:checked").length;
+  const paintWd=()=>{ const w=$("wdWarn"); if(w) w.style.display=wdCount()?"none":"block"; };
+  document.querySelectorAll("[data-wd]").forEach(cb=>cb.onchange=paintWd);
+  paintWd();
+  if($("saveWorkDays")) $("saveWorkDays").onclick=()=>{
+    const days=[...document.querySelectorAll("[data-wd]:checked")].map(cb=>cb.dataset.wd);
+    if(!days.length){ toast(t("wd_none")); return; }
+    const labels={};
+    document.querySelectorAll("[data-wdlbl]").forEach(inp=>{ labels[inp.dataset.wdlbl]=inp.value.trim()||t(inp.dataset.wdlbl); });
+    CFG.work_days={days:DOW_ORDER.filter(d=>days.includes(d)), labels};
+    CFG.work_day_labels={weekday:$("wdlWeekday").value.trim(), friday:$("wdlFriday").value.trim()};
+    saveConfig(); resyncDays(); render(); reopen("workdays");
+  };
+  /* ── extra task ── */
+  if($("saveExtra")) $("saveExtra").onclick=()=>{
+    const lines=id=>$(id).value.split("\n").map(x=>x.trim()).filter(Boolean);
+    const he=$("etHe").value.trim();
+    CFG.extra_task={
+      label:{he:he||"?", en:$("etEn").value.trim()||he||"?", es:$("etEs").value.trim()||he||"?"},
+      options:lines("etOpts"),
+      morning_values:lines("etM"),
+      noon_values:lines("etN"),
+      targets:{morning:+$("etTgM").value||0, noon:+$("etTgN").value||0}
+    };
+    saveConfig(); render(); reopen("extra");
+  };
+  /* ── free-text assignment notes ── */
+  if($("saveNotes")) $("saveNotes").onclick=()=>{
+    CFG.assign_notes=$("assignNotes").value;
+    saveConfig(); render(); reopen("notes");
   };
   /* row order: up/down buttons */
   document.querySelectorAll("[data-up],[data-dn]").forEach(b=>b.onclick=()=>{
@@ -1290,7 +1708,7 @@ function wireSettings(){
     if(j<0||j>=order.length) return;
     [order[i],order[j]]=[order[j],order[i]];
     CFG.row_order=order; saveConfig(); render();
-    document.querySelectorAll("details.sect")[1].open=true;
+    reopen("order");
   });
   /* row order: pointer drag (move/up listeners live on document so the drop
      is caught wherever the finger/cursor is released) */
@@ -1320,7 +1738,7 @@ function wireSettings(){
         if(!lst) return;
         CFG.row_order=[...lst.querySelectorAll("li")].map(li=>li.dataset.key);
         saveConfig(); render();
-        const sect=document.querySelectorAll("details.sect")[1]; if(sect) sect.open=true;
+        reopen("order");
       };
       document.addEventListener("pointerup",finish);
       document.addEventListener("pointercancel",finish);
@@ -1341,21 +1759,19 @@ function wireSettings(){
     });
     CFG.special_values={
       holiday:$("svHoliday").value.trim(),
-      vehicle_special:$("svVehicle").value.trim(),
-      udex_morning:$("svUdexM").value.split(",").map(s=>s.trim()).filter(Boolean),
-      udex_noon:$("svUdexT").value.split(",").map(s=>s.trim()).filter(Boolean)
+      vehicle_special:$("svVehicle").value.trim()
     };
-    saveConfig(); render();
+    saveConfig(); render(); reopen("options");
   };
   $("saveTargets").onclick=()=>{
     const fp=CFG.targets.field_pcts||{};
-    CFG.targets={ yellow_per_week:+$("tgY").value||0, udex_m:+$("tgM").value||0,
-      udex_t:+$("tgT").value||0, theater_per_week:+$("tgTh").value||0, field_pcts:fp };
+    CFG.targets={ yellow_per_week:+$("tgY").value||0,
+      theater_per_week:+$("tgTh").value||0, field_pcts:fp };
     /* the vehicle percentages are just another view of the weekly special-
        vehicle count, so editing the count re-derives them */
     fp.vehicle=defaultVehiclePcts(pctOptions("vehicle"));
     saveConfig(); render();
-    document.querySelectorAll("details.sect")[4].open=true;
+    reopen("targets");
   };
   /* ── target-% tables ── */
   const pctTotal=key=>{ let n=0;
@@ -1379,14 +1795,14 @@ function wireSettings(){
     CFG.targets.field_pcts[key]=o;
     if(key==="vehicle") CFG.targets.yellow_per_week=yellowFromPcts(o);
     saveConfig(); render();
-    document.querySelectorAll("details.sect")[4].open=true; });
+    reopen("targets"); });
   /* ── manual entry/exit ↔ axis reference maps ── */
   document.querySelectorAll("[data-mapsave]").forEach(b=>b.onclick=()=>{
     const k=b.dataset.mapsave, o={};
     document.querySelectorAll(`[data-map="${k}"]`).forEach(i=>{
       const v=i.value.trim(); if(v) o[i.dataset.val]=v; });
     CFG[k]=o; saveConfig(); render();
-    document.querySelectorAll("details.sect")[4].open=true; });
+    reopen("targets"); });
   $("addRow").onclick=()=>{
     const he=$("crHe").value.trim();
     if(!he){ toast("⚠️ "+t("name_required")); return; }
@@ -1398,7 +1814,7 @@ function wireSettings(){
       options:$("crOpts").value.split("\n").map(s=>s.trim()).filter(Boolean) });
     if(S.days) Object.values(S.days).forEach(d=>{ if(d[key]==null) d[key]=""; });
     saveConfig(); saveDraft(); toast("✅ "+t("row_added")); render();
-    document.querySelectorAll("details.sect")[5].open=true;
+    reopen("custom");
   };
   document.querySelectorAll("[data-crsave]").forEach(b=>b.onclick=()=>{
     const key=b.dataset.crsave;
@@ -1411,14 +1827,14 @@ function wireSettings(){
     const ta=document.querySelector(`[data-cre-opts="${key}"]`);
     if(ta) row.options=ta.value.split("\n").map(s=>s.trim()).filter(Boolean);
     saveConfig(); toast("✅ "+t("row_updated")); render();
-    document.querySelectorAll("details.sect")[5].open=true;
+    reopen("custom");
   });
   document.querySelectorAll("[data-delrow]").forEach(b=>b.onclick=()=>{S.pendingConfirm="delrow_"+b.dataset.delrow;render();
-    document.querySelectorAll("details.sect")[5].open=true;});
+    reopen("custom");});
   document.querySelectorAll("[data-delrow-yes]").forEach(b=>b.onclick=()=>{
     CFG.custom_rows=customRows().filter(r=>r.key!==b.dataset.delrowYes);
     S.pendingConfirm=null; saveConfig(); toast("🗑 "+t("row_deleted")); render();
-    document.querySelectorAll("details.sect")[5].open=true;});
+    reopen("custom");});
 }
 
 /* ═══════════════ boot ═══════════════ */

@@ -5,13 +5,11 @@ import app_config as cfg
 from archive_storage import list_archive, load_schedule
 from datetime import date
 
-EMPLOYEE_ROLES = ["emb_il", "apt_il", "emb_pe", "apt_pe"]
-EMPLOYEE_ROLE_LABELS = {
-    "emb_il": "EMB IL",
-    "apt_il": "R IL",
-    "emb_pe": "EMB PE",
-    "apt_pe": "R PE",
-}
+# Roles are the workplace sections the station configured, so they change with
+# the configuration rather than being fixed here.
+EMPLOYEE_ROLES = cfg.section_row_keys()
+EMPLOYEE_ROLE_LABELS = {sec["row_key"]: cfg.section_label(w, sec)
+                        for w, sec in cfg.all_sections()}
 
 
 def vacation_budget() -> dict:
@@ -23,7 +21,7 @@ VALUE_FIELDS = [
     ("exit",            "Exit"),
     ("arrival_point",   "Arrival Point"),
     ("theater",         "Theater"),
-    ("udex",            "UDEX"),
+    ("udex",            "Extra Task"),
     ("vehicle_morning", "Vehicle Morning"),
     ("axis_morning",    "Axis Morning"),
     ("wait_morning",    "Wait Morning"),
@@ -56,7 +54,8 @@ def compute_stats(schedules: list) -> tuple:
         vacation_counts {employee: days_on_vacation}
     """
     all_employees = cfg.all_employees()
-    emp_counts = {e: {r: 0 for r in EMPLOYEE_ROLES} for e in all_employees}
+    roles = cfg.section_row_keys()
+    emp_counts = {e: {r: 0 for r in roles} for e in all_employees}
     field_counts = {f: {} for f, _ in VALUE_FIELDS}
     vacation_counts = {e: 0 for e in all_employees}
     other_counts = {e: 0 for e in all_employees}
@@ -66,18 +65,11 @@ def compute_stats(schedules: list) -> tuple:
         for day in schedule.values():
             num_days += 1
 
-            # Single-person roles
-            for role in ("emb_il", "apt_il", "apt_pe"):
-                val = day.get(role, "")
-                if val in emp_counts:
-                    emp_counts[val][role] += 1
-
-            # EMB PE: can be "A+B" pair or single
-            emb_pe = day.get("emb_pe", "")
-            if emb_pe:
-                for emp in emb_pe.split("+"):
-                    if emp in emp_counts:
-                        emp_counts[emp]["emb_pe"] += 1
+            # Workplace sections; a section may hold a pair ("A+B") — credit both
+            for role in roles:
+                for emp in str(day.get(role, "")).split("+"):
+                    if emp and emp in emp_counts:
+                        emp_counts[emp][role] += 1
 
             # Value fields (normalize renamed option values)
             for field, _ in VALUE_FIELDS:
@@ -89,8 +81,8 @@ def compute_stats(schedules: list) -> tuple:
                         val = _EXIT_NORMALIZE.get(val, val)
                     field_counts[field][val] = field_counts[field].get(val, 0) + 1
 
-            # Vacation
-            for vac_field in ("vacation_il", "vacation_pe"):
+            # Vacation — one column per active group
+            for vac_field in cfg.vac_fields():
                 vac = day.get(vac_field, "")
                 if vac and vac in vacation_counts:
                     vacation_counts[vac] += 1

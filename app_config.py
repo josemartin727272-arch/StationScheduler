@@ -9,28 +9,77 @@ from pathlib import Path
 
 CONFIG_PATH = Path(__file__).parent / "config.json"
 
-# Base rows in display order. "dates"/"days" are header rows; "vacation" maps
-# to the vacation_il/vacation_pe pair. Custom rows are appended after these.
-BASE_ROW_KEYS = [
+# Rows that exist regardless of configuration. Workplace-section rows and
+# custom rows are spliced in at "@workplaces" / "@custom" (see row_keys()).
+# "dates"/"days" are header rows; "vacation" expands to one column per group.
+FIXED_ROW_ORDER = [
     "dates", "days", "work_hours",
     "entry", "exit",
     "escort_morning", "school", "escort_noon",
-    "emb_il", "emb_pe", "other_empl",
+    "@workplaces",
+    "other_empl",
     "arrival_point", "theater", "udex",
-    "apt_il", "apt_pe",
     "vehicle_morning", "axis_morning", "wait_morning",
     "taxi_apt", "taxi_arrival",
     "vehicle_noon", "axis_noon", "wait_noon",
     "taxi_emb", "taxi_arrival_noon",
+    "@custom",
     "vacation",
 ]
 
+MAX_GROUPS = 5
+MAX_WORKPLACES = 5
+
+# Monday-based, because a week always starts on a Monday here.
+DOW_ORDER = ["monday", "tuesday", "wednesday", "thursday", "friday",
+             "saturday", "sunday"]
+
+# The two groups that shipped as IL/PE keep their original vacation field names
+# so that already-archived weeks stay readable.
+LEGACY_VAC = {"g1": "vacation_il", "g2": "vacation_pe"}
+
 # Option lists are stored WITHOUT the leading blank; use options_with_blank().
+# Nothing about a particular station is baked in: employee groups, workplaces,
+# working days and the extra task are all data, editable from Settings.
 DEFAULTS = {
-    "schema_version": 1,
-    "employees": {
-        "il": ["LEON", "TORO"],
-        "pe": ["HALCON", "CHCHORRO", "BUHO"],
+    "schema_version": 2,
+    "groups": [
+        {"id": "g1", "name": "IL", "color": "#D6E4F0",
+         "employees": ["LEON", "TORO"], "active": True},
+        {"id": "g2", "name": "PE", "color": "#FAD7A0",
+         "employees": ["HALCON", "CHCHORRO", "BUHO"], "active": True},
+        {"id": "g3", "name": "", "color": "#D5F5E3", "employees": [], "active": False},
+        {"id": "g4", "name": "", "color": "#FADBD8", "employees": [], "active": False},
+        {"id": "g5", "name": "", "color": "#E8DAEF", "employees": [], "active": False},
+    ],
+    "workplaces": [
+        {"id": "wp1", "name": "EMB", "active": True, "notes": "", "sections": [
+            {"id": "s1", "name": "IL", "group_id": "g1", "row_key": "emb_il"},
+            {"id": "s2", "name": "PE", "group_id": "g2", "row_key": "emb_pe",
+             "allow_pair": True},
+        ]},
+        {"id": "wp2", "name": "דירה", "active": True, "notes": "", "sections": [
+            {"id": "s3", "name": "IL", "group_id": "g1", "row_key": "apt_il"},
+            {"id": "s4", "name": "PE", "group_id": "g2", "row_key": "apt_pe"},
+        ]},
+        {"id": "wp3", "name": "", "active": False, "notes": "", "sections": []},
+        {"id": "wp4", "name": "", "active": False, "notes": "", "sections": []},
+        {"id": "wp5", "name": "", "active": False, "notes": "", "sections": []},
+    ],
+    "work_days": {
+        "days": ["monday", "tuesday", "wednesday", "thursday", "friday"],
+        "labels": {"sunday": "ראשון", "monday": "שני", "tuesday": "שלישי",
+                   "wednesday": "רביעי", "thursday": "חמישי",
+                   "friday": "שישי 🕕", "saturday": "שבת"},
+    },
+    # headings of the two work-hours option lists
+    "work_day_labels": {"weekday": "א'-ה'", "friday": "שישי"},
+    "extra_task": {
+        "label": {"he": "משימה נוספת", "en": "Extra Task", "es": "Tarea Extra"},
+        "options": ["EMB-M", "EMB-T", "R-M", "R-T"],
+        "targets": {"morning": 3, "noon": 2},
+        "morning_values": ["EMB-M", "R-M"],
+        "noon_values": ["EMB-T", "R-T"],
     },
     "vacation_budget": {
         "LEON": 14, "TORO": 14,
@@ -45,7 +94,6 @@ DEFAULTS = {
         "escort":        ["200", "201", "300", "301", "400", "500"],
         "arrival_point": ["CHILE", "BRAZIL", "COLOMBIA", "BOLIVIA"],
         "theater":       ["משקפת", "רדיו", "תמונות"],
-        "udex":          ["EMB-M", "EMB-T", "R-M", "R-T"],
         "vehicle":       ["BLACK", "YELLOW"],
         "axis":          ["A-U", "A-D", "B-U", "B-D", "C-U", "C-D", "D-U", "D-D"],
         "wait_spot":     ["2", "3", "4", "5"],
@@ -57,15 +105,11 @@ DEFAULTS = {
     # Values with special meaning to auto-assign/validation. Editable so that
     # renaming an option in "options" doesn't silently break the logic.
     "special_values": {
-        "holiday": "חג",          # excluded from entry/exit auto-assign
+        "holiday": "חג",              # excluded from entry/exit auto-assign
         "vehicle_special": "YELLOW",  # counted vehicle; enables taxi rows
-        "udex_morning": ["EMB-M", "R-M"],
-        "udex_noon":    ["EMB-T", "R-T"],
     },
     "targets": {
         "yellow_per_week": 3,
-        "udex_m": 3,
-        "udex_t": 2,
         "theater_per_week": 3,
         # {field_key: {option: percent}} — target share of each option for the
         # weighted-least-used auto-assign. Empty ⇒ equal split for every field
@@ -76,9 +120,11 @@ DEFAULTS = {
     # Documentation only — auto-assign and validation never read these.
     "entry_axis_map": {},
     "exit_axis_map": {},
-    # Display order of schedule rows (keys). Empty ⇒ natural order
-    # (BASE_ROW_KEYS then custom rows). Keys not listed here are appended
-    # at the end; unknown/stale keys are ignored. "dates"/"days" always first.
+    # Free-text station notes; documentation only, never read by the logic.
+    "assign_notes": "",
+    # Display order of schedule rows (keys). Empty ⇒ natural order.
+    # Keys not listed here are appended at the end; unknown/stale keys are
+    # ignored. "dates"/"days" always first.
     "row_order": [],
     # {row_key: {"he": .., "en": .., "es": ..}} — overrides translations.py
     "row_labels": {},
@@ -86,6 +132,7 @@ DEFAULTS = {
     #   "options": [...]}] — rendered after the base rows
     "custom_rows": [],
 }
+
 
 _cache = {"mtime": -1.0, "cfg": None}
 
@@ -99,17 +146,61 @@ def _deep_merge(base: dict, override: dict) -> dict:
     return base
 
 
+def _migrate(cfg: dict, raw: dict) -> dict:
+    """v1 → v2: employees {il, pe} became groups, and UDEX became the extra
+    task. Reads the RAW stored object, because _deep_merge has already folded
+    whatever it contained on top of the v2 defaults."""
+    if raw.get("employees") and not raw.get("groups"):
+        il = [e for e in raw["employees"].get("il", []) if e]
+        pe = [e for e in raw["employees"].get("pe", []) if e]
+        cfg["groups"][0]["employees"], cfg["groups"][0]["active"] = il, True
+        cfg["groups"][1]["employees"], cfg["groups"][1]["active"] = pe, bool(pe)
+    if not raw.get("extra_task"):
+        opt = (raw.get("options") or {}).get("udex")
+        sv, tg = raw.get("special_values") or {}, raw.get("targets") or {}
+        if isinstance(opt, list) and opt:
+            cfg["extra_task"]["options"] = [o for o in opt if o]
+        if isinstance(sv.get("udex_morning"), list):
+            cfg["extra_task"]["morning_values"] = [o for o in sv["udex_morning"] if o]
+        if isinstance(sv.get("udex_noon"), list):
+            cfg["extra_task"]["noon_values"] = [o for o in sv["udex_noon"] if o]
+        if tg.get("udex_m") is not None:
+            cfg["extra_task"]["targets"]["morning"] = int(tg["udex_m"])
+        if tg.get("udex_t") is not None:
+            cfg["extra_task"]["targets"]["noon"] = int(tg["udex_t"])
+    cfg.pop("employees", None)
+    cfg.get("options", {}).pop("udex", None)
+    for k in ("udex_morning", "udex_noon"):
+        cfg.get("special_values", {}).pop(k, None)
+    for k in ("udex_m", "udex_t"):
+        cfg.get("targets", {}).pop(k, None)
+    while len(cfg["groups"]) < MAX_GROUPS:
+        cfg["groups"].append({"id": f"g{len(cfg['groups']) + 1}", "name": "",
+                              "color": "#eef2f7", "employees": [], "active": False})
+    while len(cfg["workplaces"]) < MAX_WORKPLACES:
+        cfg["workplaces"].append({"id": f"wp{len(cfg['workplaces']) + 1}", "name": "",
+                                  "active": False, "notes": "", "sections": []})
+    for g in cfg["groups"]:
+        g["employees"] = [e for e in g.get("employees", []) if e]
+    for w in cfg["workplaces"]:
+        w["sections"] = [x for x in w.get("sections", []) if x and x.get("row_key")]
+    cfg["schema_version"] = 2
+    return cfg
+
+
 def get_config() -> dict:
     """Load config.json merged over DEFAULTS, cached by file mtime."""
     mtime = CONFIG_PATH.stat().st_mtime if CONFIG_PATH.exists() else None
     if _cache["cfg"] is not None and _cache["mtime"] == mtime:
         return _cache["cfg"]
-    cfg = deepcopy(DEFAULTS)
+    cfg, raw = deepcopy(DEFAULTS), {}
     if CONFIG_PATH.exists():
         try:
-            _deep_merge(cfg, json.loads(CONFIG_PATH.read_text(encoding="utf-8")))
+            raw = json.loads(CONFIG_PATH.read_text(encoding="utf-8"))
+            _deep_merge(cfg, raw)
         except (json.JSONDecodeError, OSError):
-            pass  # unreadable config → run on defaults; next Save rewrites it
+            raw = {}  # unreadable config → run on defaults; next Save rewrites it
+    cfg = _migrate(cfg, raw if isinstance(raw, dict) else {})
     _cache["mtime"], _cache["cfg"] = mtime, cfg
     return cfg
 
@@ -122,16 +213,137 @@ def save_config(cfg: dict) -> None:
 
 # ── Accessors ──────────────────────────────────────────────────────────────
 
-def employees_il() -> list:
-    return list(get_config()["employees"]["il"])
+# ── employee groups ────────────────────────────────────────────────────────
+
+def groups() -> list:
+    return list(get_config()["groups"])
 
 
-def employees_pe() -> list:
-    return list(get_config()["employees"]["pe"])
+def active_groups() -> list:
+    return [g for g in groups() if g.get("active")]
+
+
+def group_by_id(gid: str):
+    return next((g for g in groups() if g.get("id") == gid), None)
+
+
+def group_name(g: dict) -> str:
+    return (g.get("name") or "").strip() or g.get("id", "").upper()
+
+
+def group_employees(gid: str) -> list:
+    g = group_by_id(gid)
+    return [e for e in (g or {}).get("employees", []) if e] if (g or {}).get("active") else []
 
 
 def all_employees() -> list:
-    return employees_il() + employees_pe()
+    out, seen = [], set()
+    for g in active_groups():
+        for e in g.get("employees", []):
+            e = (e or "").strip()
+            if e and e not in seen:
+                seen.add(e)
+                out.append(e)
+    return out
+
+
+def vac_field(g: dict) -> str:
+    """Vacation column name for a group; the two original groups keep theirs."""
+    return LEGACY_VAC.get(g.get("id"), "vacation_" + str(g.get("id")))
+
+
+def vac_fields() -> list:
+    return [vac_field(g) for g in active_groups()]
+
+
+def default_vacation_budget(emp: str) -> int:
+    g = next((x for x in active_groups() if emp in x.get("employees", [])), None)
+    return 14 if g and g.get("id") == "g1" else 30
+
+
+# ── workplaces & their sections ────────────────────────────────────────────
+
+def workplaces() -> list:
+    return list(get_config()["workplaces"])
+
+
+def active_workplaces() -> list:
+    return [w for w in workplaces() if w.get("active")]
+
+
+def workplace_name(w: dict) -> str:
+    return (w.get("name") or "").strip() or w.get("id", "").upper()
+
+
+def workplace_sections(w: dict) -> list:
+    return [x for x in w.get("sections", []) if x and x.get("row_key")]
+
+
+def all_sections() -> list:
+    """[(workplace, section)] across every active workplace, in display order."""
+    return [(w, sec) for w in active_workplaces() for sec in workplace_sections(w)]
+
+
+def section_row_keys() -> list:
+    return [sec["row_key"] for _, sec in all_sections()]
+
+
+def section_by_row(row_key: str):
+    return next(((w, s) for w, s in all_sections() if s["row_key"] == row_key), None)
+
+
+def section_label(w: dict, sec: dict) -> str:
+    name = (sec.get("name") or "").strip()
+    return workplace_name(w) + (" " + name if name else "")
+
+
+# ── working days ───────────────────────────────────────────────────────────
+
+def work_days() -> list:
+    picked = (get_config().get("work_days") or {}).get("days") or []
+    sel = [d for d in DOW_ORDER if d in picked]
+    return sel or ["monday"]          # never produce an empty week
+
+
+def work_day_label(dow: str) -> str:
+    labels = (get_config().get("work_days") or {}).get("labels") or {}
+    return labels.get(dow) or dow
+
+
+def work_day_type_labels() -> dict:
+    return dict(get_config().get("work_day_labels") or {})
+
+
+# ── extra task (was UDEX) ──────────────────────────────────────────────────
+
+def extra_task() -> dict:
+    return dict(get_config()["extra_task"])
+
+
+def extra_label(lang: str = "he") -> str:
+    lbl = extra_task().get("label") or {}
+    return lbl.get(lang) or lbl.get("he") or lbl.get("en") or "udex"
+
+
+def extra_options() -> list:
+    return [o for o in extra_task().get("options", []) if o]
+
+
+def extra_morning_values() -> list:
+    return [o for o in extra_task().get("morning_values", []) if o]
+
+
+def extra_noon_values() -> list:
+    return [o for o in extra_task().get("noon_values", []) if o]
+
+
+def extra_targets() -> dict:
+    t = extra_task().get("targets") or {}
+    return {"morning": int(t.get("morning") or 0), "noon": int(t.get("noon") or 0)}
+
+
+def assign_notes() -> str:
+    return get_config().get("assign_notes") or ""
 
 
 def options(name: str) -> list:
@@ -234,7 +446,7 @@ def pct_label(key: str, lang: str) -> str:
     """Heading for a target-% table. vehicle/wait_spot name option lists rather
     than schedule rows, so they take their label from the options tab."""
     if key == "vehicle":
-        return row_label("vehicle_morning", lang) + " / " + row_label("vehicle_noon", lang)
+        return row_label("vehicle_morning", lang) + " / " + row_label("vehicle_noon", lang)  # noqa: E501
     if key == "wait_spot":
         return row_label("wait_morning", lang) + " / " + row_label("wait_noon", lang)
     return row_label(key, lang)
@@ -266,10 +478,22 @@ def custom_row_keys() -> list:
     return [r["key"] for r in custom_rows()]
 
 
+def natural_row_keys() -> list:
+    """Fixed rows with workplace sections and custom rows spliced in."""
+    out = []
+    for k in FIXED_ROW_ORDER:
+        if k == "@workplaces":
+            out += section_row_keys()
+        elif k == "@custom":
+            out += custom_row_keys()
+        else:
+            out.append(k)
+    return out
+
+
 def reorderable_row_keys() -> list:
     """Row keys the user may reorder — everything except the header rows."""
-    natural = [k for k in BASE_ROW_KEYS if k not in ("dates", "days")]
-    natural += custom_row_keys()
+    natural = [k for k in natural_row_keys() if k not in ("dates", "days")]
     order = get_config().get("row_order", [])
     ordered = [k for k in order if k in natural]
     ordered += [k for k in natural if k not in ordered]  # new rows at the end
@@ -280,12 +504,25 @@ def all_row_keys() -> list:
     return ["dates", "days"] + reorderable_row_keys()
 
 
+def schedule_fields() -> list:
+    """Every field a day object carries."""
+    return [k for k in reorderable_row_keys() if k != "vacation"] + vac_fields()
+
+
+BASE_ROW_KEYS = [k for k in FIXED_ROW_ORDER if not k.startswith("@")]
+
+
 def row_label(key: str, lang: str) -> str:
     """Display label for a row: config override → custom row → translations."""
     cfg = get_config()
     override = cfg["row_labels"].get(key, {})
     if override.get(lang):
         return override[lang]
+    if key == "udex":
+        return extra_label(lang)
+    sx = section_by_row(key)
+    if sx:
+        return section_label(*sx)
     for r in cfg["custom_rows"]:
         if r.get("key") == key:
             labels = r.get("labels", {})

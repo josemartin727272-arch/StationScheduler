@@ -3,6 +3,7 @@ Weekly Work Schedule – Taxi Company
 Streamlit app: multilingual (HE/EN/ES), local archive, Excel export.
 """
 from datetime import date, timedelta
+from uuid import uuid4
 
 import streamlit as st
 
@@ -49,9 +50,11 @@ lang = st.session_state.lang
 
 # ── Everything below re-reads config.json each rerun, so Settings-page
 #    edits apply immediately ─────────────────────────────────────────────────
-EMPLOYEES_IL = cfg.employees_il()
-EMPLOYEES_PE = cfg.employees_pe()
-ALL_EMPLOYEES = EMPLOYEES_IL + EMPLOYEES_PE
+ACTIVE_GROUPS = cfg.active_groups()
+ALL_EMPLOYEES = cfg.all_employees()
+SECTIONS = cfg.all_sections()                 # [(workplace, section)]
+SECTION_KEYS = cfg.section_row_keys()
+VAC_FIELDS = cfg.vac_fields()
 WORK_HOURS_WEEKDAY = cfg.options_with_blank("work_hours_weekday")
 WORK_HOURS_FRIDAY  = cfg.options_with_blank("work_hours_friday")
 ENTRY_OPTIONS = cfg.options_with_blank("entry")
@@ -59,7 +62,7 @@ EXIT_OPTIONS  = cfg.options_with_blank("exit")
 ESCORT_OPTIONS = cfg.options_with_blank("escort")
 ARRIVAL_POINT_OPTIONS = cfg.options_with_blank("arrival_point")
 THEATER_OPTIONS = cfg.options_with_blank("theater")
-UDEX_OPTIONS = cfg.options_with_blank("udex")
+UDEX_OPTIONS = [""] + cfg.extra_options()
 VEHICLE_OPTIONS = cfg.options_with_blank("vehicle")
 AXIS_OPTIONS = cfg.options_with_blank("axis")
 WAIT_SPOT_OPTIONS = cfg.options_with_blank("wait_spot")
@@ -69,12 +72,11 @@ VACATION_BUDGET = vacation_budget()
 
 # Fields that auto-assign fills (need session-state sync on assign)
 AUTO_FIELDS = [
-    "entry", "exit",
-    "emb_il", "emb_pe", "arrival_point", "theater", "udex",
-    "apt_il", "apt_pe", "vehicle_morning", "vehicle_noon",
+    "entry", "exit", "arrival_point", "theater", "udex",
+    "vehicle_morning", "vehicle_noon",
     "axis_morning", "axis_noon", "wait_morning", "wait_noon",
     "taxi_apt", "taxi_arrival", "taxi_emb", "taxi_arrival_noon",
-]
+] + SECTION_KEYS
 
 # ── Sidebar (settings only) ────────────────────────────────────────────────
 with st.sidebar:
@@ -124,47 +126,221 @@ if st.session_state.page == "settings":
     st.subheader("⚙️ " + t("settings", lang))
     config = cfg.get_config()
 
-    tab_emp, tab_rows, tab_opts, tab_targets = st.tabs([
-        "👤 " + t("tab_employees", lang),
+    (tab_grp, tab_wp, tab_wd, tab_extra,
+     tab_rows, tab_opts, tab_targets, tab_notes) = st.tabs([
+        "👤 " + t("tab_groups", lang),
+        "🏢 " + t("tab_workplaces", lang),
+        "📆 " + t("tab_workdays", lang),
+        "➕ " + t("tab_extra", lang),
         "📋 " + t("tab_rows", lang),
         "📝 " + t("tab_options", lang),
         "🎯 " + t("tab_targets", lang),
+        "📄 " + t("notes_general", lang),
     ])
 
-    # ── Tab 1: Employees + vacation budgets ────────────────────────────────
-    with tab_emp:
-        with st.form("emp_form"):
-            ce1, ce2 = st.columns(2)
-            il_text = ce1.text_area(
-                t("employees_il_label", lang),
-                value="\n".join(config["employees"]["il"]),
-                help=t("one_per_line", lang), height=120)
-            pe_text = ce2.text_area(
-                t("employees_pe_label", lang),
-                value="\n".join(config["employees"]["pe"]),
-                help=t("one_per_line", lang), height=120)
+    # ── Tab 1: Employee groups + vacation budgets ──────────────────────────
+    with tab_grp:
+        active = [g for g in config["groups"] if g.get("active")]
+        if not active:
+            st.warning(t("grp_none", lang))
+        with st.form("groups_form"):
+            for g in active:
+                gid = g["id"]
+                c1, c2 = st.columns([3, 1])
+                c1.text_input(t("grp_name", lang), value=g.get("name", ""),
+                              key=f"gname_{gid}")
+                c2.color_picker(t("grp_color", lang), value=g.get("color", "#eef2f7"),
+                                key=f"gcolor_{gid}")
+                st.text_area(t("grp_emps", lang),
+                             value="\n".join(g.get("employees", [])),
+                             help=t("one_per_line", lang), height=110,
+                             key=f"gemps_{gid}")
+                st.divider()
             st.caption("⚠️ " + t("rename_warning", lang))
-
             st.markdown("**🏖 " + t("vacation_budget_label", lang) + "**")
             budget_cols = st.columns(max(len(ALL_EMPLOYEES), 1))
             for col, emp in zip(budget_cols, ALL_EMPLOYEES):
                 col.number_input(emp, min_value=0, max_value=365,
-                    value=int(VACATION_BUDGET.get(emp, 14 if emp in EMPLOYEES_IL else 30)),
+                    value=int(VACATION_BUDGET.get(emp, cfg.default_vacation_budget(emp))),
                     key=f"vb_{emp}")
-
             if st.form_submit_button("💾 " + t("save_settings", lang), type="primary"):
-                new_il = [l.strip() for l in il_text.splitlines() if l.strip()]
-                new_pe = [l.strip() for l in pe_text.splitlines() if l.strip()]
-                config["employees"]["il"] = new_il
-                config["employees"]["pe"] = new_pe
+                roster = []
+                for g in config["groups"]:
+                    if not g.get("active"):
+                        continue
+                    gid = g["id"]
+                    g["name"] = st.session_state.get(f"gname_{gid}", g.get("name", "")).strip()
+                    g["color"] = st.session_state.get(f"gcolor_{gid}", g.get("color", ""))
+                    g["employees"] = [l.strip() for l in
+                        st.session_state.get(f"gemps_{gid}", "").splitlines() if l.strip()]
+                    roster += g["employees"]
                 vb = {}
-                for emp in new_il:
+                for emp in roster:
                     vb[emp] = int(st.session_state.get(f"vb_{emp}",
-                                  config["vacation_budget"].get(emp, 14)))
-                for emp in new_pe:
-                    vb[emp] = int(st.session_state.get(f"vb_{emp}",
-                                  config["vacation_budget"].get(emp, 30)))
+                        config["vacation_budget"].get(emp, 30)))
                 config["vacation_budget"] = vb
+                cfg.save_config(config)
+                st.success("✅ " + t("settings_saved", lang))
+                st.rerun()
+
+        cg1, cg2 = st.columns(2)
+        free = next((g for g in config["groups"] if not g.get("active")), None)
+        if cg1.button(t("grp_add", lang), disabled=free is None, key="add_group"):
+            free["active"] = True
+            free["name"] = free["name"] or free["id"].upper()
+            cfg.save_config(config)
+            st.rerun()
+        if free is None:
+            cg1.caption(t("grp_max", lang))
+        rm = cg2.selectbox(t("grp_remove", lang), [""] + [g["id"] for g in active],
+                           key="rm_group")
+        if rm and cg2.button("🗑", key="rm_group_go"):
+            cfg.group_by_id(rm)  # existence check
+            for g in config["groups"]:
+                if g["id"] == rm:
+                    g["active"] = False        # switched off, never deleted
+            cfg.save_config(config)
+            st.rerun()
+
+    # ── Tab 2: Workplaces and the roles inside them ────────────────────────
+    with tab_wp:
+        st.caption(t("wp_notes_hint", lang))
+        act_wps = [w for w in config["workplaces"] if w.get("active")]
+        act_gids = [g["id"] for g in config["groups"] if g.get("active")]
+        if not act_wps:
+            st.warning(t("wp_none", lang))
+        for w in act_wps:
+            wid = w["id"]
+            with st.expander(cfg.workplace_name(w), expanded=True):
+                st.text_input(t("wp_name", lang), value=w.get("name", ""),
+                              key=f"wpname_{wid}")
+                st.markdown("**" + t("wp_sections", lang) + "**")
+                for sec in w.get("sections", []):
+                    sid = sec["id"]
+                    s1, s2, s3, s4 = st.columns([3, 2, 2, 1])
+                    s1.text_input(t("wp_sec_name", lang), value=sec.get("name", ""),
+                                  key=f"scname_{sid}")
+                    s2.selectbox(t("wp_sec_group", lang), act_gids,
+                        index=act_gids.index(sec["group_id"]) if sec.get("group_id") in act_gids else 0,
+                        key=f"scgroup_{sid}", format_func=lambda g: cfg.group_name(cfg.group_by_id(g)))
+                    s3.checkbox(t("wp_sec_pair", lang), value=bool(sec.get("allow_pair")),
+                                key=f"scpair_{sid}")
+                    if s4.button("🗑", key=f"screm_{sid}"):
+                        w["sections"] = [x for x in w["sections"] if x["id"] != sid]
+                        cfg.save_config(config)
+                        st.rerun()
+                if st.button(t("wp_sec_add", lang), key=f"scadd_{wid}"):
+                    uid = uuid4().hex[:8]
+                    w.setdefault("sections", []).append({
+                        "id": f"s_{uid}", "name": "",
+                        "group_id": act_gids[0] if act_gids else "",
+                        "row_key": f"sec_{uid}"})
+                    cfg.save_config(config)
+                    st.rerun()
+                st.text_area(t("wp_notes", lang), value=w.get("notes", ""),
+                             height=90, key=f"wpnotes_{wid}")
+                if st.button("🗑 " + t("wp_remove", lang), key=f"wprem_{wid}"):
+                    w["active"] = False
+                    cfg.save_config(config)
+                    st.rerun()
+        if st.button("💾 " + t("save_settings", lang), type="primary", key="save_wps"):
+            for w in config["workplaces"]:
+                if not w.get("active"):
+                    continue
+                w["name"] = st.session_state.get(f"wpname_{w['id']}", w.get("name", "")).strip()
+                w["notes"] = st.session_state.get(f"wpnotes_{w['id']}", w.get("notes", ""))
+                for sec in w.get("sections", []):
+                    sid = sec["id"]
+                    sec["name"] = st.session_state.get(f"scname_{sid}", sec.get("name", "")).strip()
+                    sec["group_id"] = st.session_state.get(f"scgroup_{sid}", sec.get("group_id"))
+                    sec["allow_pair"] = bool(st.session_state.get(f"scpair_{sid}"))
+            cfg.save_config(config)
+            st.success("✅ " + t("settings_saved", lang))
+            st.rerun()
+        free_wp = next((w for w in config["workplaces"] if not w.get("active")), None)
+        if st.button(t("wp_add", lang), disabled=free_wp is None, key="add_wp"):
+            free_wp["active"] = True
+            free_wp["name"] = free_wp["name"] or free_wp["id"].upper()
+            cfg.save_config(config)
+            st.rerun()
+        if free_wp is None:
+            st.caption(t("wp_max", lang))
+
+    # ── Tab 3: Which weekdays the week is built from ───────────────────────
+    with tab_wd:
+        st.caption(t("wd_pick", lang))
+        picked = cfg.work_days()
+        labels = (config.get("work_days") or {}).get("labels") or {}
+        with st.form("workdays_form"):
+            for d in cfg.DOW_ORDER:
+                c1, c2 = st.columns([1, 2])
+                c1.checkbox(t(d, lang), value=d in picked, key=f"wd_{d}")
+                c2.text_input(t("wd_label", lang), value=labels.get(d, t(d, lang)),
+                              key=f"wdlbl_{d}", label_visibility="collapsed")
+            st.markdown("**" + t("wd_labels_title", lang) + "**")
+            wl1, wl2 = st.columns(2)
+            wl1.text_input(t("wd_lbl_weekday", lang),
+                value=(config.get("work_day_labels") or {}).get("weekday", ""), key="wdl_weekday")
+            wl2.text_input(t("wd_lbl_friday", lang),
+                value=(config.get("work_day_labels") or {}).get("friday", ""), key="wdl_friday")
+            if st.form_submit_button("💾 " + t("save_settings", lang), type="primary"):
+                days = [d for d in cfg.DOW_ORDER if st.session_state.get(f"wd_{d}")]
+                if not days:
+                    st.error(t("wd_none", lang))
+                else:
+                    config["work_days"] = {
+                        "days": days,
+                        "labels": {d: (st.session_state.get(f"wdlbl_{d}", "").strip()
+                                       or t(d, lang)) for d in cfg.DOW_ORDER}}
+                    config["work_day_labels"] = {
+                        "weekday": st.session_state.get("wdl_weekday", "").strip(),
+                        "friday":  st.session_state.get("wdl_friday", "").strip()}
+                    cfg.save_config(config)
+                    st.success("✅ " + t("settings_saved", lang))
+                    st.rerun()
+
+    # ── Tab 4: The extra task (was UDEX) ───────────────────────────────────
+    with tab_extra:
+        et = config["extra_task"]
+        with st.form("extra_form"):
+            e1, e2, e3 = st.columns(3)
+            v_he = e1.text_input(t("et_name", lang) + " (he)", value=et["label"].get("he", ""))
+            v_en = e2.text_input(t("et_name", lang) + " (en)", value=et["label"].get("en", ""))
+            v_es = e3.text_input(t("et_name", lang) + " (es)", value=et["label"].get("es", ""))
+            o1, o2, o3 = st.columns(3)
+            v_opts = o1.text_area(t("et_options", lang),
+                value="\n".join(et.get("options", [])), height=130)
+            v_m = o2.text_area(t("et_morning", lang),
+                value="\n".join(et.get("morning_values", [])), height=130)
+            v_n = o3.text_area(t("et_noon", lang),
+                value="\n".join(et.get("noon_values", [])), height=130)
+            g1, g2 = st.columns(2)
+            v_tm = g1.number_input(t("et_tg_m", lang), min_value=0, max_value=7,
+                value=int((et.get("targets") or {}).get("morning", 0)))
+            v_tn = g2.number_input(t("et_tg_n", lang), min_value=0, max_value=7,
+                value=int((et.get("targets") or {}).get("noon", 0)))
+            if st.form_submit_button("💾 " + t("save_settings", lang), type="primary"):
+                lines = lambda txt: [l.strip() for l in txt.splitlines() if l.strip()]
+                config["extra_task"] = {
+                    "label": {"he": v_he.strip() or "?", "en": v_en.strip() or v_he.strip() or "?",
+                              "es": v_es.strip() or v_he.strip() or "?"},
+                    "options": lines(v_opts),
+                    "morning_values": lines(v_m),
+                    "noon_values": lines(v_n),
+                    "targets": {"morning": int(v_tm), "noon": int(v_tn)},
+                }
+                cfg.save_config(config)
+                st.success("✅ " + t("settings_saved", lang))
+                st.rerun()
+
+    # ── Tab 8: Free-text assignment notes ──────────────────────────────────
+    with tab_notes:
+        st.caption(t("notes_hint", lang))
+        with st.form("notes_form"):
+            v_notes = st.text_area(t("notes_general", lang),
+                value=config.get("assign_notes", ""), height=220)
+            if st.form_submit_button("💾 " + t("save_settings", lang), type="primary"):
+                config["assign_notes"] = v_notes
                 cfg.save_config(config)
                 st.success("✅ " + t("settings_saved", lang))
                 st.rerun()
@@ -209,7 +385,10 @@ if st.session_state.page == "settings":
 
         st.divider()
         st.markdown("**" + t("row_labels_title", lang) + "**")
-        editable_rows = [k for k in cfg.BASE_ROW_KEYS if k not in ("dates", "days")]
+        _sec = set(cfg.section_row_keys())
+        editable_rows = [k for k in cfg.natural_row_keys()
+                         if k not in ("dates", "days", "udex")
+                         and k not in _sec and k not in cfg.custom_row_keys()]
         with st.form("labels_form"):
             lh, le, ls_ = st.columns(3)
             lh.markdown("**עברית**"); le.markdown("**English**"); ls_.markdown("**Español**")
@@ -303,14 +482,15 @@ if st.session_state.page == "settings":
 
     # ── Tab 3: Dropdown options ────────────────────────────────────────────
     with tab_opts:
-        weekday_lbl = ("א'-ה'" if lang == "he" else "Mon-Thu")
+        _wdl = cfg.work_day_type_labels()
+        weekday_lbl = _wdl.get("weekday") or t("monday", lang)
+        friday_lbl = _wdl.get("friday") or t("friday", lang)
         OPTION_GROUPS = [
             ("entry",         t("row_entry", lang)),
             ("exit",          t("row_exit", lang)),
             ("escort",        t("row_escort_morning", lang) + " / " + t("row_escort_noon", lang)),
             ("arrival_point", t("row_arrival_point", lang)),
             ("theater",       t("row_theater", lang)),
-            ("udex",          t("row_udex", lang)),
             ("vehicle",       t("row_vehicle_morning", lang) + " / " + t("row_vehicle_noon", lang)),
             ("axis",          t("row_axis_morning", lang) + " / " + t("row_axis_noon", lang)),
             ("wait_spot",     t("row_wait_morning", lang) + " / " + t("row_wait_noon", lang)),
@@ -319,7 +499,7 @@ if st.session_state.page == "settings":
             ("taxi_emb",          cfg.row_label("taxi_emb", lang)),
             ("taxi_arrival_noon", cfg.row_label("taxi_arrival_noon", lang)),
             ("work_hours_weekday", t("row_work_hours", lang) + f" ({weekday_lbl})"),
-            ("work_hours_friday",  t("row_work_hours", lang) + f" ({t('friday', lang)})"),
+            ("work_hours_friday",  t("row_work_hours", lang) + f" ({friday_lbl})"),
         ]
         with st.form("opts_form"):
             grid = st.columns(3)
@@ -332,11 +512,9 @@ if st.session_state.page == "settings":
             st.divider()
             st.caption("⚠️ " + t("special_values_note", lang))
             sv = config["special_values"]
-            s1, s2, s3, s4 = st.columns(4)
+            s1, s2 = st.columns(2)
             sv_holiday = s1.text_input("Holiday", value=sv["holiday"], key="sv_holiday")
             sv_vehicle = s2.text_input("Special vehicle", value=sv["vehicle_special"], key="sv_vehicle")
-            sv_udex_m = s3.text_input("UDEX morning (,)", value=",".join(sv["udex_morning"]), key="sv_udex_m")
-            sv_udex_t = s4.text_input("UDEX noon (,)", value=",".join(sv["udex_noon"]), key="sv_udex_t")
 
             if st.form_submit_button("💾 " + t("save_settings", lang), type="primary"):
                 for opt_key, _ in OPTION_GROUPS:
@@ -346,8 +524,6 @@ if st.session_state.page == "settings":
                 config["special_values"] = {
                     "holiday": sv_holiday.strip(),
                     "vehicle_special": sv_vehicle.strip(),
-                    "udex_morning": [v.strip() for v in sv_udex_m.split(",") if v.strip()],
-                    "udex_noon":    [v.strip() for v in sv_udex_t.split(",") if v.strip()],
                 }
                 cfg.save_config(config)
                 st.success("✅ " + t("settings_saved", lang))
@@ -362,15 +538,9 @@ if st.session_state.page == "settings":
                 min_value=0, max_value=10, value=int(tg["yellow_per_week"]))
             v_theater = g2.number_input(t("targets_theater", lang),
                 min_value=0, max_value=5, value=int(tg["theater_per_week"]))
-            v_udex_m = g1.number_input(t("targets_udex_m", lang),
-                min_value=0, max_value=5, value=int(tg["udex_m"]))
-            v_udex_t = g2.number_input(t("targets_udex_t", lang),
-                min_value=0, max_value=5, value=int(tg["udex_t"]))
             if st.form_submit_button("💾 " + t("save_settings", lang), type="primary"):
                 config["targets"] = {
                     "yellow_per_week": int(v_yellow),
-                    "udex_m": int(v_udex_m),
-                    "udex_t": int(v_udex_t),
                     "theater_per_week": int(v_theater),
                     # keep the per-field percentages; the vehicle row is just
                     # another view of yellow_per_week, so re-derive it
@@ -505,39 +675,27 @@ def _render_stats(schedules: list, title: str):
     emp_df.index.name = ""
     st.dataframe(emp_df, use_container_width=True)
 
-    # ── IL / PE pie charts (English labels to avoid RTL reversal) ───────
-    col_il, col_pe = st.columns(2)
-    with col_il:
-        fig, ax = plt.subplots(figsize=(5, 4))
-        fig.patch.set_alpha(0.0); ax.set_facecolor("none")
-        labels, values = [], []
-        for emp in EMPLOYEES_IL:
-            for r in ["emb_il", "apt_il"]:
-                cnt = emp_counts[emp][r]
-                if cnt:
-                    labels.append(f"{emp}\n{EMPLOYEE_ROLE_LABELS[r]}")
-                    values.append(cnt)
-        if values:
-            ax.pie(values, labels=labels, autopct="%1.0f%%", startangle=90)
-        ax.set_title("IL Employees")
-        st.pyplot(fig)
-        plt.close(fig)
-
-    with col_pe:
-        fig, ax = plt.subplots(figsize=(5, 4))
-        fig.patch.set_alpha(0.0); ax.set_facecolor("none")
-        labels, values = [], []
-        for emp in EMPLOYEES_PE:
-            for r in ["emb_pe", "apt_pe"]:
-                cnt = emp_counts[emp][r]
-                if cnt:
-                    labels.append(f"{emp}\n{EMPLOYEE_ROLE_LABELS[r]}")
-                    values.append(cnt)
-        if values:
-            ax.pie(values, labels=labels, autopct="%1.0f%%", startangle=90)
-        ax.set_title("PE Employees")
-        st.pyplot(fig)
-        plt.close(fig)
+    # ── one pie per active employee group (English labels to avoid RTL flip) ──
+    if ACTIVE_GROUPS:
+        pie_cols = st.columns(len(ACTIVE_GROUPS))
+        for col, grp in zip(pie_cols, ACTIVE_GROUPS):
+            grp_rows = [sec["row_key"] for _, sec in SECTIONS
+                        if sec.get("group_id") == grp["id"]]
+            with col:
+                fig, ax = plt.subplots(figsize=(5, 4))
+                fig.patch.set_alpha(0.0); ax.set_facecolor("none")
+                labels, values = [], []
+                for emp in grp.get("employees", []):
+                    for r in grp_rows:
+                        cnt = emp_counts.get(emp, {}).get(r, 0)
+                        if cnt:
+                            labels.append(f"{emp}\n{EMPLOYEE_ROLE_LABELS.get(r, r)}")
+                            values.append(cnt)
+                if values:
+                    ax.pie(values, labels=labels, autopct="%1.0f%%", startangle=90)
+                ax.set_title(cfg.group_name(grp))
+                st.pyplot(fig)
+                plt.close(fig)
 
     # ── Vacation breakdown with annual budget ──────────────────────────
     st.markdown("##### 🏖 " + ("חופשות" if lang == "he" else "Vacations"))
@@ -646,21 +804,19 @@ def _render_stats(schedules: list, title: str):
         df.index.name = ""
         st.dataframe(df, use_container_width=True)
 
-    # UDEX — always show all 4 options (EMB-M, R-M, EMB-T, R-T) even if 0
-    udex_counts = field_counts.get("udex", {})
-    udex_total = sum(udex_counts.values()) or 1
-    udex_row_m = {}
-    for v in ["EMB-M", "R-M"]:
-        cnt = udex_counts.get(v, 0)
-        udex_row_m[v] = f"{cnt} ({cnt/udex_total*100:.0f}%)"
-    udex_row_t = {}
-    for v in ["EMB-T", "R-T"]:
-        cnt = udex_counts.get(v, 0)
-        udex_row_t[v] = f"{cnt} ({cnt/udex_total*100:.0f}%)"
-    df_um = pd.DataFrame([udex_row_m], index=["UDEX (M-type)"]); df_um.index.name = ""
-    df_ut = pd.DataFrame([udex_row_t], index=["UDEX (T-type)"]); df_ut.index.name = ""
-    st.dataframe(df_um, use_container_width=True)
-    st.dataframe(df_ut, use_container_width=True)
+    # Extra task — always show every configured value, even at 0
+    extra_counts = field_counts.get("udex", {})
+    extra_total = sum(extra_counts.values()) or 1
+    extra_name = cfg.extra_label(lang)
+    for vals, suffix in ((cfg.extra_morning_values(), t("et_tg_m", lang)),
+                         (cfg.extra_noon_values(), t("et_tg_n", lang))):
+        if not vals:
+            continue
+        row = {v: f"{extra_counts.get(v, 0)} "
+                  f"({extra_counts.get(v, 0) / extra_total * 100:.0f}%)" for v in vals}
+        df_e = pd.DataFrame([row], index=[f"{extra_name} — {suffix}"])
+        df_e.index.name = ""
+        st.dataframe(df_e, use_container_width=True)
 
     def _axis_bar(counts_ax, title, color):
         """Horizontal bar chart for axis values — A1 at top, clear labels."""
@@ -830,38 +986,16 @@ py_to_key = ["monday","tuesday","wednesday","thursday","friday","saturday","sund
 # ── Print helper ───────────────────────────────────────────────────────────
 def generate_print_html(sched: dict, dk_list: list, lng: str) -> str:
     """Generate a self-contained, printable HTML table of the schedule."""
-    PRINT_ROWS = [
-        ("work_hours",        cfg.row_label("work_hours",   lng)),
-        ("entry",             cfg.row_label("entry",        lng)),
-        ("exit",              cfg.row_label("exit",         lng)),
-        ("escort_morning",    cfg.row_label("escort_morning", lng)),
-        ("school",            cfg.row_label("school",       lng)),
-        ("escort_noon",       cfg.row_label("escort_noon",  lng)),
-        ("emb_il",            cfg.row_label("emb_il",       lng)),
-        ("emb_pe",            cfg.row_label("emb_pe",       lng)),
-        ("other_empl",        cfg.row_label("other_empl",   lng)),
-        ("arrival_point",     cfg.row_label("arrival_point",lng)),
-        ("theater",           cfg.row_label("theater",      lng)),
-        ("udex",              cfg.row_label("udex",         lng)),
-        ("apt_il",            cfg.row_label("apt_il",       lng)),
-        ("apt_pe",            cfg.row_label("apt_pe",       lng)),
-        ("vehicle_morning",   cfg.row_label("vehicle_morning", lng)),
-        ("axis_morning",      cfg.row_label("axis_morning", lng)),
-        ("wait_morning",      cfg.row_label("wait_morning", lng)),
-        ("vehicle_noon",      cfg.row_label("vehicle_noon", lng)),
-        ("axis_noon",         cfg.row_label("axis_noon",    lng)),
-        ("wait_noon",         cfg.row_label("wait_noon",    lng)),
-        ("vacation_il",       cfg.row_label("vacation",     lng) + " IL"),
-        ("vacation_pe",       cfg.row_label("vacation",     lng) + " PE"),
-    ] + [(r["key"], cfg.row_label(r["key"], lng)) for r in CUSTOM_ROWS]
-
-    # Apply the configured row order (vacation_il/pe follow the "vacation" slot)
-    _order = {k: i for i, k in enumerate(cfg.reorderable_row_keys())}
-    PRINT_ROWS.sort(key=lambda item: (
-        _order.get("vacation" if item[0] in ("vacation_il", "vacation_pe") else item[0],
-                   len(_order)),
-        1 if item[0] == "vacation_pe" else 0,
-    ))
+    # Rows follow the configured order; "vacation" fans out to one column
+    # per active employee group.
+    PRINT_ROWS = []
+    for rk in cfg.reorderable_row_keys():
+        if rk == "vacation":
+            for g in cfg.active_groups():
+                PRINT_ROWS.append((cfg.vac_field(g),
+                                   cfg.row_label("vacation", lng) + " " + cfg.group_name(g)))
+        else:
+            PRINT_ROWS.append((rk, cfg.row_label(rk, lng)))
 
     py_keys = ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"]
 
@@ -869,18 +1003,20 @@ def generate_print_html(sched: dict, dk_list: list, lng: str) -> str:
     hdr_cells = "<th></th>"
     for dk in dk_list:
         d = sched[dk]["date"]
-        dname = t(py_keys[d.weekday()], lng)
+        dname = cfg.work_day_label(py_keys[d.weekday()]) or t(py_keys[d.weekday()], lng)
         hdr_cells += f"<th>{dname}<br><span class='date'>{d.strftime('%d/%m/%Y')}</span></th>"
 
     # Section dividers (before these row keys insert a divider row)
-    SECTION_DIVIDERS = {
-        "emb_il":          "― EMB ―",
-        "arrival_point":   "― " + cfg.row_label("arrival_point",lng) + " / " + cfg.row_label("theater",lng) + " / UDEX ―",
-        "apt_il":          "― " + cfg.row_label("apt_il",lng) + " / " + cfg.row_label("apt_pe",lng) + " ―",
-        "vehicle_morning": "― " + cfg.row_label("vehicle_morning",lng) + " ―",
-        "vehicle_noon":    "― " + cfg.row_label("vehicle_noon",lng) + " ―",
-        "vacation_il":     "― " + cfg.row_label("vacation",lng) + " ―",
-    }
+    SECTION_DIVIDERS = {}
+    for w in cfg.active_workplaces():
+        secs = cfg.workplace_sections(w)
+        if secs:
+            SECTION_DIVIDERS[secs[0]["row_key"]] = "― " + cfg.workplace_name(w) + " ―"
+    for k in ("arrival_point", "vehicle_morning", "vehicle_noon"):
+        SECTION_DIVIDERS.setdefault(k, "― " + cfg.row_label(k, lng) + " ―")
+    first_vac = cfg.vac_fields()
+    if first_vac:
+        SECTION_DIVIDERS.setdefault(first_vac[0], "― " + cfg.row_label("vacation", lng) + " ―")
 
     body_rows = ""
     for rk, rlabel in PRINT_ROWS:
@@ -951,63 +1087,10 @@ ac1, ac2, ac3, ac4, ac5 = st.columns(5)
 
 with ac1:
     if st.button("⚡ " + t("auto_assign", lang), type="primary", use_container_width=True):
-        import random as _rnd
         global_hist = st.session_state.history
-
-        # ── Pre-plan EMB IL: guaranteed 3:2 split across the week ────────────
-        il_hist = global_hist.get("emb_il", {})
-        sorted_il = sorted(EMPLOYEES_IL, key=lambda e: il_hist.get(e, 0))
-        if il_hist.get(sorted_il[0], 0) == il_hist.get(sorted_il[1], 0):
-            _rnd.shuffle(sorted_il)
-        # Alternating pattern so no employee works consecutive days at same role
-        # sorted_il[0] = less-used → gets days 0,2,4 (3 days); [1] gets 1,3 (2 days)
-        emb_il_plan = [sorted_il[i % 2] for i in range(5)]
-
-        # ── Pre-plan Apt PE: guaranteed 2:2:1 split across the week ─────────
-        pe_hist = global_hist.get("apt_pe", {})
-        sorted_pe = sorted(EMPLOYEES_PE, key=lambda e: pe_hist.get(e, 0))
-        # sorted_pe[0] least-used → 2 days, [1] → 2 days, [2] most-used → 1 day
-        apt_pe_plan = [sorted_pe[0]] * 2 + [sorted_pe[1]] * 2 + [sorted_pe[2]] * 1
-        _rnd.shuffle(apt_pe_plan)
-
-        # ── Pre-populate employee fields respecting vacations ─────────────────
-        for i, dk in enumerate(day_keys):
-            vac_il = schedule[dk].get("vacation_il", "")
-            vac_pe = schedule[dk].get("vacation_pe", "")
-
-            other_empl_day = schedule[dk].get("other_empl", "")
-
-            # EMB IL — exclude vacationing AND employee in "other" task
-            if not schedule[dk].get("emb_il"):
-                planned = emb_il_plan[i]
-                if planned == vac_il or planned == other_empl_day:
-                    others = [e for e in EMPLOYEES_IL if e != vac_il and e != other_empl_day]
-                    planned = others[0] if others else ""
-                schedule[dk]["emb_il"] = planned
-
-            # Apt IL (must differ from emb_il, vac_il, other_empl)
-            if not schedule[dk].get("apt_il"):
-                emb = schedule[dk].get("emb_il", "")
-                apt_opts = [e for e in EMPLOYEES_IL if e != emb and e != vac_il and e != other_empl_day]
-                schedule[dk]["apt_il"] = apt_opts[0] if apt_opts else ""
-
-            # Apt PE
-            if not schedule[dk].get("apt_pe"):
-                planned_pe = apt_pe_plan[i]
-                if planned_pe == vac_pe:
-                    others_pe = [e for e in EMPLOYEES_PE if e != vac_pe]
-                    planned_pe = min(others_pe, key=lambda e: pe_hist.get(e, 0)) if others_pe else ""
-                schedule[dk]["apt_pe"] = planned_pe
-
-            # EMB PE: pair from remaining active PE (not apt_pe, not vac_pe, not emb_il if PE)
-            if not schedule[dk].get("emb_pe"):
-                emb_il_val = schedule[dk].get("emb_il", "")
-                emb_il_pe = emb_il_val if emb_il_val in EMPLOYEES_PE else ""
-                apt_pe_val = schedule[dk].get("apt_pe", "")
-                pair = [e for e in EMPLOYEES_PE
-                        if e != apt_pe_val and e != emb_il_pe and e != vac_pe]
-                ordered = [e for e in EMPLOYEES_PE if e in pair]
-                schedule[dk]["emb_pe"] = "+".join(ordered) if len(ordered) >= 2 else (ordered[0] if ordered else "")
+        # Workplace sections, employee groups and working days all come from the
+        # configuration, so auto_assign_day fills them; nothing is pre-planned
+        # for a particular station shape here.
 
         # Axis and wait spots are filled per-day by auto_assign_day via
         # least-used against cumulative+weekly history (equal balance rule).
@@ -1094,34 +1177,14 @@ st.divider()
 if st.session_state.get("auto_assigned"):
     st.session_state.auto_assigned = False
 
-    ALL_DISPLAY_FIELDS = [
-        ("work_hours",        "Work Hours"),
-        ("entry",             "Entry"),
-        ("exit",              "Exit"),
-        ("escort_morning",    "Morning Escort"),
-        ("school",            "School"),
-        ("escort_noon",       "Noon Escort"),
-        ("emb_il",            "EMB IL"),
-        ("emb_pe",            "EMB PE"),
-        ("other_empl",        "Other"),
-        ("arrival_point",     "Arrival Point"),
-        ("theater",           "Theater"),
-        ("udex",              "UDEX"),
-        ("apt_il",            "Apt IL"),
-        ("apt_pe",            "Apt PE"),
-        ("vehicle_morning",   "Vehicle Morning"),
-        ("axis_morning",      "Axis Morning"),
-        ("wait_morning",      "Wait Morning"),
-        ("taxi_apt",          "Taxi Apt"),
-        ("taxi_arrival",      "Taxi Arrival"),
-        ("vehicle_noon",      "Vehicle Noon"),
-        ("axis_noon",         "Axis Noon"),
-        ("wait_noon",         "Wait Noon"),
-        ("taxi_emb",          "Taxi EMB"),
-        ("taxi_arrival_noon", "Taxi Arrival Noon"),
-        ("vacation_il",       "Vacation IL"),
-        ("vacation_pe",       "Vacation PE"),
-    ] + [(r["key"], cfg.row_label(r["key"], lang)) for r in CUSTOM_ROWS]
+    ALL_DISPLAY_FIELDS = []
+    for _rk in cfg.reorderable_row_keys():
+        if _rk == "vacation":
+            for _g in cfg.active_groups():
+                ALL_DISPLAY_FIELDS.append(
+                    (cfg.vac_field(_g), "Vacation " + cfg.group_name(_g)))
+        else:
+            ALL_DISPLAY_FIELDS.append((_rk, cfg.row_label(_rk, lang)))
 
     import pandas as pd
     day_labels_en = [schedule[dk]["date"].strftime("%a %d/%m") for dk in day_keys]
@@ -1164,8 +1227,7 @@ def render_row(rk: str):
     for i, dk in enumerate(day_keys):
         day = schedule[dk]
         ck = f"{rk}_{dk}"
-        vac_il = day.get("vacation_il", "")
-        vac_pe = day.get("vacation_pe", "")
+        sx = cfg.section_by_row(rk)
 
         with cols[i+1]:
             if rk == "work_hours":
@@ -1198,20 +1260,18 @@ def render_row(rk: str):
                 day["school"] = st.text_input("", value=day.get("school",""),
                     key=ck, label_visibility="collapsed")
 
-            elif rk == "emb_il":
-                avail = [""] + [e for e in EMPLOYEES_IL if e != vac_il]
-                cur = day.get("emb_il","")
-                day["emb_il"] = st.selectbox("", avail,
-                    index=avail.index(cur) if cur in avail else 0,
-                    key=ck, label_visibility="collapsed")
-
-            elif rk == "emb_pe":
-                avail = [""] + [e for e in EMPLOYEES_PE if e != vac_pe] + \
-                    [f"{a}+{b}" for ii,a in enumerate(EMPLOYEES_PE)
-                     for b in EMPLOYEES_PE[ii+1:]
-                     if a != vac_pe and b != vac_pe]
-                cur = day.get("emb_pe","")
-                day["emb_pe"] = st.selectbox("", avail,
+            elif sx:
+                _wp, _sec = sx
+                _grp = cfg.group_by_id(_sec.get("group_id"))
+                _vac = day.get(cfg.vac_field(_grp), "") if _grp else ""
+                _people = [e for e in (cfg.group_employees(_sec.get("group_id"))
+                                       if _grp else ALL_EMPLOYEES) if e != _vac]
+                avail = [""] + _people
+                if _sec.get("allow_pair"):
+                    avail += [f"{a}+{b}" for ii, a in enumerate(_people)
+                              for b in _people[ii + 1:]]
+                cur = day.get(rk, "")
+                day[rk] = st.selectbox("", avail,
                     index=avail.index(cur) if cur in avail else 0,
                     key=ck, label_visibility="collapsed")
 
@@ -1238,20 +1298,6 @@ def render_row(rk: str):
                 cur = day.get("udex","")
                 day["udex"] = st.selectbox("", UDEX_OPTIONS,
                     index=UDEX_OPTIONS.index(cur) if cur in UDEX_OPTIONS else 0,
-                    key=ck, label_visibility="collapsed")
-
-            elif rk == "apt_il":
-                avail = [""] + [e for e in EMPLOYEES_IL if e != vac_il]
-                cur = day.get("apt_il","")
-                day["apt_il"] = st.selectbox("", avail,
-                    index=avail.index(cur) if cur in avail else 0,
-                    key=ck, label_visibility="collapsed")
-
-            elif rk == "apt_pe":
-                avail = [""] + [e for e in EMPLOYEES_PE if e != vac_pe]
-                cur = day.get("apt_pe","")
-                day["apt_pe"] = st.selectbox("", avail,
-                    index=avail.index(cur) if cur in avail else 0,
                     key=ck, label_visibility="collapsed")
 
             elif rk in ("vehicle_morning","vehicle_noon"):
@@ -1292,33 +1338,29 @@ def render_row(rk: str):
                         key=ck, label_visibility="collapsed")
 
             elif rk == "vacation":
-                avail_il = [""] + EMPLOYEES_IL
-                avail_pe = [""] + EMPLOYEES_PE
-                cur_il = day.get("vacation_il","")
-                cur_pe = day.get("vacation_pe","")
-                day["vacation_il"] = st.selectbox("IL", avail_il,
-                    index=avail_il.index(cur_il) if cur_il in avail_il else 0,
-                    key=ck+"_il", label_visibility="collapsed")
-                day["vacation_pe"] = st.selectbox("PE", avail_pe,
-                    index=avail_pe.index(cur_pe) if cur_pe in avail_pe else 0,
-                    key=ck+"_pe", label_visibility="collapsed")
+                for _g in ACTIVE_GROUPS:
+                    _f = cfg.vac_field(_g)
+                    _av = [""] + cfg.group_employees(_g["id"])
+                    _cur = day.get(_f, "")
+                    day[_f] = st.selectbox(cfg.group_name(_g), _av,
+                        index=_av.index(_cur) if _cur in _av else 0,
+                        key=f"{ck}_{_g['id']}", label_visibility="collapsed")
 
         schedule[dk] = day
 
 # ── Section dividers ───────────────────────────────────────────────────────
-SECTIONS = {
-    "emb_il":         "― EMB ―",
-    "arrival_point":  "― " + cfg.row_label("arrival_point",lang) + " / " + cfg.row_label("theater",lang) + " / UDEX ―",
-    "apt_il":         "― " + cfg.row_label("apt_il",lang) + " / " + cfg.row_label("apt_pe",lang) + " ―",
-    "vehicle_morning":"― " + cfg.row_label("vehicle_morning",lang) + " ―",
-    "vehicle_noon":   "― " + cfg.row_label("vehicle_noon",lang) + " ―",
-    "vacation":       "― " + cfg.row_label("vacation",lang) + " ―",
-}
+ROW_DIVIDERS = {}
+for _w in cfg.active_workplaces():
+    _secs = cfg.workplace_sections(_w)
+    if _secs:
+        ROW_DIVIDERS[_secs[0]["row_key"]] = "― " + cfg.workplace_name(_w) + " ―"
+for _k in ("arrival_point", "vehicle_morning", "vehicle_noon", "vacation"):
+    ROW_DIVIDERS.setdefault(_k, "― " + cfg.row_label(_k, lang) + " ―")
 
 render_rows = [k for k in cfg.all_row_keys() if k not in ("dates","days")]
 for rk in render_rows:
-    if rk in SECTIONS:
-        st.markdown(f"<div style='color:#999;font-size:0.75rem;margin:8px 0 2px'>{SECTIONS[rk]}</div>",
+    if rk in ROW_DIVIDERS:
+        st.markdown(f"<div style='color:#999;font-size:0.75rem;margin:8px 0 2px'>{ROW_DIVIDERS[rk]}</div>",
                     unsafe_allow_html=True)
     render_row(rk)
 

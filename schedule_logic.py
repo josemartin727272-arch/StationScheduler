@@ -31,58 +31,54 @@ def exit_auto_options() -> list:
     return [o for o in cfg.options("exit") if o != holiday]
 
 
-def emb_pe_options() -> list:
-    """Single PE employees plus all ordered pairs (A+B)."""
-    pe = cfg.employees_pe()
-    return ([""] + pe +
-            [f"{a}+{b}" for i, a in enumerate(pe) for b in pe[i + 1:]])
+def section_options(row_key: str) -> list:
+    """Pickable values for a workplace-section row: the employees of its group,
+    plus every pair (A+B) when the section allows a pair."""
+    sx = cfg.section_by_row(row_key)
+    if not sx:
+        return [""] + cfg.all_employees()
+    _, sec = sx
+    people = cfg.group_employees(sec.get("group_id")) or cfg.all_employees()
+    out = [""] + people
+    if sec.get("allow_pair"):
+        out += [f"{a}+{b}" for i, a in enumerate(people) for b in people[i + 1:]]
+    return out
 
 
 # ── Data model ─────────────────────────────────────────────────────────────
 
 def empty_week(week_start: date) -> dict:
-    """Return a blank weekly schedule dict keyed by date string (Mon–Fri only)."""
+    """Blank weekly schedule keyed by date string, one entry per configured
+    working day. Monday is offset 0, so a Sunday shift lands at the end."""
     if week_start.weekday() != 0:
         week_start = week_start - timedelta(days=week_start.weekday())
-    base_fields = [
-        "work_hours", "entry", "exit",
-        "escort_morning", "school", "escort_noon",
-        "emb_il", "emb_pe", "other_empl",
-        "arrival_point", "theater", "udex",
-        "apt_il", "apt_pe",
-        "vehicle_morning", "axis_morning", "wait_morning",
-        "taxi_apt", "taxi_arrival",
-        "vehicle_noon", "axis_noon", "wait_noon",
-        "taxi_emb", "taxi_arrival_noon",
-        "vacation_il", "vacation_pe",
-    ]
-    fields = base_fields + cfg.custom_row_keys()
+    fields = cfg.schedule_fields()
     schedule = {}
-    for i in range(5):  # Monday=0 .. Friday=4
-        day = week_start + timedelta(days=i)
+    for name in cfg.work_days():
+        day = week_start + timedelta(days=cfg.DOW_ORDER.index(name))
         entry = {f: "" for f in fields}
         entry["date"] = day
         schedule[day.isoformat()] = entry
-    return schedule
+    return dict(sorted(schedule.items()))
 
 
 # ── Validation ─────────────────────────────────────────────────────────────
 
 def validate_schedule(schedule: dict, lang: str = "he") -> list:
-    """Return list of warning/error strings."""
+    """Return list of warning/error strings. Every rule is derived from the
+    configured groups, workplaces and extra task — nothing is hard-coded."""
     from translations import t
     errors = []
 
-    employees_il = cfg.employees_il()
-    employees_pe = cfg.employees_pe()
     targets = cfg.targets()
     vehicle_special = cfg.special("vehicle_special")
-    udex_m_vals = set(cfg.special("udex_morning"))
-    udex_t_vals = set(cfg.special("udex_noon"))
+    extra_m = set(cfg.extra_morning_values())
+    extra_n = set(cfg.extra_noon_values())
+    extra_tg = cfg.extra_targets()
+    extra_name = cfg.extra_label(lang)
+    sections = cfg.all_sections()
 
-    yellow_count = 0
-    udex_m = 0
-    udex_t = 0
+    yellow_count = extra_m_count = extra_n_count = 0
 
     for day_key, day in schedule.items():
         if day.get("vehicle_morning") == vehicle_special:
@@ -90,41 +86,52 @@ def validate_schedule(schedule: dict, lang: str = "he") -> list:
         if day.get("vehicle_noon") == vehicle_special:
             yellow_count += 1
 
-        udex = day.get("udex", "")
-        if udex in udex_m_vals:
-            udex_m += 1
-        elif udex in udex_t_vals:
-            udex_t += 1
+        extra = day.get("udex", "")
+        if extra in extra_m:
+            extra_m_count += 1
+        elif extra in extra_n:
+            extra_n_count += 1
 
-        vac_il = day.get("vacation_il", "")
-        vac_pe = day.get("vacation_pe", "")
         other_empl = day.get("other_empl", "")
         d_str = day.get("date").strftime("%d/%m") if day.get("date") else day_key
-        if vac_il and "," in vac_il:
-            errors.append(f"{day_key}: {t('error_two_il_vacation', lang)}")
-        if vac_pe and "," in vac_pe:
-            errors.append(f"{day_key}: {t('error_two_pe_vacation', lang)}")
-        emb_il = day.get("emb_il", "")
-        if emb_il and emb_il in employees_il:
-            if emb_il == vac_il:
-                errors.append(f"❌ {d_str}: {emb_il} שובץ ל-EMB IL אך הוא בחופשה")
-            elif emb_il == other_empl:
-                errors.append(f"❌ {d_str}: {emb_il} שובץ ל-EMB IL אך הוא כבר במשימת אחר")
-        unavail_il = {e for e in [vac_il, other_empl] if e in employees_il}
-        available_il = [e for e in employees_il if e not in unavail_il]
-        if not available_il and not emb_il:
-            errors.append(f"❌ {d_str}: אין עובד IL פנוי ל-EMB IL (חופשה + משימת אחר)")
-        elif not available_il and emb_il not in employees_pe:
-            errors.append(f"❌ {d_str}: כל עובדי IL לא זמינים — EMB IL חייב להיות ממולא")
+        placed = {}                       # employee → the section holding them
+        for wp, sec in sections:
+            row_key = sec["row_key"]
+            group = cfg.group_by_id(sec.get("group_id"))
+            label = cfg.section_label(wp, sec)
+            vac = day.get(cfg.vac_field(group), "") if group else ""
+            people = [e for e in str(day.get(row_key, "")).split("+") if e]
+            for e in people:
+                if e == vac:
+                    errors.append(f"❌ {d_str}: " +
+                                  t("err_sec_vac", lang, e=e, s=label))
+                elif e == other_empl:
+                    errors.append(f"❌ {d_str}: " +
+                                  t("err_sec_other", lang, e=e, s=label))
+                if e in placed:
+                    errors.append(f"{d_str}: " +
+                                  t("warn_sec_dup", lang, e=e, s=placed[e], s2=label))
+                else:
+                    placed[e] = label
+            if not people:
+                pool = [e for e in (cfg.group_employees(sec.get("group_id"))
+                                    if group else cfg.all_employees())
+                        if e not in (vac, other_empl)]
+                if not pool:
+                    errors.append(f"❌ {d_str}: " + t(
+                        "err_sec_none", lang, s=label,
+                        g=cfg.group_name(group) if group else "—"))
 
     theater_count = sum(1 for day in schedule.values() if day.get("theater", ""))
 
     if yellow_count != targets["yellow_per_week"]:
         errors.append(t("warning_yellow_count", lang, count=yellow_count))
-    if udex_m != targets["udex_m"]:
-        errors.append(t("warning_udex_m", lang, count=udex_m))
-    if udex_t != targets["udex_t"]:
-        errors.append(t("warning_udex_t", lang, count=udex_t))
+    if extra_m_count != extra_tg["morning"]:
+        errors.append(t("warn_extra_m", lang, n=extra_m_count,
+                        t=extra_tg["morning"], f=extra_name))
+    if extra_n_count != extra_tg["noon"]:
+        errors.append(t("warn_extra_n", lang, n=extra_n_count,
+                        t=extra_tg["noon"], f=extra_name))
     if theater_count != targets["theater_per_week"]:
         errors.append(t("warning_theater_count", lang, count=theater_count))
 
@@ -135,22 +142,16 @@ def validate_schedule(schedule: dict, lang: str = "he") -> list:
 
 def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
     """
-    Fill in auto-assigned fields for a single day based on equality history.
-    Rules:
-    - No employee assigned to two tasks on the same day
-    - EMB IL: always IL employee (or PE if IL on vacation)
-    - EMB PE: normally a pair of 2 PE employees; single only if limited by vacation+Apt PE
-    - Taxis assigned later (after vehicle type known) in auto_assign_week_vehicles_udex
+    Fill in auto-assigned fields for a single day from the equality history.
+    Everything comes from the configuration:
+    - each workplace section draws from its own employee group
+    - nobody is booked twice on the same day
+    - a section marked allow_pair may hold two employees ("A+B")
+    - taxis are assigned later (once the vehicle type is known) in
+      auto_assign_week_vehicles_udex
     """
     day = day.copy()
-    employees_il = cfg.employees_il()
-    employees_pe = cfg.employees_pe()
-    vac_il = day.get("vacation_il", "")
-    vac_pe = day.get("vacation_pe", "")
     other_empl = day.get("other_empl", "")
-    active_il = [e for e in employees_il if e != vac_il and e != other_empl]
-    active_pe = [e for e in employees_pe if e != vac_pe and e != other_empl]
-
     axis_vals = cfg.options("axis")
 
     # ── entry/exit and both axes: independent, each balanced against its own
@@ -168,44 +169,27 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
         day["exit"] = _least_used(
             exit_auto_options(), history.get("exit", {}), "exit")
 
-    # ── Step 1: EMB IL ──────────────────────────────────────────────────────
-    if not day.get("emb_il"):
-        if active_il:
-            day["emb_il"] = _least_used(active_il, history.get("emb_il", {}))
-        elif active_pe:
-            day["emb_il"] = _least_used(active_pe, history.get("emb_il", {}))
-    emb_il = day.get("emb_il", "")
-
-    # ── Step 2: Apt IL ──────────────────────────────────────────────────────
-    if not day.get("apt_il"):
-        apt_il_opts = [e for e in active_il if e != emb_il]
-        if apt_il_opts:
-            day["apt_il"] = _least_used(apt_il_opts, history.get("apt_il", {}))
-
-    # ── Step 3: Apt PE ──────────────────────────────────────────────────────
-    if not day.get("apt_pe"):
-        emb_il_pe = emb_il if emb_il in employees_pe else ""
-        apt_pe_opts = [e for e in active_pe if e != emb_il_pe]
-        if apt_pe_opts:
-            day["apt_pe"] = _least_used(apt_pe_opts, history.get("apt_pe", {}))
-    apt_pe = day.get("apt_pe", "")
-
-    # ── Step 4: EMB PE ──────────────────────────────────────────────────────
-    if not day.get("emb_pe"):
-        emb_il_pe = emb_il if emb_il in employees_pe else ""
-        available = [e for e in active_pe if e != apt_pe and e != emb_il_pe]
-
-        if len(available) >= 2:
-            pairs = [
-                f"{employees_pe[i]}+{employees_pe[j]}"
-                for i in range(len(employees_pe))
-                for j in range(i + 1, len(employees_pe))
-                if employees_pe[i] in available and employees_pe[j] in available
-            ]
-            if pairs:
-                day["emb_pe"] = _least_used(pairs, history.get("emb_pe", {}))
-        elif len(available) == 1:
-            day["emb_pe"] = available[0]
+    # ── workplace sections, in configured order ─────────────────────────────
+    taken = set()
+    for wp, sec in cfg.all_sections():
+        row_key = sec["row_key"]
+        if day.get(row_key):
+            taken.update(e for e in str(day[row_key]).split("+") if e)
+            continue
+        group = cfg.group_by_id(sec.get("group_id"))
+        vac = day.get(cfg.vac_field(group), "") if group else ""
+        pool = [e for e in (cfg.group_employees(sec.get("group_id"))
+                            if group else cfg.all_employees())
+                if e not in (vac, other_empl) and e not in taken]
+        if not pool:
+            continue
+        if sec.get("allow_pair") and len(pool) >= 2:
+            pairs = [f"{a}+{b}" for i, a in enumerate(pool) for b in pool[i + 1:]]
+            choice = _least_used(pairs, history.get(row_key, {}))
+        else:
+            choice = _least_used(pool, history.get(row_key, {}))
+        day[row_key] = choice
+        taken.update(e for e in str(choice).split("+") if e)
 
     # ── Arrival point ───────────────────────────────────────────────────────
     if not day.get("arrival_point"):
@@ -242,8 +226,9 @@ def auto_assign_week_vehicles_udex(schedule: dict, history: dict = None,
     vehicle_special = cfg.special("vehicle_special")
     vehicle_regular = next(
         (v for v in cfg.options("vehicle") if v != vehicle_special), "")
-    udex_m_vals = list(cfg.special("udex_morning"))
-    udex_t_vals = list(cfg.special("udex_noon"))
+    udex_m_vals = cfg.extra_morning_values()
+    udex_t_vals = cfg.extra_noon_values()
+    extra_tg = cfg.extra_targets()
 
     # Special vehicle: choose the morning/noon split that best balances the
     # monthly history (falls back to the cumulative history if not provided)
@@ -280,25 +265,25 @@ def auto_assign_week_vehicles_udex(schedule: dict, history: dict = None,
             if not schedule[k].get(f):
                 schedule[k][f] = vehicle_regular
 
-    # UDEX: balance within each type via history
-    udex_unassigned = [k for k in keys if not schedule[k].get("udex")]
-    udex_m_needed = targets["udex_m"] - sum(
+    # Extra task: balance within each type via history
+    extra_unassigned = [k for k in keys if not schedule[k].get("udex")]
+    m_needed = extra_tg["morning"] - sum(
         1 for k in keys if schedule[k].get("udex") in udex_m_vals)
-    udex_t_needed = targets["udex_t"] - sum(
+    t_needed = extra_tg["noon"] - sum(
         1 for k in keys if schedule[k].get("udex") in udex_t_vals)
-    random.shuffle(udex_unassigned)
+    random.shuffle(extra_unassigned)
     m_hist = dict(history.get("udex", {}))
     t_hist = dict(history.get("udex", {}))
-    for _ in range(max(0, udex_m_needed)):
-        if udex_unassigned:
+    for _ in range(max(0, m_needed)):
+        if extra_unassigned and udex_m_vals:
             chosen = _least_used(udex_m_vals, m_hist)
             m_hist[chosen] = m_hist.get(chosen, 0) + 1
-            schedule[udex_unassigned.pop(0)]["udex"] = chosen
-    for _ in range(max(0, udex_t_needed)):
-        if udex_unassigned:
+            schedule[extra_unassigned.pop(0)]["udex"] = chosen
+    for _ in range(max(0, t_needed)):
+        if extra_unassigned and udex_t_vals:
             chosen = _least_used(udex_t_vals, t_hist)
             t_hist[chosen] = t_hist.get(chosen, 0) + 1
-            schedule[udex_unassigned.pop(0)]["udex"] = chosen
+            schedule[extra_unassigned.pop(0)]["udex"] = chosen
 
     # Theater: assign to exactly theater_per_week days
     theater_vals = cfg.options("theater")
@@ -375,13 +360,12 @@ def _least_used(options: list, counts: dict, field: str = None) -> str:
 def update_history(history: dict, schedule: dict) -> dict:
     """Add this week's assignments to the cumulative history counts."""
     fields_to_track = [
-        "entry", "exit",
-        "emb_il", "emb_pe", "arrival_point", "theater",
-        "apt_il", "apt_pe", "axis_morning", "axis_noon",
+        "entry", "exit", "arrival_point", "theater",
+        "axis_morning", "axis_noon",
         "wait_morning", "wait_noon", "taxi_apt", "taxi_arrival",
         "vehicle_morning", "vehicle_noon", "udex",
         "taxi_emb", "taxi_arrival_noon",
-    ]
+    ] + cfg.section_row_keys()
     for day in schedule.values():
         for field in fields_to_track:
             val = day.get(field, "")
