@@ -67,9 +67,18 @@ td.cell-yellow select{background:var(--yellow)}
 .msg.err{background:#fdecea;color:var(--danger);border:1px solid #f5b7b1}
 .msg.warn{background:#fef9e7;color:#7d6608;border:1px solid #f7dc6f}
 .msg.ok{background:#eafaf1;color:var(--ok);border:1px solid #a9dfbf}
-/* The badge is the only place warnings surface, and it is a count, not a
-   control — nothing about the schedule opens, expands or turns yellow. */
-.badge{cursor:default}
+/* The badge is where warnings surface — a count, and a small list under it.
+   Nothing inside the schedule itself ever turns yellow. */
+.badge{cursor:pointer}
+.warn-pop{position:fixed;z-index:400;background:#fff;border:1px solid var(--border);
+  border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.14);padding:6px;
+  max-height:300px;overflow:auto;min-width:240px;max-width:min(420px,92vw)}
+.warn-pop .wl{padding:6px 8px;border-radius:6px;font-size:.85rem;line-height:1.45;
+  border-inline-start:3px solid var(--muted)}
+.warn-pop .wl+.wl{margin-block-start:4px}
+.warn-pop .wl.err{color:var(--danger);border-inline-start-color:var(--danger)}
+.warn-pop .wl.warn{color:#7d6608;border-inline-start-color:#f0c000}
+.warn-pop .wl.ok{color:var(--ok);border-inline-start-color:var(--ok)}
 /* settings */
 details.sect{border:1px solid var(--border);border-radius:12px;background:#fff;margin-bottom:10px}
 details.sect>summary{cursor:pointer;padding:14px;font-weight:700;color:var(--primary);
@@ -1851,6 +1860,42 @@ function openAwayPop(box){
   window.addEventListener("scroll", closeAwayPop, true);
 }
 
+/* ── the warnings popover ─────────────────────────────────────────────────
+   A short list under the badge. It lives on <body> and is fixed-positioned,
+   so nothing in the page can clip it, and a scroll closes it rather than
+   letting it drift away from the badge it belongs to. */
+let _warnPop=null;
+function closeWarnPop(){
+  if(!_warnPop) return;
+  _warnPop.remove(); _warnPop=null;
+  document.removeEventListener("mousedown", warnOutside, true);
+  window.removeEventListener("resize", closeWarnPop);
+  window.removeEventListener("scroll", closeWarnPop, true);
+}
+function warnOutside(ev){
+  if(_warnPop && !_warnPop.contains(ev.target) && ev.target.id!=="statusBadge")
+    closeWarnPop();
+}
+function openWarnPop(badge){
+  const was=!!_warnPop;
+  closeWarnPop();
+  if(was) return;                          // a second click on the badge closes it
+  const errs=S.days?validate():[];
+  const pop=document.createElement("div");
+  pop.className="warn-pop";
+  pop.innerHTML=errs.length
+    ?errs.map(e=>`<div class="wl ${e.lvl}">${esc(e.msg)}</div>`).join("")
+    :`<div class="wl ok">${esc(t("valid"))}</div>`;
+  document.body.appendChild(pop);
+  const r=badge.getBoundingClientRect(), h=pop.offsetHeight;
+  const below=r.bottom+6+h<=window.innerHeight-8;
+  pop.style.top=(below?r.bottom+6:Math.max(8, r.top-h-6))+"px";
+  pop.style.left=Math.max(8, Math.min(r.left, window.innerWidth-pop.offsetWidth-8))+"px";
+  _warnPop=pop;
+  document.addEventListener("mousedown", warnOutside, true);
+  window.addEventListener("resize", closeWarnPop);
+  window.addEventListener("scroll", closeWarnPop, true);
+}
 /* live refresh of the badge / save-dot without a full re-render */
 function updateStatus(){
   const b=document.getElementById("statusBadge");
@@ -1859,6 +1904,7 @@ function updateStatus(){
     b.className="badge "+(errs.length?"bad":"good");
     b.textContent=errs.length?`⚠️ ${errs.length}`:`✓ ${t("valid_short")}`;
     b.title=errs.length?t("warn_count"):t("valid");
+    if(_warnPop){ closeWarnPop(); openWarnPop(b); }
   }
   const dot=document.getElementById("saveDot");
   if(dot) dot.style.display=S.dirty?"inline-block":"none";
@@ -2562,6 +2608,15 @@ const GUIDE = [
       en:"Change it as needed. The app uses it in the statistics only, to show how many days have been used.",
       es:"Cámbialo según haga falta. La app lo usa solo en las estadísticas, para mostrar cuántos días se usaron."}},
 
+  {h:{he:"2א. מגבלת היעדרות יומית", en:"2a. The daily absence limit",
+      es:"2a. El límite de ausencias diarias"}},
+  {p:{he:"בתחתית הקטע 👤 קבוצות עובדים יש שדה אחד: כמה עובדים מותר שייעדרו באותו יום — חופשה ונסיעה יחד.",
+      en:"At the bottom of the 👤 Employee groups section is a single field: how many people may be away on the same day — vacation and trips together.",
+      es:"Al final de la sección 👤 Grupos de personal hay un campo: cuántas personas pueden faltar el mismo día — vacaciones y viajes juntos."}},
+  {p:{he:"ברירת המחדל היא 2. אם תסמן יותר מהמספר הזה ביום אחד, תופיע הערה — אבל היא אינה חוסמת שמירה. אתה מחליט.",
+      en:"The default is 2. Mark more than that on one day and a note appears — but it never blocks saving. You decide.",
+      es:"El valor por defecto es 2. Si marcas más en un día aparece una observación — pero nunca impide guardar. Tú decides."}},
+
   {h:{he:"3. מקומות עבודה", en:"3. Workplaces", es:"3. Lugares de trabajo"}},
   {p:{he:"מקום עבודה הוא מיקום שאליו משבצים עובדים. לכל מקום יש תפקידים — למשל תפקיד לכל קבוצה.",
       en:"A workplace is a location you staff. Each one holds roles — for example one role per group.",
@@ -2587,6 +2642,46 @@ const GUIDE = [
   {warn:{he:"אם תפקיד מסומן חובה ואי אפשר לאייש אותו — כל המקום לא יאויש באותו יום, וגם התפקידים שאינם חובה יישארו ריקים.",
          en:"If a required role cannot be filled, the whole workplace is skipped that day — its non-required roles stay empty too.",
          es:"Si un puesto obligatorio no se puede cubrir, se omite todo el lugar ese día — sus puestos no obligatorios también quedan vacíos."}},
+
+  {h:{he:"3א. סדר שיבוץ", en:"3a. The staffing order", es:"3a. El orden de asignación"}},
+  {p:{he:"בראש הקטע 🏢 מקומות עבודה יש רשימה ממוספרת של כל התפקידים. הרשימה הזאת היא כל החוק: השיבוץ האוטומטי עובר עליה מלמעלה למטה, וכל תפקיד מקבל עובד פנוי מהקבוצה שלו.",
+      en:"At the top of the 🏢 Workplaces section is a numbered list of every role. That list is the whole rule: Auto Assign walks it from top to bottom, and each role gets a free person from its own group.",
+      es:"Al inicio de la sección 🏢 Lugares de trabajo hay una lista numerada de todos los puestos. Esa lista es toda la regla: la asignación la recorre de arriba abajo y cada puesto recibe a alguien libre de su grupo."}},
+  {p:{he:"מה שלמעלה מקבל עובד ראשון. אם נשארו מעט עובדים, התפקידים שבתחתית הרשימה הם אלה שיישארו ריקים.",
+      en:"Whatever sits higher is served first. When few people are free, the roles at the bottom of the list are the ones left empty.",
+      es:"Lo que está arriba se cubre primero. Cuando hay poca gente libre, los puestos del final son los que quedan vacíos."}},
+  {steps:[
+    {he:"גרור שורה בידית ⠿ למקום שתרצה, או השתמש בחצים ↑↓ להזזה בצעד אחד.",
+     en:"Drag a line by its ⠿ handle, or use the ↑↓ arrows to move it one step.",
+     es:"Arrastra una línea por su asa ⠿, o usa las flechas ↑↓ para moverla un paso."},
+    {he:"השינוי נשמר מיד — אין צורך ללחוץ שמור.",
+     en:"The change is saved at once — no need to press Save.",
+     es:"El cambio se guarda de inmediato — no hace falta pulsar Guardar."},
+    {he:"הרץ שיבוץ אוטומטי ותראה את ההבדל.",
+     en:"Run Auto Assign and you will see the difference.",
+     es:"Ejecuta la asignación automática y verás la diferencia."}]},
+  {tip:{he:"שים למעלה את התפקיד שהכי חשוב לך שיאויש, ולמטה את זה שאתה מוכן לוותר עליו ביום עמוס.",
+        en:"Put the role you most need staffed at the top, and the one you can live without on a busy day at the bottom.",
+        es:"Pon arriba el puesto que más necesitas cubrir, y abajo el que puedes dejar sin cubrir en un día ajetreado."}},
+
+  {h:{he:"3ב. מספר עובדים ומינימומים", en:"3b. Headcount and minimums",
+      es:"3b. Cantidad de personal y mínimos"}},
+  {p:{he:"לכל תפקיד יש שלושה שדות שקובעים כמה אנשים הוא מחזיק:",
+      en:"Every role has three fields that decide how many people it holds:",
+      es:"Cada puesto tiene tres campos que deciden cuántas personas tiene:"}},
+  {li:[
+    {he:"מספר עובדים לשיבוץ — התקרה. 1 פירושו עובד אחד; 2 פירושו שני עובדים שיופיעו בתא מופרדים בסימן +; 0 מכבה את השורה לגמרי.",
+     en:"Employees to assign — the ceiling. 1 means one person; 2 means two, shown in the cell joined by a +; 0 switches the row off entirely.",
+     es:"Empleados a asignar — el techo. 1 es una persona; 2 son dos, unidas por un + en la celda; 0 apaga la fila del todo."},
+    {he:"מינימום לשיבוץ יומי — הרצפה. כמה עובדים התפקיד צריך לפחות ביום. אם לא הושג, תופיע הערה בסימן האזהרה.",
+     en:"Daily minimum — the floor. How many people the role needs at least, per day. If it is not reached, a note appears under the badge.",
+     es:"Mínimo diario — el piso. Cuánta gente necesita el puesto al menos por día. Si no se alcanza, aparece una observación en la insignia."},
+    {he:"מינימום תפקידים מאוישים — לכל מקום עבודה: כמה מהתפקידים שלו חייבים להתאייש. שימושי כשמספיק שאחד משניים מאויש.",
+     en:"Roles that must be staffed — per workplace: how many of its roles have to end up staffed. Useful when one of two is enough.",
+     es:"Puestos que deben cubrirse — por lugar: cuántos de sus puestos deben quedar cubiertos. Útil cuando basta con uno de dos."}]},
+  {p:{he:"שלושת השדות האלה אינם משנים את סדר השיבוץ — הרשימה למעלה קובעת אותו. הם רק מייצרים הערות כשמשהו לא הושג.",
+      en:"None of the three changes the staffing order — the list above decides that. They only raise notes when something was not reached.",
+      es:"Ninguno de los tres cambia el orden — eso lo decide la lista de arriba. Solo generan observaciones cuando algo no se cumple."}},
 
   {h:{he:"4. שורות הסידור", en:"4. The schedule rows", es:"4. Las filas del horario"}},
   {p:{he:"שורה היא סוג מידע שמופיע בסידור — למשל שעות עבודה, סוג רכב, או כל דבר אחר שחשוב לך.",
@@ -2657,7 +2752,35 @@ const GUIDE = [
      es:"¿Quieres repartir por igual otra vez? Pulsa ↺ División igual."}]},
   {tip:{he:"אין חובה לגעת באחוזים. ברירת המחדל היא חלוקה שווה בין כל הערכים, וזה מתאים לרוב המקרים.",
         en:"You do not have to touch the percentages. The default is an even split across all values, which suits most cases.",
-        es:"No hace falta tocar los porcentajes. Por defecto se reparte igual entre todos los valores, y eso sirve casi siempre."}}]},
+        es:"No hace falta tocar los porcentajes. Por defecto se reparte igual entre todos los valores, y eso sirve casi siempre."}},
+  {p:{he:"איך המערכת משתמשת בהם: לפני כל בחירה היא סופרת כמה פעמים הופיע כל ערך ב-90 הימים האחרונים, ומשווה את החלק שלו בפועל לאחוז שקבעת. הערך שהכי רחוק מתחת ליעד שלו — הוא זה שנבחר.",
+      en:"How the app uses them: before each choice it counts how often every value appeared in the last 90 days and compares its real share to the percentage you set. Whichever value sits furthest below its target is the one it picks.",
+      es:"Cómo los usa: antes de cada elección cuenta cuántas veces apareció cada valor en los últimos 90 días y compara su parte real con el porcentaje que fijaste. Elige el valor que más lejos esté por debajo de su meta."}},
+  {p:{he:"לכן אחוזים שווים פירושם פשוט \u201eמי שקיבל הכי מעט מקבל עכשיו\u201d, ואחוז גבוה יותר לערך מסוים גורם לו לחזור לעיתים קרובות יותר לאורך זמן — לא בכל יום.",
+      en:"So equal percentages simply mean \u201cwhoever got it least gets it now\u201d, and a higher percentage on one value makes it come up more often over time — not every day.",
+      es:"Así que porcentajes iguales significan \u201cle toca a quien menos tuvo\u201d, y un porcentaje más alto hace que ese valor salga más seguido con el tiempo — no cada día."}},
+
+  {h:{he:"8. צירים וכניסות/יציאות", en:"8. Axes and entry/exit times",
+      es:"8. Ejes y horas de entrada/salida"}},
+  {p:{he:"בקטע 🧭 צירים וכניסות/יציאות מגדירים אילו צירים קיימים בתחנה, ואיזה ציר מותר לכל שעת כניסה ושעת יציאה.",
+      en:"The 🧭 Axes and entries/exits section is where you say which axes the station has, and which axis each entry time and exit time may use.",
+      es:"En la sección 🧭 Ejes y entradas/salidas defines qué ejes tiene la estación y qué eje puede usar cada hora de entrada y de salida."}},
+  {li:[
+    {he:"כל ציר הוא אות (A, B, C…) ובתוכו חלוקה פנימית לשני כיוונים באחוזים — ברירת המחדל 50/50.",
+     en:"Each axis is a letter (A, B, C…) split internally between two directions by percentage — 50/50 by default.",
+     es:"Cada eje es una letra (A, B, C…) dividida internamente en dos sentidos por porcentaje — 50/50 por defecto."},
+    {he:"לכל שעת כניסה מסמנים בתיבות סימון אילו צירים מותרים לה, ואפשר גם לקבוע אחוז לכל אחד.",
+     en:"For each entry time you tick which axes it may use, and you may set a percentage for each.",
+     es:"Para cada hora de entrada marcas qué ejes puede usar, y puedes fijar un porcentaje para cada uno."},
+    {he:"אותו דבר בדיוק לשעות היציאה, בטבלה נפרדת.",
+     en:"The same again for the exit times, in a separate table.",
+     es:"Lo mismo para las horas de salida, en una tabla aparte."},
+    {he:"שעה שלא סימנת לה שום ציר — מותרים לה כל הצירים.",
+     en:"A time with no axis ticked may use any axis at all.",
+     es:"Una hora sin ningún eje marcado puede usar cualquiera."}]},
+  {p:{he:"בשיבוץ האוטומטי המערכת בוחרת קודם את שעת הכניסה, ואז ציר מתוך אלה שמותרים לה. אם תזין ידנית צמד שאינו מותר — תופיע הערה בסימן האזהרה, אבל השמירה לא תיחסם.",
+      en:"When it assigns, the app picks the entry time first and then an axis from the ones that time allows. Type a pair by hand that is not allowed and a note appears under the badge — saving is never blocked.",
+      es:"Al asignar, la app elige primero la hora de entrada y luego un eje entre los permitidos. Si escribes a mano un par no permitido aparece una observación en la insignia — guardar nunca se bloquea."}}]},
 
 { id:"build", icon:"📋",
   title:{he:"בניית סידור שבועי", en:"Building a weekly schedule", es:"Armar el horario semanal"},
@@ -2716,15 +2839,50 @@ const GUIDE = [
   {p:{he:"בראש הדף מופיע סימן מצב: ✓ תקין בירוק, או ⚠️ עם מספר באדום.",
       en:"A status badge sits at the top: ✓ Valid in green, or ⚠️ with a number in red.",
       es:"Arriba hay una insignia: ✓ Válido en verde, o ⚠️ con un número en rojo."}},
-  {p:{he:"הסימן מראה כמה הערות יש — הוא אינו נפתח, והסידור עצמו נשאר נקי.",
-      en:"The badge shows how many notes there are — it does not open, and the schedule itself stays clean.",
-      es:"La insignia indica cuántas observaciones hay — no se abre, y el horario queda limpio."}},
+  {p:{he:"לחץ על הסימן וייפתח מתחתיו חלון קטן עם רשימת ההערות. לחיצה מחוץ לחלון סוגרת אותו. הסידור עצמו נשאר נקי — אין שורות צהובות בתוך הטבלה.",
+      en:"Click the badge and a small window opens under it with the list of notes. Click anywhere outside to close it. The schedule itself stays clean — no yellow rows inside the table.",
+      es:"Pulsa la insignia y se abre una ventanita debajo con la lista de observaciones. Pulsa fuera para cerrarla. El horario queda limpio — sin filas amarillas en la tabla."}},
+  {p:{he:"מה לעשות כשיש אזהרות: קרא אותן, ותקן רק את מה שמפריע לך. שגיאה באדום מצביעה על משהו שכנראה שגוי — עובד שמשובץ ביום שהוא בחופשה, למשל. אזהרה בצהוב היא הערה בלבד: יעד שלא הושג, או מקום עבודה שלא אויש במלואו.",
+      en:"What to do about them: read them, and fix only what bothers you. A red one points at something probably wrong — someone placed on a day they are away, for instance. A yellow one is only a note: a quota not met, or a workplace not fully staffed.",
+      es:"Qué hacer: léelas y corrige solo lo que te moleste. Una roja señala algo probablemente equivocado — alguien asignado un día que está ausente. Una amarilla es solo una nota: una meta no cumplida o un lugar sin cubrir del todo."}},
   {p:{he:"הודעות נפוצות: עובד שובץ ביום שהוא בחופשה, יעד שבועי שלא הושג, או ערך שאינו תואם לכלל שהגדרת.",
       en:"Common messages: someone placed on a day they are away, a weekly quota not met, or a value that breaks a rule you set.",
       es:"Mensajes comunes: alguien asignado en un día ausente, una meta no cumplida, o un valor que rompe una regla."}},
   {tip:{he:"אזהרה אינה חוסמת. אפשר לשמור סידור גם כשיש אזהרות — היא רק מסבה את תשומת ליבך.",
         en:"A warning does not block you. You can save with warnings showing — it only points something out.",
         es:"Un aviso no te bloquea. Puedes guardar con avisos — solo señala algo."}},
+
+  {h:{he:"צבעי השורות", en:"The row colours", es:"Los colores de las filas"}},
+  {p:{he:"כל תפקיד בטבלה צבוע בצבע של הקבוצה שמאיישת אותו — הצבע שבחרת לקבוצה בהגדרות. כך אפשר לראות בהצצה אחת אילו שורות שייכות לאיזו קבוצה, בלי לקרוא שם של אף עובד.",
+      en:"Each role in the table carries the colour of the group that staffs it — the colour you chose for that group in Settings. One glance tells you which rows belong to which group, without reading a single name.",
+      es:"Cada puesto lleva el color del grupo que lo cubre — el que elegiste en Ajustes. De un vistazo ves qué filas pertenecen a qué grupo, sin leer ningún nombre."}},
+  {p:{he:"שתי הקבוצות שמגיעות עם המערכת צבועות בכחול בהיר ובכתום בהיר. אם תשנה צבע קבוצה בהגדרות — הטבלה תשתנה מיד.",
+      en:"The two groups the app ships with are a light blue and a light orange. Change a group's colour in Settings and the table follows at once.",
+      es:"Los dos grupos que trae la app son azul claro y naranja claro. Cambia el color de un grupo en Ajustes y la tabla cambia enseguida."}},
+
+  {h:{he:"שורות נסיעה וחופשה", en:"The trip and vacation rows", es:"Las filas de viaje y vacaciones"}},
+  {p:{he:"שתי השורות האחרונות בטבלה אינן רשימות בחירה אלא תגיות. לחץ על התא ותיפתח רשימת כל העובדים עם תיבות סימון — סמן את מי שנעדר באותו יום.",
+      en:"The last two rows are not dropdowns but tags. Click the cell and a list of everyone opens with checkboxes — tick whoever is away that day.",
+      es:"Las dos últimas filas no son listas sino etiquetas. Pulsa la celda y se abre la lista de todos con casillas — marca a quien esté ausente ese día."}},
+  {li:[
+    {he:"אפשר לסמן כמה עובדים באותו יום — כל אחד מופיע כתגית נפרדת.",
+     en:"You can tick several people on the same day — each shows as its own tag.",
+     es:"Puedes marcar a varios en el mismo día — cada uno aparece como su propia etiqueta."},
+    {he:"לחיצה על ה-✕ שעל תגית מסירה את העובד מאותו יום.",
+     en:"The ✕ on a tag removes that person from that day.",
+     es:"La ✕ de una etiqueta quita a esa persona de ese día."},
+    {he:"מי שמסומן בנסיעה או בחופשה לא ישובץ לשום תפקיד באותו יום.",
+     en:"Anyone marked on a trip or on vacation is placed in no role that day.",
+     es:"Quien esté marcado de viaje o de vacaciones no se asigna a ningún puesto ese día."}]},
+
+  {h:{he:"הזנה ידנית קודמת לכול", en:"What you type by hand comes first",
+      es:"Lo que escribes a mano manda"}},
+  {p:{he:"כל ערך שהזנת ידנית נשאר כפי שהוא. שיבוץ אוטומטי ממלא רק תאים ריקים, ולעולם אינו דורס משהו שכתבת. אפשר להריץ אותו שוב ושוב בלי לאבד שום דבר שקבעת בעצמך.",
+      en:"Anything you typed by hand stays exactly as it is. Auto Assign fills empty cells only and never overwrites something you wrote. Run it as many times as you like without losing a single choice of yours.",
+      es:"Todo lo que escribiste a mano queda igual. La asignación automática solo llena celdas vacías y nunca sobrescribe lo tuyo. Ejecútala las veces que quieras sin perder ninguna decisión."}},
+  {tip:{he:"זה גם הכלי הכי פשוט לכפות משהו: כתוב אותו ידנית, ומשם הוא מוגן.",
+        en:"That is also the simplest way to force something: type it by hand and it is protected from then on.",
+        es:"Esa es la forma más simple de forzar algo: escríbelo a mano y queda protegido."}},
 
   {h:{he:"5. שמירת הסידור", en:"5. Saving the schedule", es:"5. Guardar el horario"}},
   {p:{he:"כשהסידור מוכן — לחץ 💾 שמור. הוא נשמר בארכיון עם התאריך שלו ומצטרף להיסטוריה.",
@@ -2839,6 +2997,33 @@ const GUIDE = [
       en:"In the Total assignments column, a red number marks someone more than twenty percent away from everyone's average.",
       es:"En la columna Total asignaciones, un número rojo marca a quien está a más del veinte por ciento del promedio."}},
 
+  {h:{he:"חלון 90 הימים", en:"The 90-day window", es:"La ventana de 90 días"}},
+  {p:{he:"כשהמערכת מחליטה את מי לשבץ, היא מסתכלת 90 יום אחורה — כשלושה חודשים, סביב שלושה-עשר שבועות. כל מה שרחוק יותר אינו משפיע על ההחלטה.",
+      en:"When the app decides who to place, it looks 90 days back — about three months, roughly thirteen weeks. Anything older does not affect the decision.",
+      es:"Cuando la app decide a quién asignar, mira 90 días atrás — unos tres meses, cerca de trece semanas. Lo más antiguo no influye."}},
+  {p:{he:"החלון הזה נבחר כדי ששבוע ראשון בשנה חדשה לא יתחיל מדף ריק: הוא ממשיך לראות את החודשים שלפניו, גם כשמעבירים שנה.",
+      en:"That window was chosen so the first week of a new year does not start from a blank slate: it still sees the months before it, even across a year boundary.",
+      es:"Esa ventana se eligió para que la primera semana de un año nuevo no empiece en blanco: sigue viendo los meses anteriores, incluso al cambiar de año."}},
+  {p:{he:"שים לב: המספרים בדף הסטטיסטיקה מתייחסים לתקופה שבחרת למעלה, ואילו ההחלטות של השיבוץ מתייחסות תמיד ל-90 הימים האחרונים. אלה שני חישובים שונים.",
+      en:"Note the difference: the numbers on this page cover the period you picked at the top, while the assignment decisions always use the last 90 days. Those are two different calculations.",
+      es:"Ojo con la diferencia: los números de esta página cubren el período que elegiste arriba, mientras que las decisiones de asignación siempre usan los últimos 90 días. Son dos cálculos distintos."}},
+
+  {h:{he:"איזון חודשי ושנתי", en:"Monthly and yearly balance",
+      es:"Equilibrio mensual y anual"}},
+  {p:{he:"בשבוע בודד אין איזון, וזה בסדר גמור: חמישה ימים לא מספיקים כדי לחלק הכול שווה בשווה. שבוע אחד שנראה מוטה הוא כמעט תמיד מקרי.",
+      en:"A single week is never balanced, and that is fine: five days are not enough to split everything evenly. A week that looks lopsided is almost always just chance.",
+      es:"Una sola semana nunca está equilibrada, y está bien: cinco días no alcanzan para repartir todo por igual. Una semana torcida casi siempre es azar."}},
+  {li:[
+    {he:"בחר חודש בבורר התקופה — ברמה הזאת האיזון כבר אמור להיראות. פערים של אחוזים בודדים הם נורמליים.",
+     en:"Pick a month in the period selector — at that level the balance should already show. A few percent of difference is normal.",
+     es:"Elige un mes en el selector — a ese nivel el equilibrio ya debería verse. Unos pocos puntos de diferencia son normales."},
+    {he:"בחר שנה כדי לראות את התמונה המלאה, כולל ניצול ימי החופשה מול התקציב של כל עובד.",
+     en:"Pick a year for the full picture, including how much of each person's vacation budget was used.",
+     es:"Elige un año para la imagen completa, incluido cuánto usó cada persona de su presupuesto de vacaciones."},
+    {he:"פער שנשאר גם ברמה השנתית מצביע כמעט תמיד על הגדרה: חופשות ארוכות, יעד שבועי, או אחוז שקבעת ושכחת.",
+     en:"A gap that survives at the yearly level almost always points at a setting: long absences, a weekly quota, or a percentage you set and forgot.",
+     es:"Una diferencia que persiste a nivel anual casi siempre apunta a una configuración: ausencias largas, una meta semanal o un porcentaje que fijaste y olvidaste."}]},
+
   {h:{he:"מה לעשות כשיש פערים", en:"What to do about gaps", es:"Qué hacer con las diferencias"}},
   {p:{he:"פער בשבוע אחד הוא נורמלי לגמרי. בדוק על פני חודש — שם האיזון אמור להתיישר.",
       en:"A gap in a single week is completely normal. Check across a month — that is where things even out.",
@@ -2850,7 +3035,81 @@ const GUIDE = [
         en:"Look at the statistics once a month. You can also export them to CSV and check in a spreadsheet.",
         es:"Revisa las estadísticas una vez al mes. También puedes exportarlas a CSV y revisarlas en una hoja."}}]},
 
-{ id:"move", icon:"📱",
+{ id:"install", icon:"📱",
+  title:{he:"התקנה על מכשיר", en:"Installing it on a device",
+         es:"Instalarla en un dispositivo"},
+  blocks:[
+  {p:{he:"אפשר להתקין את המערכת על הטאבלט או המחשב כמו אפליקציה רגילה: אייקון משלה, חלון משלה, ועבודה גם בלי אינטרנט.",
+      en:"You can install the app on a tablet or a computer like any other app: its own icon, its own window, and it keeps working with no internet.",
+      es:"Puedes instalar la app en una tableta o computadora como cualquier otra: su propio icono, su propia ventana, y funciona sin internet."}},
+
+  {h:{he:"התקנה על טאבלט אנדרואיד", en:"On an Android tablet", es:"En una tableta Android"}},
+  {steps:[
+    {he:"פתח את Chrome על הטאבלט.", en:"Open Chrome on the tablet.", es:"Abre Chrome en la tableta."},
+    {he:"הכנס לכתובת האפליקציה.", en:"Go to the app's address.", es:"Entra a la dirección de la app."},
+    {he:"לחץ על תפריט ⋮ (שלוש נקודות) בפינה הימנית העליונה.",
+     en:"Tap the ⋮ menu (three dots) in the top corner.",
+     es:"Toca el menú ⋮ (tres puntos) en la esquina superior."},
+    {he:"בחר \u201eהוספה למסך הבית\u201d או \u201eהתקן אפליקציה\u201d.",
+     en:"Choose \u201cAdd to Home screen\u201d or \u201cInstall app\u201d.",
+     es:"Elige \u201cAgregar a pantalla de inicio\u201d o \u201cInstalar aplicación\u201d."},
+    {he:"לחץ \u201eהוסף\u201d — אייקון יופיע על מסך הבית.",
+     en:"Tap \u201cAdd\u201d — an icon appears on the home screen.",
+     es:"Toca \u201cAgregar\u201d — aparece un icono en la pantalla de inicio."},
+    {he:"מעכשיו האפליקציה עובדת גם בלי אינטרנט.",
+     en:"From now on the app works with no internet at all.",
+     es:"Desde ahora la app funciona sin internet."}]},
+  {warn:{he:"נדרש אינטרנט רק בהתקנה הראשונה.",
+         en:"The internet is needed only for that first install.",
+         es:"Solo hace falta internet para esa primera instalación."}},
+
+  {h:{he:"התקנה על מחשב (Windows / Mac)", en:"On a computer (Windows / Mac)",
+      es:"En una computadora (Windows / Mac)"}},
+  {steps:[
+    {he:"פתח Chrome ועבור לכתובת האפליקציה.",
+     en:"Open Chrome and go to the app's address.",
+     es:"Abre Chrome y ve a la dirección de la app."},
+    {he:"לחץ על אייקון ההתקנה בשורת הכתובת (📥), או: תפריט ⋮ ← \u201eהתקן את אשר סידור מוניות\u201d.",
+     en:"Click the install icon in the address bar (📥), or: ⋮ menu → \u201cInstall Asher Taxi Scheduler\u201d.",
+     es:"Haz clic en el icono de instalación en la barra de direcciones (📥), o: menú ⋮ → \u201cInstalar Asher Programador de Taxis\u201d."},
+    {he:"לחץ \u201eהתקן\u201d — האפליקציה תיפתח בחלון נפרד.",
+     en:"Click \u201cInstall\u201d — the app opens in a window of its own.",
+     es:"Haz clic en \u201cInstalar\u201d — la app se abre en su propia ventana."},
+    {he:"אייקון יופיע על שולחן העבודה.",
+     en:"An icon appears on the desktop.",
+     es:"Aparece un icono en el escritorio."}]},
+
+  {h:{he:"שיתוף בין מכשירים", en:"Sharing between devices", es:"Compartir entre dispositivos"}},
+  {steps:[
+    {he:"על המכשיר הישן: 📁 ארכיון ← 📤 גיבוי הכול.",
+     en:"On the old device: 📁 Archive → 📤 Back up everything.",
+     es:"En el dispositivo viejo: 📁 Archivo → 📤 Respaldar todo."},
+    {he:"שלח את הקובץ למכשיר החדש (WhatsApp, מייל, כל דרך נוחה).",
+     en:"Send the file to the new device (WhatsApp, email, whatever suits you).",
+     es:"Envía el archivo al dispositivo nuevo (WhatsApp, correo, como prefieras)."},
+    {he:"על המכשיר החדש: התקן את האפליקציה לפי ההוראות למעלה.",
+     en:"On the new device: install the app as described above.",
+     es:"En el dispositivo nuevo: instala la app como se explicó arriba."},
+    {he:"📁 ארכיון ← 📥 שחזור מגיבוי.",
+     en:"📁 Archive → 📥 Restore from backup.",
+     es:"📁 Archivo → 📥 Restaurar respaldo."}]},
+  {warn:{he:"חשוב: גבה לפני כל החלפת מכשיר. הנתונים יושבים על המכשיר עצמו, ואין להם עותק במקום אחר.",
+         en:"Important: back up before every device change. The data lives on the device itself and has no copy anywhere else.",
+         es:"Importante: respalda antes de cada cambio de dispositivo. Los datos viven en el dispositivo y no hay copia en ningún otro lado."}},
+
+  {h:{he:"עדכונים עתידיים", en:"Future updates", es:"Actualizaciones futuras"}},
+  {li:[
+    {he:"פתח את האפליקציה עם אינטרנט פעם אחת.",
+     en:"Open the app with internet once.",
+     es:"Abre la app con internet una vez."},
+    {he:"העדכון יתבצע אוטומטית ברקע.",
+     en:"The update installs itself in the background.",
+     es:"La actualización se instala sola en segundo plano."},
+    {he:"הנתונים שלך נשמרים ולא נמחקים בעדכון.",
+     en:"Your data is kept — an update never erases it.",
+     es:"Tus datos se conservan — una actualización nunca los borra."}]}]},
+
+{ id:"move", icon:"🔄",
   title:{he:"העברה למכשיר אחר", en:"Moving to another device", es:"Pasar a otro dispositivo"},
   blocks:[
   {p:{he:"רוצה להשתמש במערכת גם על טאבלט או על מחשב אחר? כך עושים זאת.",
@@ -3050,6 +3309,9 @@ function wire(){
       downloadCsv(S.days,wk);
       logAction("export_excel","log_export_week",{w:wk},{week:wk}); };
     if($("btnPrint")) $("btnPrint").onclick=doPrint;
+    const sb=$("statusBadge");
+    if(sb) sb.onclick=()=>openWarnPop(sb);
+    closeWarnPop();
     closeAwayPop();
     document.querySelectorAll("table.sched .tagbox").forEach(box=>{
       box.onclick=ev=>{
