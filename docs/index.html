@@ -67,26 +67,9 @@ td.cell-yellow select{background:var(--yellow)}
 .msg.err{background:#fdecea;color:var(--danger);border:1px solid #f5b7b1}
 .msg.warn{background:#fef9e7;color:#7d6608;border:1px solid #f7dc6f}
 .msg.ok{background:#eafaf1;color:var(--ok);border:1px solid #a9dfbf}
-/* Warnings live in a drawer off the inline-end edge, never in the schedule
-   itself — a yellow strip between the rows was read as part of the week. */
-.scrim{position:fixed;inset:0;background:rgba(28,39,51,.38);z-index:60}
-.drawer{position:fixed;inset-block:0;inset-inline-end:0;z-index:61;
-  width:min(400px,92vw);background:var(--card);display:flex;flex-direction:column;
-  border-inline-start:1px solid var(--border);box-shadow:-8px 0 28px rgba(28,39,51,.16);
-  transform:translateX(0);animation:drawerIn .18s ease-out}
-@keyframes drawerIn{from{transform:translateX(8%);opacity:.4}to{transform:translateX(0);opacity:1}}
-@media (prefers-reduced-motion:reduce){.drawer{animation:none}}
-.drawer .head{display:flex;align-items:center;gap:10px;padding:14px 16px;
-  position:static;background:var(--card);color:var(--text);
-  border-block-end:1px solid var(--border);border-block-start:3px solid var(--accent)}
-.drawer .head h3{margin:0;font-size:1rem;flex:1;white-space:normal}
-.drawer .body{overflow:auto;padding:12px 16px 24px}
-.drawer .line{padding:9px 12px;margin-block-end:8px;border-radius:8px;font-size:.9rem;
-  line-height:1.5;background:#f8fafc;border-inline-start:3px solid var(--muted)}
-.drawer .line.err{background:#fdecea;color:var(--danger);border-inline-start-color:var(--danger)}
-.drawer .line.warn{background:#fef9e7;color:#7d6608;border-inline-start-color:#f0c000}
-.drawer .line.ok{background:#eafaf1;color:var(--ok);border-inline-start-color:var(--ok)}
-.badge{cursor:pointer}
+/* The badge is the only place warnings surface, and it is a count, not a
+   control — nothing about the schedule opens, expands or turns yellow. */
+.badge{cursor:default}
 /* settings */
 details.sect{border:1px solid var(--border);border-radius:12px;background:#fff;margin-bottom:10px}
 details.sect>summary{cursor:pointer;padding:14px;font-weight:700;color:var(--primary);
@@ -292,7 +275,7 @@ log_settings:"ההגדרות עודכנו",log_add_row:"נוספה השורה \"
 log_export_week:"ייצוא הסידור לשבוע {w}",log_backup:"גיבוי מלא הורד",log_restore:"שוחזר מגיבוי",
 log_cfg_export:"ייצוא הגדרות",log_cfg_import:"ייבוא הגדרות",guide_lead:"מדריך קצר לכל מה שהמערכת יודעת לעשות. פתח פרק כדי לקרוא אותו.",
 week_start:"תחילת שבוע",generate:"צור סידור",auto_assign:"⚡ שיבוץ אוטומטי",save:"💾 שמור",export_excel:"📤 ייצוא Excel",print:"🖨️ הדפסה",
-warn_panel:"הודעות על הסידור",close:"סגור",
+warn_count:"מספר הערות על הסידור",
 warn_sec_cross_group:"{e} שובץ ל-{s} אף שאינו בקבוצה {g}",
 saved:"הסידור נשמר בארכיון",valid:"הסידור תקין ✓",replace_q:"קיים סידור שמור לשבוע זה — להחליף?",yes:"כן",no:"ביטול",
 row_dates:"תאריכים",row_days:"ימים",row_work_hours:"שעות עבודה",row_entry:"כניסה",row_exit:"יציאה",
@@ -400,7 +383,7 @@ log_settings:"Settings updated",log_add_row:"Added the row \"{r}\"",log_del_row:
 log_export_week:"Exported the schedule for {w}",log_backup:"Full backup downloaded",log_restore:"Restored from a backup",
 log_cfg_export:"Settings exported",log_cfg_import:"Settings imported",guide_lead:"A short guide to everything the app can do. Open a chapter to read it.",
 week_start:"Week start",generate:"New Schedule",auto_assign:"⚡ Auto Assign",save:"💾 Save",export_excel:"📤 Export Excel",print:"🖨️ Print",
-warn_panel:"Schedule messages",close:"Close",
+warn_count:"Notes on this schedule",
 warn_sec_cross_group:"{e} was placed at {s} though they are not in group {g}",
 saved:"Schedule saved to archive",valid:"Schedule is valid ✓",replace_q:"A schedule exists for this week — replace?",yes:"Yes",no:"Cancel",
 row_dates:"Dates",row_days:"Days",row_work_hours:"Work Hours",row_entry:"Entry",row_exit:"Exit",
@@ -508,7 +491,7 @@ log_settings:"Configuración actualizada",log_add_row:"Se agregó la fila \"{r}\
 log_export_week:"Se exportó el horario de {w}",log_backup:"Respaldo completo descargado",log_restore:"Restaurado desde un respaldo",
 log_cfg_export:"Configuración exportada",log_cfg_import:"Configuración importada",guide_lead:"Una guía breve de todo lo que hace la app. Abre un capítulo para leerlo.",
 week_start:"Inicio de semana",generate:"Nuevo Horario",auto_assign:"⚡ Asignación Automática",save:"💾 Guardar",export_excel:"📤 Exportar Excel",print:"🖨️ Imprimir",
-warn_panel:"Mensajes del horario",close:"Cerrar",
+warn_count:"Observaciones del horario",
 warn_sec_cross_group:"{e} fue asignado a {s} aunque no pertenece al grupo {g}",
 saved:"Horario guardado en archivo",valid:"El horario es válido ✓",replace_q:"Existe un horario para esta semana — ¿reemplazar?",yes:"Sí",no:"Cancelar",
 row_dates:"Fechas",row_days:"Días",row_work_hours:"Horas de Trabajo",row_entry:"Ingreso",row_exit:"Salida",
@@ -1761,9 +1744,10 @@ function render(){
 /* ═══════════════ screen 1: schedule ═══════════════ */
 function viewSched(){
   const errs=S.days?validate():[];
+  /* the badge counts and nothing more: no panel, no list, nothing to open */
   const badge=S.days?(errs.length
-    ?`<span class="badge bad" id="statusBadge">⚠️ ${errs.length}</span>`
-    :`<span class="badge good" id="statusBadge">✓ ${t("valid_short")}</span>`):"";
+    ?`<span class="badge bad" id="statusBadge" title="${esc(t("warn_count"))}">⚠️ ${errs.length}</span>`
+    :`<span class="badge good" id="statusBadge" title="${esc(t("valid"))}">✓ ${t("valid_short")}</span>`):"";
   let h=`<div class="card row-flex">
     <label>${t("week_start")} <input type="date" id="weekPick" value="${S.weekStart}"></label>
     <button class="btn primary" id="btnGen">🔄 ${t("generate")}</button>
@@ -1793,13 +1777,6 @@ function viewSched(){
     h+=renderRow(rk,keys);
   }
   h+=`</tbody></table></div>`;
-  /* the messages themselves live in the drawer, opened from the badge */
-  h+=`<div class="scrim" id="warnScrim" hidden></div>
-    <aside class="drawer" id="warnDrawer" hidden aria-label="${esc(t("warn_panel"))}">
-      <div class="head"><h3>${t("warn_panel")}</h3>
-        <button class="btn small" id="warnClose" aria-label="${esc(t("close"))}">✕</button></div>
-      <div class="body" id="warnBody">${errLines(errs)}</div>
-    </aside>`;
   return h;
 }
 
@@ -1874,30 +1851,14 @@ function openAwayPop(box){
   window.addEventListener("scroll", closeAwayPop, true);
 }
 
-/* one message per line, for the warnings drawer */
-function errLines(errs){
-  return errs.length
-    ?errs.map(e=>`<div class="line ${e.lvl}">${esc(e.msg)}</div>`).join("")
-    :`<div class="line ok">${t("valid")}</div>`;
-}
-document.addEventListener("keydown",ev=>{
-  if(ev.key==="Escape") openWarnings(false);
-});
-function openWarnings(on){
-  const d=document.getElementById("warnDrawer"), sc=document.getElementById("warnScrim");
-  if(!d||!sc) return;
-  d.hidden=!on; sc.hidden=!on;
-  if(on) document.getElementById("warnClose").focus();
-}
-/* live refresh of badge / error list / save-dot without a full re-render */
+/* live refresh of the badge / save-dot without a full re-render */
 function updateStatus(){
   const b=document.getElementById("statusBadge");
   if(b&&S.days){
     const errs=validate();
     b.className="badge "+(errs.length?"bad":"good");
     b.textContent=errs.length?`⚠️ ${errs.length}`:`✓ ${t("valid_short")}`;
-    const el=document.getElementById("warnBody");
-    if(el) el.innerHTML=errLines(errs);
+    b.title=errs.length?t("warn_count"):t("valid");
   }
   const dot=document.getElementById("saveDot");
   if(dot) dot.style.display=S.dirty?"inline-block":"none";
@@ -2755,9 +2716,9 @@ const GUIDE = [
   {p:{he:"בראש הדף מופיע סימן מצב: ✓ תקין בירוק, או ⚠️ עם מספר באדום.",
       en:"A status badge sits at the top: ✓ Valid in green, or ⚠️ with a number in red.",
       es:"Arriba hay una insignia: ✓ Válido en verde, o ⚠️ con un número en rojo."}},
-  {p:{he:"לחץ על הסימן וייפתח פאנל בצד עם כל ההודעות. סגירה: ✕ או מקש Esc.",
-      en:"Click the badge and a side panel opens with every message. Close it with ✕ or Esc.",
-      es:"Pulsa la insignia y se abre un panel lateral con todos los mensajes. Ciérralo con ✕ o Esc."}},
+  {p:{he:"הסימן מראה כמה הערות יש — הוא אינו נפתח, והסידור עצמו נשאר נקי.",
+      en:"The badge shows how many notes there are — it does not open, and the schedule itself stays clean.",
+      es:"La insignia indica cuántas observaciones hay — no se abre, y el horario queda limpio."}},
   {p:{he:"הודעות נפוצות: עובד שובץ ביום שהוא בחופשה, יעד שבועי שלא הושג, או ערך שאינו תואם לכלל שהגדרת.",
       en:"Common messages: someone placed on a day they are away, a weekly quota not met, or a value that breaks a rule you set.",
       es:"Mensajes comunes: alguien asignado en un día ausente, una meta no cumplida, o un valor que rompe una regla."}},
@@ -3089,10 +3050,6 @@ function wire(){
       downloadCsv(S.days,wk);
       logAction("export_excel","log_export_week",{w:wk},{week:wk}); };
     if($("btnPrint")) $("btnPrint").onclick=doPrint;
-    const sb=$("statusBadge");
-    if(sb) sb.onclick=()=>openWarnings($("warnDrawer")&&$("warnDrawer").hidden);
-    if($("warnClose")) $("warnClose").onclick=()=>openWarnings(false);
-    if($("warnScrim")) $("warnScrim").onclick=()=>openWarnings(false);
     closeAwayPop();
     document.querySelectorAll("table.sched .tagbox").forEach(box=>{
       box.onclick=ev=>{
