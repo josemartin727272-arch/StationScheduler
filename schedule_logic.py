@@ -148,6 +148,17 @@ def validate_schedule(schedule: dict, lang: str = "he") -> list:
                     errors.append(f"{d_str}: " + t(
                         "warn_sec_min", lang, w=cfg.workplace_name(wp),
                         s=cfg.section_label(wp, sec), n=floor))
+            # a borrowed hand is legitimate but worth naming
+            for sec in cfg.workplace_sections(wp):
+                group = cfg.group_by_id(sec.get("group_id"))
+                if not group or not cfg.section_size(sec):
+                    continue
+                roster = cfg.group_employees(sec.get("group_id"))
+                for e in [x for x in str(day.get(sec["row_key"], "")).split("+") if x]:
+                    if e not in roster:
+                        errors.append(f"{d_str}: " + t(
+                            "warn_sec_cross_group", lang, e=e,
+                            s=cfg.section_label(wp, sec), g=cfg.group_name(group)))
             wp_floor = cfg.workplace_min_sections(wp)
             staffed = len([s for s in cfg.workplace_sections(wp)
                            if cfg.section_size(s) and day.get(s["row_key"])])
@@ -275,12 +286,12 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
 
     away = cfg.away_today(day)      # vacation and trip both mean unavailable
 
-    def _pick(sec, busy, n):
+    def _pick(sec, busy, n, any_group=False):
         """Place exactly n names in a section, or "" when even that fails."""
         if not cfg.section_size(sec):
             return ""
         want = max(1, min(n, cfg.section_target(sec)))
-        group = cfg.group_by_id(sec.get("group_id"))
+        group = None if any_group else cfg.group_by_id(sec.get("group_id"))
         pool = [e for e in (cfg.group_employees(sec.get("group_id"))
                             if group else cfg.all_employees())
                 if e not in away and e != other_empl and e not in busy]
@@ -367,7 +378,9 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
         # They go first — a role marked required outranks every other row here.
         trial, busy, ok = {}, set(taken), True
         for sec in [s for s in open_secs() if cfg.section_required(s)]:
-            choice = _pick(sec, busy, max(1, cfg.section_min(sec)))
+            floor = max(1, cfg.section_min(sec))
+            # its own group first; borrowing beats standing the workplace down
+            choice = _pick(sec, busy, floor) or _pick(sec, busy, floor, True)
             if not choice:
                 ok = False
                 break
@@ -396,14 +409,20 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
             owed = _owed_after(idx, taken)
             slack = lambda s: (_free_in(s.get("group_id"), taken)
                                - owed.get(s.get("group_id") or "", 0))
-            for sec in sorted(open_secs(), key=lambda s: -slack(s)):
-                if staffed() >= floor:
-                    break
-                choice = _pick(sec, taken, 1)
-                if not choice:
-                    continue
-                day[sec["row_key"]] = choice
-                taken.update(e for e in str(choice).split("+") if e)
+            by_slack = sorted(open_secs(), key=lambda s: -slack(s))
+            # own groups first; only if the floor is still out of reach does a
+            # role borrow from another group — an unstaffed workplace is worse
+            for any_group in (False, True):
+                for sec in by_slack:
+                    if staffed() >= floor:
+                        break
+                    if day.get(sec["row_key"]):
+                        continue
+                    choice = _pick(sec, taken, 1, any_group)
+                    if not choice:
+                        continue
+                    day[sec["row_key"]] = choice
+                    taken.update(e for e in str(choice).split("+") if e)
 
     # Pass 2 — the discretionary half: top staffed rows up to max_workers, then
     # fill whatever optional rows are still open, priority order again.
@@ -418,6 +437,21 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
             if day.get(sec["row_key"]):
                 continue
             choice = _pick_spare(sec, taken, 1, owed)
+            if not choice:
+                continue
+            day[sec["row_key"]] = choice
+            taken.update(e for e in str(choice).split("+") if e)
+
+    # Nobody sits idle while a role stands empty: whoever is still unplaced
+    # fills what is left, group or no group. This only ever fires when the
+    # station has more open roles than the matching groups can cover.
+    for wp in order:
+        if wp["id"] in skipped:
+            continue
+        for sec in wp_rows[wp["id"]]:
+            if day.get(sec["row_key"]):
+                continue
+            choice = _pick(sec, taken, 1, True)
             if not choice:
                 continue
             day[sec["row_key"]] = choice
