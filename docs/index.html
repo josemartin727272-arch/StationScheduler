@@ -116,13 +116,13 @@ details.sect>.inner{padding:0 14px 14px}
 .dot{width:10px;height:10px;background:#e67e22;border-radius:50%;
   display:inline-block;margin-inline-start:6px;vertical-align:middle}
 /* drag list */
-#orderList{list-style:none;margin:0;padding:0;user-select:none}
-#orderList li{display:flex;align-items:center;gap:10px;background:#fff;
+#orderList,#assignList{list-style:none;margin:0 0 14px;padding:0;user-select:none}
+#orderList li,#assignList li{display:flex;align-items:center;gap:10px;background:#fff;
   border:1px solid var(--border);border-radius:10px;padding:8px 12px;margin-bottom:6px;
   font-size:.92rem;touch-action:none}
-#orderList li.dragging{opacity:.5;border-style:dashed;background:#eef6ff}
-#orderList .handle{cursor:grab;font-size:1.2rem;color:var(--muted);padding:4px 8px}
-#orderList .updown{margin-inline-start:auto;display:flex;gap:4px}
+#orderList li.dragging,#assignList li.dragging{opacity:.5;border-style:dashed;background:#eef6ff}
+#orderList .handle,#assignList .handle{cursor:grab;font-size:1.2rem;color:var(--muted);padding:4px 8px}
+#orderList .updown,#assignList .updown{margin-inline-start:auto;display:flex;gap:4px}
 /* archive */
 .arch-item{display:flex;align-items:center;gap:8px;padding:10px;border-bottom:1px solid var(--border);flex-wrap:wrap}
 .arch-item:last-child{border-bottom:none}
@@ -332,7 +332,9 @@ wp_sections:"תפקידים במקום העבודה",wp_sec_add:"➕ הוסף ת
 wp_sec_group:"קבוצה",wp_notes:"הערות לוגיקת שיבוץ (עזר בלבד)",
 wp_notes_hint:"לוגיקת שיבוץ מפורטת — הגדר בשדה ההערות. המערכת לא אוכפת אותה.",
 wp_priority:"סדר עדיפות",wp_sec_required:"חובה לשיבוץ",
-wp_prio_hint:"מקומות עבודה משובצים לפי סדר עדיפות. אם תפקיד חובה לא מאויש — המקום כולו מדולג.",
+wp_prio_hint:"סדר העדיפות קובע את סדר ההתחלה של רשימת השיבוץ בלבד. הסדר בפועל נקבע ברשימה למטה.",
+asg_order:"סדר שיבוץ",
+asg_order_hint:"התפקידים משובצים בסדר הזה, אחד אחרי השני. גרור כדי לשנות — מה שלמעלה מקבל עובד ראשון.",
 warn_wp_skipped:"מקום {w} לא אויש — אין עובדים זמינים לתפקיד חובה {s}",
 warn_sec_min:"מקום {w}: תפקיד {s} זקוק לפחות {n} עובדים",
 warn_wp_min_sections:"מקום {w}: רק {c} תפקידים מאוישים, נדרשים לפחות {n}",
@@ -438,7 +440,9 @@ wp_sections:"Roles at this workplace",wp_sec_add:"➕ Add role",wp_sec_name:"Rol
 wp_sec_group:"Group",wp_notes:"Assignment logic notes (reference only)",
 wp_notes_hint:"Detailed assignment logic — write it in the notes field. The app does not enforce it.",
 wp_priority:"Priority",wp_sec_required:"Required",
-wp_prio_hint:"Workplaces are staffed in priority order. If a required role cannot be filled, the whole workplace is skipped.",
+wp_prio_hint:"Priority only seeds the staffing list below. The list itself decides the order.",
+asg_order:"Staffing order",
+asg_order_hint:"Roles are staffed in this order, one after another. Drag to change it — whatever sits higher is served first.",
 warn_wp_skipped:"{w} was not staffed — no employee available for the required role {s}",
 warn_sec_min:"{w}: role {s} needs at least {n} employees",
 warn_wp_min_sections:"{w}: only {c} roles staffed, at least {n} required",
@@ -544,7 +548,9 @@ wp_sections:"Puestos en este lugar",wp_sec_add:"➕ Agregar puesto",wp_sec_name:
 wp_sec_group:"Grupo",wp_notes:"Notas de lógica de asignación (solo referencia)",
 wp_notes_hint:"Lógica de asignación detallada — escríbela en las notas. La app no la impone.",
 wp_priority:"Prioridad",wp_sec_required:"Obligatorio",
-wp_prio_hint:"Los lugares se cubren por orden de prioridad. Si un puesto obligatorio no se cubre, se omite todo el lugar.",
+wp_prio_hint:"La prioridad solo genera la lista de abajo. La lista es la que decide el orden.",
+asg_order:"Orden de asignación",
+asg_order_hint:"Los puestos se cubren en este orden, uno tras otro. Arrastra para cambiarlo — lo que está arriba se cubre primero.",
 warn_wp_skipped:"{w} no fue cubierto — no hay empleado disponible para el puesto obligatorio {s}",
 warn_sec_min:"{w}: el puesto {s} necesita al menos {n} empleados",
 warn_wp_min_sections:"{w}: solo {c} puestos cubiertos, se requieren al menos {n}",
@@ -705,6 +711,9 @@ const DEFAULT_CONFIG = {
   max_daily_absence: 2,
   /* free-text station notes; documentation only, never read by the logic */
   assign_notes: "",
+  /* the order roles are staffed in. Empty or missing ⇒ built from the
+     workplaces in priority order, so an older config keeps working. */
+  assignment_order: ["emb_il", "apt_il", "emb_pe", "apt_pe"],
   row_order: [],
   row_labels: {},
   /* built-in rows the user deleted; every row may be deleted, so this is the
@@ -945,6 +954,7 @@ function migrateConfig(cfg, raw){
     if(out.length) cfg.weekly_targets=out;
   }
   cfg.removed_rows=(cfg.removed_rows||[]).filter(Boolean);
+  cfg.assignment_order=(cfg.assignment_order||[]).filter(Boolean);
   cfg.max_daily_absence=Math.max(0,Math.min(20,parseInt(cfg.max_daily_absence,10)||0));
   cfg.weekly_targets=(cfg.weekly_targets||[]).filter(x=>x&&x.field)
     .map(x=>({field:x.field, value:x.value||"", count:Math.max(0,parseInt(x.count,10)||0)}));
@@ -1127,6 +1137,16 @@ function sectionLabel(x){
 }
 function newId(prefix){ return prefix+Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
 /* how many employees a section takes; 0 means "never assign this row" */
+/* The staffing order: whatever the settings page holds, then any role it has
+   not heard of yet, in workplace-priority order. A config with no list at all
+   therefore behaves exactly as it did before the list existed. */
+function assignmentOrder(){
+  const live=new Map(allSections().map(x=>[x.sec.row_key,x]));
+  const out=[];
+  (CFG.assignment_order||[]).forEach(rk=>{ if(live.has(rk)&&out.indexOf(rk)<0) out.push(rk); });
+  live.forEach((x,rk)=>{ if(out.indexOf(rk)<0) out.push(rk); });
+  return out.map(rk=>live.get(rk));
+}
 /* how many of a workplace's roles must end up staffed, capped by how many
    roles it actually has switched on */
 function wpMinSections(w){
@@ -1500,13 +1520,11 @@ function autoAssign(){
         day[af]=pickAxis(vf, day[vf], H(af));
     });
 
-    /* Workplaces in priority order. Each section draws from its own group,
-       skipping anyone on vacation, on another task, or already placed today,
-       so nobody is booked twice in one day. max_workers decides how many names
-       the row holds: 0 skips it, 1 is a single employee, 2+ join with "+".
-       A workplace whose required sections cannot all be filled is skipped
-       whole — its optional rows stay empty too, and the people it would have
-       used stay free for the workplaces below it. */
+    /* Roles in the configured staffing order. Each one draws from its own
+       group, skipping anyone on vacation, on another task, or already placed
+       today, so nobody is booked twice in one day. max_workers decides how
+       many names the row holds: 0 skips it, 1 is a single employee, 2+ join
+       with "+" once the second lap gets to it. */
     const taken=new Set();
     /* whatever is already on the day (manual or quota-placed) is spoken for */
     secs.forEach(x=>{ const v=day[x.sec.row_key];
@@ -1540,117 +1558,21 @@ function autoAssign(){
       day[sec.row_key]=have.concat(String(add).split("+").filter(Boolean)).join("+");
       String(add).split("+").forEach(e=>busy.add(e));
     };
-    const wpRows=new Map(), skipped=new Set(), order=activeWorkplaces();
-    order.forEach(w=>
-      wpRows.set(w, wpSections(w).filter(sec=>free(sec.row_key)&&sectionSize(sec)>0)));
-    const groupOf=sec=>sec.group_id||"";
-    /* people of a group still up for grabs right now */
-    const freeIn=(gid,busy)=>{
-      const g=groupById(gid);
-      return (g?groupEmps(g.id):allEmps())
-        .filter(e=>!away.has(e)&&e!==other&&!busy.has(e)).length;
-    };
-    /* The planning step: heads each group still owes to the minimums of the
-       workplaces further down the priority list. A workplace may spend these
-       on its own minimum — priority decides that — but never on a spare. */
-    const owedAfter=(idx,busy)=>{
-      const need=new Map(), add=(gid,n)=>need.set(gid,(need.get(gid)||0)+n);
-      order.slice(idx+1).forEach(w2=>{
-        const rows=wpRows.get(w2), open=rows.filter(sec=>!day[sec.row_key]);
-        const req=open.filter(sec=>sec.required);
-        req.forEach(sec=>add(groupOf(sec),Math.max(1,sectionMin(sec))));
-        /* one head per role it is still short of, taken from whichever role
-           has the most people free — that is the one it will actually use */
-        let short=wpMinSections(w2)-rows.filter(sec=>day[sec.row_key]).length-req.length;
-        open.filter(sec=>!sec.required)
-          .sort((a,b)=>freeIn(groupOf(b),busy)-freeIn(groupOf(a),busy))
-          .forEach(sec=>{ if(short>0){ add(groupOf(sec),1); short--; } });
-      });
-      return need;
-    };
-    /* a spare head: taken only from what no later workplace is counting on */
-    const pickSpare=(sec,busy,n,owed)=>{
-      const slack=freeIn(groupOf(sec),busy)-(owed.get(groupOf(sec))||0);
-      return slack<1?"":pickN(sec,busy,Math.min(n,slack));
-    };
-    /* Pass 1 — in priority order, every workplace takes only what it must, so
-       a high-priority workplace cannot spend the people a later one needs to
-       reach its own minimum. Pass 2 hands out the spares afterwards. */
-    order.forEach((w,idx)=>{
-      const list=wpRows.get(w);
-      const open=()=>list.filter(sec=>!day[sec.row_key]);
-      /* required rows are hard: all of them, or the workplace is skipped whole.
-         They go first — a role marked required outranks every other row here. */
-      const trial=new Map(), busy=new Set(taken);
-      let ok=true;
-      for(const sec of open().filter(sec=>sec.required)){
-        const floor=Math.max(1,sectionMin(sec));
-        /* its own group first; borrowing beats standing the workplace down */
-        const c=pickN(sec,busy,floor)||pickN(sec,busy,floor,true);
-        if(!c){ ok=false; break; }
-        trial.set(sec.row_key,c);
-        String(c).split("+").forEach(e=>busy.add(e));
-      }
-      if(!ok){ skipped.add(w); return; }   // whole workplace skipped today
-      trial.forEach((v,rk)=>{ day[rk]=v; });
-      busy.forEach(e=>taken.add(e));
-      /* rows carrying their own daily floor come next — preferred, but soft:
-         one that cannot be filled leaves the workplace standing, because the
-         "at least N roles" rule below decides whether the workplace is short */
-      for(const sec of open().filter(sec=>sectionMin(sec)>0)){
-        const c=pickN(sec,taken,sectionMin(sec));
-        if(!c) continue;
-        day[sec.row_key]=c;
-        String(c).split("+").forEach(e=>taken.add(e));
-      }
-      /* "at least N roles staffed": fill roles until the floor is reached,
-         starting with the one whose group the workplaces below need least —
-         staffing this one through PE when IL is idle would starve them */
-      const filled=()=>list.filter(sec=>day[sec.row_key]).length;
-      if(filled()<wpMinSections(w)){
-        const owed=owedAfter(idx,taken);
-        const slack=sec=>freeIn(groupOf(sec),taken)-(owed.get(groupOf(sec))||0);
-        const bySlack=open().slice().sort((a,b)=>slack(b)-slack(a));
-        /* own groups first; only if the floor is still out of reach does a
-           role borrow from another group — an unstaffed workplace is worse */
-        for(const anyGroup of [false,true])
-          for(const sec of bySlack){
-            if(filled()>=wpMinSections(w)) break;
-            if(day[sec.row_key]) continue;
-            const c=pickN(sec,taken,1,anyGroup);
-            if(!c) continue;
-            day[sec.row_key]=c;
-            String(c).split("+").forEach(e=>taken.add(e));
-          }
-      }
-    });
-    /* Pass 2 — the discretionary half: top staffed rows up to max_workers,
-       then fill whatever optional rows are still open, priority order again */
-    order.forEach((w,idx)=>{
-      if(skipped.has(w)) return;
-      const list=wpRows.get(w), owed=owedAfter(idx,taken);
-      list.forEach(sec=>{ if(day[sec.row_key]) topUp(sec,taken,owed); });
-      list.forEach(sec=>{
-        if(day[sec.row_key]) return;
-        const c=pickSpare(sec,taken,1,owed);
-        if(!c) return;
-        day[sec.row_key]=c;
-        String(c).split("+").forEach(e=>taken.add(e));
-      });
-    });
-    /* Nobody sits idle while a role stands empty: whoever is still unplaced
-       fills what is left, group or no group. This only ever fires when the
-       station has more open roles than the matching groups can cover. */
-    order.forEach(w=>{
-      if(skipped.has(w)) return;
-      wpRows.get(w).forEach(sec=>{
-        if(day[sec.row_key]) return;
-        const c=pickN(sec,taken,1,true);
-        if(!c) return;
-        day[sec.row_key]=c;
-        String(c).split("+").forEach(e=>taken.add(e));
-      });
-    });
+    /* One list, one order. Every role is staffed in the order the settings
+       page shows, one person each, from its own group — and that is the whole
+       rule. Whatever the order says is what happens. */
+    const orderSecs=assignmentOrder()
+      .filter(x=>free(x.sec.row_key)&&sectionSize(x.sec)>0);
+    for(const x of orderSecs){
+      if(day[x.sec.row_key]) continue;
+      const c=pickN(x.sec,taken,1);
+      if(!c) continue;
+      day[x.sec.row_key]=c;
+      String(c).split("+").forEach(e=>taken.add(e));
+    }
+    /* a second lap down the same list hands the roles that take more than one
+       person their extra hands, out of whoever is still free */
+    for(const x of orderSecs) topUp(x.sec,taken);
 
     if(free("arrival_point")&&!day.arrival_point) day.arrival_point=leastUsed(opts("arrival_point"),H("arrival_point"),"arrival_point");
     if(free("wait_morning")&&!day.wait_morning) day.wait_morning=leastUsed(waitVals,H("wait_morning"),"wait_spot");
@@ -2064,7 +1986,19 @@ function groupsPanel(){
 /* workplaces and the roles (sections) inside each one */
 function workplacesPanel(){
   const act=activeWorkplaces();
-  let h=`<div class="hint">${t("wp_prio_hint")}</div><div class="hint">${t("wp_notes_hint")}</div>`;
+  let h=`<h3>${t("asg_order")}</h3><div class="hint">${t("asg_order_hint")}</div>
+    <ul id="assignList">`;
+  const ord=assignmentOrder();
+  ord.forEach((x,i)=>{
+    h+=`<li data-akey="${esc(x.sec.row_key)}"><span class="handle">⠿</span>
+      <span>${i+1}. ${esc(sectionLabel(x))}</span>
+      <span class="updown">
+        <button class="btn small" data-aup="${i}" ${i===0?"disabled":""}>↑</button>
+        <button class="btn small" data-adn="${i}" ${i===ord.length-1?"disabled":""}>↓</button>
+      </span></li>`;
+  });
+  h+=`</ul>
+    <div class="hint">${t("wp_prio_hint")}</div><div class="hint">${t("wp_notes_hint")}</div>`;
   if(!act.length) h+=`<div class="msg warn">${t("wp_none")}</div>`;
   act.forEach((w,i)=>{
     h+=`<div class="pct-box">
@@ -2810,8 +2744,9 @@ const GUIDE = [
      en:"The history of the last 90 days.", es:"El historial de los últimos 90 días."},
     {he:"מי בחופשה — הוא לא ישובץ.",
      en:"Who is away — they are not placed.", es:"Quién está ausente — no se le asigna."},
-    {he:"סדר העדיפות של מקומות העבודה.",
-     en:"The priority order of the workplaces.", es:"El orden de prioridad de los lugares."}]},
+    {he:"סדר השיבוץ שקבעת בהגדרות — התפקיד שלמעלה מקבל עובד ראשון.",
+     en:"The staffing order you set in Settings — the role at the top is served first.",
+     es:"El orden de asignación que fijaste en Ajustes — el puesto de arriba se cubre primero."}]},
   {p:{he:"אחרי השיבוץ — עבור על הסידור ותקן ידנית מה שצריך. אפשר ללחוץ שוב על שיבוץ אוטומטי בכל רגע.",
       en:"After it runs, look the schedule over and fix anything by hand. You can press Auto Assign again at any time.",
       es:"Después, revisa el horario y corrige a mano lo que haga falta. Puedes volver a pulsar Asignación Automática cuando quieras."}},
@@ -3447,6 +3382,47 @@ function wireSettings(){
     CFG.row_order=order; saveConfig(); render();
     reopen("order");
   });
+  /* staffing order: the same two ways of moving a line as the row order —
+     the arrows for precision, the handle for speed */
+  document.querySelectorAll("[data-aup],[data-adn]").forEach(b=>b.onclick=()=>{
+    const keys=assignmentOrder().map(x=>x.sec.row_key);
+    const i=parseInt(b.dataset.aup!=null?b.dataset.aup:b.dataset.adn,10);
+    const j=b.dataset.aup!=null?i-1:i+1;
+    if(j<0||j>=keys.length) return;
+    [keys[i],keys[j]]=[keys[j],keys[i]];
+    CFG.assignment_order=keys; saveConfig(); render(); reopen("workplaces");
+  });
+  const alist=document.getElementById("assignList");
+  if(alist){
+    alist.querySelectorAll(".handle").forEach(hd=>{
+      hd.addEventListener("pointerdown",ev=>{
+        ev.preventDefault();
+        window.__aDragEl=hd.closest("li");
+        window.__aDragEl.classList.add("dragging");
+      });
+    });
+    if(!window.__assignDragWired){
+      window.__assignDragWired=true;
+      document.addEventListener("pointermove",ev=>{
+        const el=window.__aDragEl, lst=document.getElementById("assignList");
+        if(!el||!lst) return;
+        ev.preventDefault();
+        const els=[...lst.querySelectorAll("li:not(.dragging)")];
+        const after=els.find(x=>{ const r=x.getBoundingClientRect(); return ev.clientY<r.top+r.height/2; });
+        if(after) lst.insertBefore(el,after); else lst.appendChild(el);
+      },{passive:false});
+      const finishA=()=>{
+        const el=window.__aDragEl, lst=document.getElementById("assignList");
+        if(!el) return;
+        window.__aDragEl=null; el.classList.remove("dragging");
+        if(!lst) return;
+        CFG.assignment_order=[...lst.querySelectorAll("li")].map(li=>li.dataset.akey);
+        saveConfig(); render(); reopen("workplaces");
+      };
+      document.addEventListener("pointerup",finishA);
+      document.addEventListener("pointercancel",finishA);
+    }
+  }
   /* row order: pointer drag (move/up listeners live on document so the drop
      is caught wherever the finger/cursor is released) */
   const list=document.getElementById("orderList");

@@ -243,9 +243,9 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
     Everything comes from the configuration:
     - each workplace section draws from its own employee group
     - nobody is booked twice on the same day
-    - workplaces are staffed in priority order
+    - roles are staffed in cfg.assignment_order(), one person each, then a
+      second lap grows the ones that take more than one
     - a section holds max_workers employees, joined with "+" when 2 or more
-    - a workplace whose required sections cannot be filled is skipped whole
     - taxis are assigned later (once the vehicle type is known) in
       auto_assign_week_vehicles_udex
     """
@@ -274,10 +274,9 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
             day[axis_field] = _pick_axis(
                 value_field, day.get(value_field, ""), history.get(axis_field, {}))
 
-    # ── workplaces in priority order ────────────────────────────────────────
-    # A workplace whose required sections cannot all be filled is skipped
-    # whole — its optional rows stay empty too, and the people it would have
-    # used stay free for the workplaces below it.
+    # ── roles, in the configured staffing order ─────────────────────────────
+    # The list in Settings is the whole rule: each role is offered whoever is
+    # still free from its own group, in the order the list shows.
     governed = cfg.governed_fields()
     taken = set()
     for _, sec in cfg.all_sections():          # whatever is already placed
@@ -324,138 +323,22 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
         day[sec["row_key"]] = "+".join(have + [e for e in str(add).split("+") if e])
         busy.update(e for e in str(add).split("+") if e)
 
-    order = cfg.active_workplaces()
-    wp_rows, skipped = {}, set()
-    for wp in order:
-        wp_rows[wp["id"]] = [s for s in cfg.workplace_sections(wp)
-                             if cfg.section_size(s) and s["row_key"] not in governed]
-
-    def _free_in(gid, busy):
-        """People of a group still up for grabs right now."""
-        group = cfg.group_by_id(gid)
-        pool = cfg.group_employees(gid) if group else cfg.all_employees()
-        return len([e for e in pool
-                    if e not in away and e != other_empl and e not in busy])
-
-    def _owed_after(idx, busy):
-        """The planning step: heads each group still owes to the minimums of the
-        workplaces further down the priority list. A workplace may spend these
-        on its own minimum — priority decides that — but never on a spare."""
-        need = {}
-        for wp2 in order[idx + 1:]:
-            rows = wp_rows[wp2["id"]]
-            open_rows = [s for s in rows if not day.get(s["row_key"])]
-            req = [s for s in open_rows if cfg.section_required(s)]
-            for sec in req:
-                gid = sec.get("group_id") or ""
-                need[gid] = need.get(gid, 0) + max(1, cfg.section_min(sec))
-            # one head per role it is still short of, taken from whichever role
-            # has the most people free — that is the one it will actually use
-            short = (cfg.workplace_min_sections(wp2)
-                     - len([s for s in rows if day.get(s["row_key"])]) - len(req))
-            for sec in sorted((s for s in open_rows if not cfg.section_required(s)),
-                              key=lambda s: -_free_in(s.get("group_id"), busy)):
-                if short <= 0:
-                    break
-                gid = sec.get("group_id") or ""
-                need[gid] = need.get(gid, 0) + 1
-                short -= 1
-        return need
-
-    def _pick_spare(sec, busy, n, owed):
-        """A spare head: only from what no later workplace is counting on."""
-        slack = (_free_in(sec.get("group_id"), busy)
-                 - owed.get(sec.get("group_id") or "", 0))
-        return "" if slack < 1 else _pick(sec, busy, min(n, slack))
-
-    # Pass 1 — in priority order, every workplace takes only what it must, so a
-    # high-priority workplace cannot spend the people a later one needs to reach
-    # its own minimum. Pass 2 hands out the spares afterwards.
-    for idx, wp in enumerate(order):
-        rows = wp_rows[wp["id"]]
-        open_secs = lambda: [s for s in rows if not day.get(s["row_key"])]
-        # required rows are hard: all of them, or the workplace is skipped whole.
-        # They go first — a role marked required outranks every other row here.
-        trial, busy, ok = {}, set(taken), True
-        for sec in [s for s in open_secs() if cfg.section_required(s)]:
-            floor = max(1, cfg.section_min(sec))
-            # its own group first; borrowing beats standing the workplace down
-            choice = _pick(sec, busy, floor) or _pick(sec, busy, floor, True)
-            if not choice:
-                ok = False
-                break
-            trial[sec["row_key"]] = choice
-            busy.update(e for e in str(choice).split("+") if e)
-        if not ok:
-            skipped.add(wp["id"])
-            continue                            # whole workplace skipped today
-        day.update(trial)
-        taken |= busy
-        # rows carrying their own daily floor come next — preferred, but soft:
-        # one that cannot be filled leaves the workplace standing, because the
-        # "at least N roles" rule below decides whether the workplace is short
-        for sec in [s for s in open_secs() if cfg.section_min(s) > 0]:
-            choice = _pick(sec, taken, cfg.section_min(sec))
-            if not choice:
-                continue
-            day[sec["row_key"]] = choice
-            taken.update(e for e in str(choice).split("+") if e)
-        # "at least N roles staffed": fill roles until the floor is reached,
-        # starting with the one whose group the workplaces below need least —
-        # staffing this one through PE when IL is idle would starve them
-        floor = cfg.workplace_min_sections(wp)
-        staffed = lambda: len([s for s in rows if day.get(s["row_key"])])
-        if staffed() < floor:
-            owed = _owed_after(idx, taken)
-            slack = lambda s: (_free_in(s.get("group_id"), taken)
-                               - owed.get(s.get("group_id") or "", 0))
-            by_slack = sorted(open_secs(), key=lambda s: -slack(s))
-            # own groups first; only if the floor is still out of reach does a
-            # role borrow from another group — an unstaffed workplace is worse
-            for any_group in (False, True):
-                for sec in by_slack:
-                    if staffed() >= floor:
-                        break
-                    if day.get(sec["row_key"]):
-                        continue
-                    choice = _pick(sec, taken, 1, any_group)
-                    if not choice:
-                        continue
-                    day[sec["row_key"]] = choice
-                    taken.update(e for e in str(choice).split("+") if e)
-
-    # Pass 2 — the discretionary half: top staffed rows up to max_workers, then
-    # fill whatever optional rows are still open, priority order again.
-    for idx, wp in enumerate(order):
-        if wp["id"] in skipped:
+    # One list, one order. Every role is staffed in the order the settings page
+    # shows, one person each, from its own group — and that is the whole rule.
+    order_secs = [(w, sec) for w, sec in cfg.assignment_order()
+                  if cfg.section_size(sec) and sec["row_key"] not in governed]
+    for _wp, sec in order_secs:
+        if day.get(sec["row_key"]):
             continue
-        owed = _owed_after(idx, taken)
-        for sec in wp_rows[wp["id"]]:
-            if day.get(sec["row_key"]):
-                _top_up(sec, taken, owed)
-        for sec in wp_rows[wp["id"]]:
-            if day.get(sec["row_key"]):
-                continue
-            choice = _pick_spare(sec, taken, 1, owed)
-            if not choice:
-                continue
-            day[sec["row_key"]] = choice
-            taken.update(e for e in str(choice).split("+") if e)
-
-    # Nobody sits idle while a role stands empty: whoever is still unplaced
-    # fills what is left, group or no group. This only ever fires when the
-    # station has more open roles than the matching groups can cover.
-    for wp in order:
-        if wp["id"] in skipped:
+        choice = _pick(sec, taken, 1)
+        if not choice:
             continue
-        for sec in wp_rows[wp["id"]]:
-            if day.get(sec["row_key"]):
-                continue
-            choice = _pick(sec, taken, 1, True)
-            if not choice:
-                continue
-            day[sec["row_key"]] = choice
-            taken.update(e for e in str(choice).split("+") if e)
+        day[sec["row_key"]] = choice
+        taken.update(e for e in str(choice).split("+") if e)
+    # a second lap down the same list hands the roles that take more than one
+    # person their extra hands, out of whoever is still free
+    for _wp, sec in order_secs:
+        _top_up(sec, taken, {})
 
     # ── Arrival point ───────────────────────────────────────────────────────
     if "arrival_point" not in gov and not day.get("arrival_point"):

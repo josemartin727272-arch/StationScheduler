@@ -190,6 +190,9 @@ DEFAULTS = {
     "max_daily_absence": 2,
     # Free-text station notes; documentation only, never read by the logic.
     "assign_notes": "",
+    # The order roles are staffed in. Empty or missing ⇒ built from the
+    # workplaces in priority order, so an older config keeps working.
+    "assignment_order": ["emb_il", "apt_il", "emb_pe", "apt_pe"],
     # Display order of schedule rows (keys). Empty ⇒ natural order.
     # Keys not listed here are appended at the end; unknown/stale keys are
     # ignored. "dates"/"days" always first.
@@ -568,6 +571,19 @@ def section_size(sec: dict) -> int:
         return max(0, min(10, int(sec.get("max_workers", 1))))
     except (TypeError, ValueError):
         return 1
+
+
+def assignment_order() -> list:
+    """The staffing order as (workplace, section) pairs: whatever the settings
+    page holds, then any role it has not heard of yet, in priority order. A
+    config with no list behaves exactly as it did before the list existed."""
+    live = {s["row_key"]: (w, s) for w, s in all_sections()}
+    out = []
+    for rk in get_config().get("assignment_order") or []:
+        if rk in live and rk not in out:
+            out.append(rk)
+    out += [rk for rk in live if rk not in out]
+    return [live[rk] for rk in out]
 
 
 def workplace_min_sections(w: dict) -> int:
