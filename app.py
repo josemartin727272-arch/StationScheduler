@@ -168,6 +168,9 @@ if st.session_state.page == "settings":
                 col.number_input(emp, min_value=0, max_value=365,
                     value=int(VACATION_BUDGET.get(emp, cfg.default_vacation_budget(emp))),
                     key=f"vb_{emp}")
+            st.number_input(t("max_absence", lang), min_value=0, max_value=20,
+                            value=cfg.max_daily_absence(), key="max_absence",
+                            help=t("max_absence_hint", lang))
             if st.form_submit_button("💾 " + t("save_settings", lang), type="primary"):
                 roster = []
                 for g in config["groups"]:
@@ -184,6 +187,8 @@ if st.session_state.page == "settings":
                     vb[emp] = int(st.session_state.get(f"vb_{emp}",
                         config["vacation_budget"].get(emp, 30)))
                 config["vacation_budget"] = vb
+                config["max_daily_absence"] = int(
+                    st.session_state.get("max_absence", 2))
                 cfg.save_config(config)
                 st.success("✅ " + t("settings_saved", lang))
                 st.rerun()
@@ -228,7 +233,7 @@ if st.session_state.page == "settings":
                 st.markdown("**" + t("wp_sections", lang) + "**")
                 for sec in w.get("sections", []):
                     sid = sec["id"]
-                    s1, s2, s3, s5, s4 = st.columns([3, 2, 2, 2, 1])
+                    s1, s2, s3, s6, s5, s4 = st.columns([3, 2, 2, 2, 2, 1])
                     s1.text_input(t("wp_sec_name", lang), value=sec.get("name", ""),
                                   key=f"scname_{sid}")
                     s2.selectbox(t("wp_sec_group", lang), act_gids,
@@ -236,6 +241,8 @@ if st.session_state.page == "settings":
                         key=f"scgroup_{sid}", format_func=lambda g: cfg.group_name(cfg.group_by_id(g)))
                     s3.number_input(t("wp_sec_size", lang), min_value=0, max_value=10,
                                     value=cfg.section_size(sec), key=f"scsize_{sid}")
+                    s6.number_input(t("wp_sec_min", lang), min_value=0, max_value=10,
+                                    value=cfg.section_min(sec), key=f"scmin_{sid}")
                     s5.checkbox(t("wp_sec_required", lang),
                                 value=cfg.section_required(sec), key=f"screq_{sid}")
                     if s4.button("🗑", key=f"screm_{sid}"):
@@ -247,7 +254,8 @@ if st.session_state.page == "settings":
                     w.setdefault("sections", []).append({
                         "id": f"s_{uid}", "name": "",
                         "group_id": act_gids[0] if act_gids else "",
-                        "row_key": f"sec_{uid}", "max_workers": 1, "required": False})
+                        "row_key": f"sec_{uid}", "max_workers": 1,
+                        "min_workers": 0, "required": False})
                     cfg.save_config(config)
                     st.rerun()
                 st.text_area(t("wp_notes", lang), value=w.get("notes", ""),
@@ -269,6 +277,7 @@ if st.session_state.page == "settings":
                     sec["name"] = st.session_state.get(f"scname_{sid}", sec.get("name", "")).strip()
                     sec["group_id"] = st.session_state.get(f"scgroup_{sid}", sec.get("group_id"))
                     sec["max_workers"] = int(st.session_state.get(f"scsize_{sid}", 1))
+                    sec["min_workers"] = int(st.session_state.get(f"scmin_{sid}", 0))
                     sec["required"] = bool(st.session_state.get(f"screq_{sid}"))
             cfg.save_config(config)
             st.success("✅ " + t("settings_saved", lang))

@@ -312,6 +312,8 @@ wp_notes_hint:"לוגיקת שיבוץ מפורטת — הגדר בשדה ההע
 wp_priority:"סדר עדיפות",wp_sec_required:"חובה לשיבוץ",
 wp_prio_hint:"מקומות עבודה משובצים לפי סדר עדיפות. אם תפקיד חובה לא מאויש — המקום כולו מדולג.",
 warn_wp_skipped:"מקום {w} לא אויש — אין עובדים זמינים לתפקיד חובה {s}",
+warn_sec_min:"מקום {w}: תפקיד {s} זקוק לפחות {n} עובדים",
+warn_daily_absence:"יותר מ-{n} עובדים נעדרים (חופשה + נסיעה)",
 wd_pick:"סמן את ימי העבודה",wd_label:"תווית בטבלה",wd_none:"⚠️ חייב לבחור לפחות יום עבודה אחד",
 wd_hours_title:"שעות עבודה — אפשרויות",wd_hours_hint:"שורה לכל ערך · אותה רשימה מוצעת בכל ימי העבודה",
 et_add:"➕ הוסף משימה",et_remove:"🗑 מחק משימה",et_max:"הגעת למספר המשימות המרבי (5)",
@@ -329,7 +331,9 @@ special_note:"ערכים עם משמעות בשיבוץ — אם שינית או
 sv_holiday:"ערך חג",sv_vehicle:"רכב מיוחד",
 wt_hint:"לכל יעד: שדה, ערך מסוים (או \"כל ערך\"), וכמה פעמים בשבוע",
 wt_any:"— כל ערך —",wt_add:"➕ הוסף יעד",wt_none:"אין יעדים שבועיים — הוסף יעד",
-wp_sec_size:"מספר עובדים לשיבוץ",
+wp_sec_size:"מספר עובדים לשיבוץ",wp_sec_min:"מינימום לשיבוץ יומי",
+max_absence:"מגבלת היעדרות יומית (חופשה + נסיעה)",
+max_absence_hint:"מספר מקסימלי של עובדים שיכולים להיות בחופשה או נסיעה ביום אחד",
 add_row:"הוסף שורה",row_name:"שם השורה",input_type:"סוג קלט",type_select:"רשימת בחירה",type_text:"טקסט חופשי",
 row_opts:"אפשרויות (שורה לכל ערך)",delete:"מחק",row_added:"השורה נוספה",row_deleted:"השורה נמחקה",name_required:"חובה שם בעברית",
 confirm_q:"בטוח?",
@@ -409,6 +413,8 @@ wp_notes_hint:"Detailed assignment logic — write it in the notes field. The ap
 wp_priority:"Priority",wp_sec_required:"Required",
 wp_prio_hint:"Workplaces are staffed in priority order. If a required role cannot be filled, the whole workplace is skipped.",
 warn_wp_skipped:"{w} was not staffed — no employee available for the required role {s}",
+warn_sec_min:"{w}: role {s} needs at least {n} employees",
+warn_daily_absence:"More than {n} employees are away (vacation + trip)",
 wd_pick:"Select the working days",wd_label:"Label in the table",wd_none:"⚠️ At least one working day is required",
 wd_hours_title:"Work hours — options",wd_hours_hint:"One value per line · the same list is offered on every working day",
 et_add:"➕ Add task",et_remove:"🗑 Delete task",et_max:"Maximum number of tasks reached (5)",
@@ -426,7 +432,9 @@ special_note:"Values with special meaning in auto-assign — if renamed in the l
 sv_holiday:"Holiday value",sv_vehicle:"Special vehicle",
 wt_hint:"Each quota: a row, one specific value (or \"any value\"), and how many times a week",
 wt_any:"— any value —",wt_add:"➕ Add quota",wt_none:"No weekly quotas — add one",
-wp_sec_size:"Employees to assign",
+wp_sec_size:"Employees to assign",wp_sec_min:"Daily minimum",
+max_absence:"Daily absence limit (vacation + trip)",
+max_absence_hint:"How many employees may be on vacation or away on a trip on one day",
 add_row:"Add row",row_name:"Row name",input_type:"Input type",type_select:"Dropdown",type_text:"Free text",
 row_opts:"Options (one per line)",delete:"Delete",row_added:"Row added",row_deleted:"Row deleted",name_required:"Hebrew name required",
 confirm_q:"Sure?",
@@ -506,6 +514,8 @@ wp_notes_hint:"Lógica de asignación detallada — escríbela en las notas. La 
 wp_priority:"Prioridad",wp_sec_required:"Obligatorio",
 wp_prio_hint:"Los lugares se cubren por orden de prioridad. Si un puesto obligatorio no se cubre, se omite todo el lugar.",
 warn_wp_skipped:"{w} no fue cubierto — no hay empleado disponible para el puesto obligatorio {s}",
+warn_sec_min:"{w}: el puesto {s} necesita al menos {n} empleados",
+warn_daily_absence:"Más de {n} empleados ausentes (vacaciones + viaje)",
 wd_pick:"Selecciona los días laborables",wd_label:"Etiqueta en la tabla",wd_none:"⚠️ Se requiere al menos un día laborable",
 wd_hours_title:"Horas de trabajo — opciones",wd_hours_hint:"Un valor por línea · la misma lista se ofrece todos los días laborables",
 et_add:"➕ Agregar tarea",et_remove:"🗑 Eliminar tarea",et_max:"Número máximo de tareas alcanzado (5)",
@@ -523,7 +533,9 @@ special_note:"Valores con significado especial en la asignación — si los reno
 sv_holiday:"Valor feriado",sv_vehicle:"Vehículo especial",
 wt_hint:"Cada meta: una fila, un valor específico (o \"cualquier valor\") y cuántas veces por semana",
 wt_any:"— cualquier valor —",wt_add:"➕ Agregar meta",wt_none:"No hay metas semanales — agrega una",
-wp_sec_size:"Empleados a asignar",
+wp_sec_size:"Empleados a asignar",wp_sec_min:"Mínimo diario",
+max_absence:"Límite de ausencias diarias (vacaciones + viaje)",
+max_absence_hint:"Cuántos empleados pueden estar de vacaciones o de viaje en un mismo día",
 add_row:"Agregar fila",row_name:"Nombre de fila",input_type:"Tipo de entrada",type_select:"Lista",type_text:"Texto libre",
 row_opts:"Opciones (una por línea)",delete:"Eliminar",row_added:"Fila agregada",row_deleted:"Fila eliminada",name_required:"Nombre en hebreo obligatorio",
 confirm_q:"¿Seguro?",
@@ -571,11 +583,11 @@ const DEFAULT_CONFIG = {
      ones further down the list. */
   workplaces: [
     { id:"wp1", name:"EMB", active:true, notes:"", priority:1, sections:[
-      { id:"s1", name:"IL", group_id:"g1", row_key:"emb_il", max_workers:1, required:true },
-      { id:"s2", name:"PE", group_id:"g2", row_key:"emb_pe", max_workers:2, required:true } ] },
+      { id:"s1", name:"IL", group_id:"g1", row_key:"emb_il", max_workers:1, min_workers:1, required:true },
+      { id:"s2", name:"PE", group_id:"g2", row_key:"emb_pe", max_workers:2, min_workers:1, required:true } ] },
     { id:"wp2", name:"דירה", active:true, notes:"", priority:2, sections:[
-      { id:"s3", name:"IL", group_id:"g1", row_key:"apt_il", max_workers:1, required:false },
-      { id:"s4", name:"PE", group_id:"g2", row_key:"apt_pe", max_workers:1, required:false } ] },
+      { id:"s3", name:"IL", group_id:"g1", row_key:"apt_il", max_workers:1, min_workers:1, required:false },
+      { id:"s4", name:"PE", group_id:"g2", row_key:"apt_pe", max_workers:1, min_workers:0, required:false } ] },
     { id:"wp3", name:"", active:false, notes:"", priority:3, sections:[] },
     { id:"wp4", name:"", active:false, notes:"", priority:4, sections:[] },
     { id:"wp5", name:"", active:false, notes:"", priority:5, sections:[] }
@@ -654,6 +666,8 @@ const DEFAULT_CONFIG = {
     { field:"theater",         value:"",       count:3 }
   ],
   targets: { field_pcts:{} },
+  /* how many people may be away — vacation or trip — on one day */
+  max_daily_absence: 2,
   /* free-text station notes; documentation only, never read by the logic */
   assign_notes: "",
   row_order: [],
@@ -868,7 +882,10 @@ function migrateConfig(cfg, raw){
     if(w.priority==null) w.priority=i+1;
     w.priority=Math.max(1,Math.min(MAX_WORKPLACES,parseInt(w.priority,10)||i+1));
     w.sections=(w.sections||[]).filter(x=>x&&x.row_key);
-    w.sections.forEach(sec=>{ sec.required=!!sec.required; });
+    w.sections.forEach(sec=>{
+      sec.required=!!sec.required;
+      sec.min_workers=Math.max(0,Math.min(10,parseInt(sec.min_workers,10)||0));
+    });
     /* allow_pair was a two-state flag; max_workers is a count */
     w.sections.forEach(sec=>{
       if(sec.max_workers==null) sec.max_workers=sec.allow_pair?2:1;
@@ -891,6 +908,7 @@ function migrateConfig(cfg, raw){
     if(out.length) cfg.weekly_targets=out;
   }
   cfg.removed_rows=(cfg.removed_rows||[]).filter(Boolean);
+  cfg.max_daily_absence=Math.max(0,Math.min(20,parseInt(cfg.max_daily_absence,10)||0));
   cfg.weekly_targets=(cfg.weekly_targets||[]).filter(x=>x&&x.field)
     .map(x=>({field:x.field, value:x.value||"", count:Math.max(0,parseInt(x.count,10)||0)}));
   if(cfg.targets){ delete cfg.targets.yellow_per_week; delete cfg.targets.theater_per_week; }
@@ -1072,6 +1090,18 @@ function sectionLabel(x){
 }
 function newId(prefix){ return prefix+Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
 /* how many employees a section takes; 0 means "never assign this row" */
+/* the daily floor for a section; a section carrying one must be filled */
+function sectionMin(sec){
+  const n=parseInt(sec&&sec.min_workers,10);
+  return isNaN(n)?0:Math.max(0,Math.min(10,n));
+}
+/* max_workers 0 switches a row off entirely and outranks any minimum */
+function sectionMustFill(sec){
+  return sectionSize(sec)>0 && (!!sec.required || sectionMin(sec)>0);
+}
+/* how many names to place: the target, never fewer than the floor */
+function sectionTarget(sec){ return Math.max(sectionSize(sec), sectionMin(sec)); }
+function maxDailyAbsence(){ return Math.max(0,Math.min(20,parseInt(CFG.max_daily_absence,10)||0)); }
 function sectionSize(sec){
   const n=parseInt(sec&&sec.max_workers,10);
   return isNaN(n)?1:Math.max(0,Math.min(10,n));
@@ -1439,11 +1469,11 @@ function autoAssign(){
       if(v) String(v).split("+").forEach(e=>taken.add(e)); });
     const away=awayToday(day);          // vacation and trip both mean unavailable
     const pickFor=(sec,busy)=>{
-      const g=groupById(sec.group_id), size=sectionSize(sec);
-      if(!size) return "";
+      const g=groupById(sec.group_id), size=sectionTarget(sec), min=sectionMin(sec);
+      if(!sectionSize(sec)) return "";
       const pool=(g?groupEmps(g.id):allEmps())
         .filter(e=>!away.has(e)&&e!==other&&!busy.has(e));
-      if(!pool.length) return "";
+      if(pool.length<Math.max(1,min)) return "";     // the floor cannot be met
       return size===1?leastUsed(pool,H(sec.row_key))
                      :leastUsed(combos(pool,Math.min(size,pool.length)),H(sec.row_key));
     };
@@ -1453,7 +1483,7 @@ function autoAssign(){
       /* required rows first, on a trial set we can throw away */
       const trial=new Map(), busy=new Set(taken);
       let ok=true;
-      for(const sec of open.filter(x=>x.required)){
+      for(const sec of open.filter(sectionMustFill)){
         const c=pickFor(sec,busy);
         if(!c){ ok=false; break; }
         trial.set(sec.row_key,c);
@@ -1462,7 +1492,7 @@ function autoAssign(){
       if(!ok) return;                       // whole workplace skipped today
       trial.forEach((v,rk)=>{ day[rk]=v; });
       busy.forEach(e=>taken.add(e));
-      for(const sec of open.filter(x=>!x.required)){
+      for(const sec of open.filter(sec=>!sectionMustFill(sec))){
         const c=pickFor(sec,taken);
         if(!c) continue;
         day[sec.row_key]=c;
@@ -1543,15 +1573,26 @@ function validate(){
     });
     activeWorkplaces().forEach(w=>{
       const missing=wpSections(w).find(sec=>
-        sec.required&&sectionSize(sec)>0&&!day[sec.row_key]);
+        sectionMustFill(sec)&&!day[sec.row_key]);
       if(missing) errs.push({lvl:"warn", msg:d+": "+
         t("warn_wp_skipped",{w:wpName(w), s:sectionLabel({wp:w,sec:missing})})});
+      /* a section may be filled and still be under its daily floor */
+      wpSections(w).forEach(sec=>{
+        const min=sectionMin(sec);
+        if(!min||!sectionSize(sec)) return;
+        const n=String(day[sec.row_key]||"").split("+").filter(Boolean).length;
+        if(n<min) errs.push({lvl:"warn", msg:d+": "+t("warn_sec_min",
+          {w:wpName(w), s:sectionLabel({wp:w,sec}), n:min})});
+      });
     });
     /* someone cannot be on holiday and away on a trip at once */
     const vacNames=awayList(day,"vacation"), tripNames=awayList(day,"trip");
     vacNames.filter(e=>tripNames.includes(e)).forEach(e=>
       errs.push({lvl:"warn", msg:d+": "+t("warn_vac_trip",{e})}));
     const away=awayToday(day);
+    /* a warning only — the user may knowingly exceed the daily absence cap */
+    if(away.size>maxDailyAbsence())
+      errs.push({lvl:"warn", msg:d+": "+t("warn_daily_absence",{n:maxDailyAbsence()})});
     const placed={};                          // employee → the section holding them
     secs.forEach(x=>{
       const rk=x.sec.row_key, g=groupById(x.sec.group_id), lbl=sectionLabel(x);
@@ -1829,7 +1870,11 @@ function groupsPanel(){
   h+=`<h3>${t("vac_budget")}</h3><div class="grid3">`;
   allEmps().forEach(e=>{ const v=CFG.vacation_budget[e]!=null?CFG.vacation_budget[e]:defaultVacBudget();
     h+=`<label>${esc(e)}<br><input type="number" min="0" max="365" data-vb="${esc(e)}" value="${v}"></label>`; });
-  h+=`</div><p><button class="btn primary" id="saveGroups">${t("save_settings")}</button></p>`;
+  h+=`</div><h3>${t("max_absence")}</h3>
+    <label><input type="number" min="0" max="20" style="width:80px" id="maxAbsence"
+      value="${maxDailyAbsence()}"></label>
+    <div class="hint">${t("max_absence_hint")}</div>`;
+  h+=`<p><button class="btn primary" id="saveGroups">${t("save_settings")}</button></p>`;
   return h;
 }
 /* workplaces and the roles (sections) inside each one */
@@ -1858,6 +1903,9 @@ function workplacesPanel(){
         <label class="chk">${t("wp_sec_size")}
           <input type="number" min="0" max="10" style="width:64px"
             data-scsize="${esc(sc.id)}" data-wp="${esc(w.id)}" value="${sectionSize(sc)}"></label>
+        <label class="chk">${t("wp_sec_min")}
+          <input type="number" min="0" max="10" style="width:64px"
+            data-scmin="${esc(sc.id)}" data-wp="${esc(w.id)}" value="${sectionMin(sc)}"></label>
         <label class="chk"><input type="checkbox" data-screq="${esc(sc.id)}" data-wp="${esc(w.id)}"
           ${sc.required?"checked":""}> ${t("wp_sec_required")}</label>
         <button class="btn small warn" data-scremove="${esc(sc.id)}" data-wp="${esc(w.id)}">🗑</button>
@@ -3051,6 +3099,8 @@ function wireSettings(){
     document.querySelectorAll("[data-vb]").forEach(inp=>{ vb[inp.dataset.vb]=parseInt(inp.value||0,10)||0; });
     allEmps().forEach(e=>{ if(vb[e]==null) vb[e]=defaultVacBudget(); });
     CFG.vacation_budget=vb;
+    if($("maxAbsence"))
+      CFG.max_daily_absence=Math.max(0,Math.min(20,parseInt($("maxAbsence").value,10)||0));
     saveConfig(); resyncDays(); render(); reopen("groups");
   };
   if($("addGroup")) $("addGroup").onclick=()=>{
@@ -3084,6 +3134,9 @@ function wireSettings(){
     document.querySelectorAll("[data-scsize]").forEach(inp=>{
       const x=sec(inp.dataset.scsize,inp.dataset.wp);
       if(x) x.max_workers=Math.max(0,Math.min(10,parseInt(inp.value,10)||0)); });
+    document.querySelectorAll("[data-scmin]").forEach(inp=>{
+      const x=sec(inp.dataset.scmin,inp.dataset.wp);
+      if(x) x.min_workers=Math.max(0,Math.min(10,parseInt(inp.value,10)||0)); });
     document.querySelectorAll("[data-screq]").forEach(cb=>{
       const x=sec(cb.dataset.screq,cb.dataset.wp); if(x) x.required=cb.checked; });
   };

@@ -115,6 +115,10 @@ def validate_schedule(schedule: dict, lang: str = "he") -> list:
         for name in cfg.away_list(day, "trip"):
             if name in on_vac:
                 errors.append(f"{d_str}: " + t("warn_vac_trip", lang, e=name))
+        # a warning only — the user may knowingly exceed the daily absence cap
+        cap = cfg.max_daily_absence()
+        if len(cfg.away_today(day)) > cap:
+            errors.append(f"{d_str}: " + t("warn_daily_absence", lang, n=cap))
 
         for value_field, axis_field in (("entry", "axis_morning"),
                                         ("exit", "axis_noon")):
@@ -128,12 +132,22 @@ def validate_schedule(schedule: dict, lang: str = "he") -> list:
 
         for wp in cfg.active_workplaces():
             missing = next((s for s in cfg.workplace_sections(wp)
-                            if cfg.section_required(s) and cfg.section_size(s)
+                            if cfg.section_must_fill(s)
                             and not day.get(s["row_key"])), None)
             if missing:
                 errors.append(f"{d_str}: " + t(
                     "warn_wp_skipped", lang, w=cfg.workplace_name(wp),
                     s=cfg.section_label(wp, missing)))
+            # a section may be filled and still be under its daily floor
+            for sec in cfg.workplace_sections(wp):
+                floor = cfg.section_min(sec)
+                if not floor or not cfg.section_size(sec):
+                    continue
+                n = len([e for e in str(day.get(sec["row_key"], "")).split("+") if e])
+                if n < floor:
+                    errors.append(f"{d_str}: " + t(
+                        "warn_sec_min", lang, w=cfg.workplace_name(wp),
+                        s=cfg.section_label(wp, sec), n=floor))
 
         placed = {}                       # employee → the section holding them
         for wp, sec in sections:
@@ -255,14 +269,14 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
     away = cfg.away_today(day)      # vacation and trip both mean unavailable
 
     def _pick(sec, busy):
-        size = cfg.section_size(sec)
-        if not size:
+        if not cfg.section_size(sec):
             return ""
+        size, floor = cfg.section_target(sec), cfg.section_min(sec)
         group = cfg.group_by_id(sec.get("group_id"))
         pool = [e for e in (cfg.group_employees(sec.get("group_id"))
                             if group else cfg.all_employees())
                 if e not in away and e != other_empl and e not in busy]
-        if not pool:
+        if len(pool) < max(1, floor):        # the floor cannot be met
             return ""
         counts = history.get(sec["row_key"], {})
         if size >= 2:
@@ -275,7 +289,7 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
         open_secs = [s for s in assignable if not day.get(s["row_key"])]
         # required rows first, on a trial set we can throw away
         trial, busy, ok = {}, set(taken), True
-        for sec in (s for s in open_secs if cfg.section_required(s)):
+        for sec in (s for s in open_secs if cfg.section_must_fill(s)):
             choice = _pick(sec, busy)
             if not choice:
                 ok = False
@@ -286,7 +300,7 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
             continue                            # whole workplace skipped today
         day.update(trial)
         taken |= busy
-        for sec in (s for s in open_secs if not cfg.section_required(s)):
+        for sec in (s for s in open_secs if not cfg.section_must_fill(s)):
             choice = _pick(sec, taken)
             if not choice:
                 continue

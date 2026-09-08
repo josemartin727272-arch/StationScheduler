@@ -77,16 +77,16 @@ DEFAULTS = {
         {"id": "wp1", "name": "EMB", "active": True, "notes": "", "priority": 1,
          "sections": [
             {"id": "s1", "name": "IL", "group_id": "g1", "row_key": "emb_il",
-             "max_workers": 1, "required": True},
+             "max_workers": 1, "min_workers": 1, "required": True},
             {"id": "s2", "name": "PE", "group_id": "g2", "row_key": "emb_pe",
-             "max_workers": 2, "required": True},
+             "max_workers": 2, "min_workers": 1, "required": True},
         ]},
         {"id": "wp2", "name": "דירה", "active": True, "notes": "", "priority": 2,
          "sections": [
             {"id": "s3", "name": "IL", "group_id": "g1", "row_key": "apt_il",
-             "max_workers": 1, "required": False},
+             "max_workers": 1, "min_workers": 1, "required": False},
             {"id": "s4", "name": "PE", "group_id": "g2", "row_key": "apt_pe",
-             "max_workers": 1, "required": False},
+             "max_workers": 1, "min_workers": 0, "required": False},
         ]},
         {"id": "wp3", "name": "", "active": False, "notes": "", "priority": 3,
          "sections": []},
@@ -184,6 +184,8 @@ DEFAULTS = {
         # (which behaves exactly like plain least-used).
         "field_pcts": {},
     },
+    # How many people may be away — vacation or trip — on one day.
+    "max_daily_absence": 2,
     # Free-text station notes; documentation only, never read by the logic.
     "assign_notes": "",
     # Display order of schedule rows (keys). Empty ⇒ natural order.
@@ -379,6 +381,10 @@ def _migrate(cfg: dict, raw: dict) -> dict:
                 sec["max_workers"] = max(0, min(10, int(sec["max_workers"])))
             except (TypeError, ValueError):
                 sec["max_workers"] = 1
+            try:
+                sec["min_workers"] = max(0, min(10, int(sec.get("min_workers", 0))))
+            except (TypeError, ValueError):
+                sec["min_workers"] = 0
             sec.pop("allow_pair", None)
 
     # the fixed YELLOW / theater counts became a list of weekly quotas
@@ -556,8 +562,33 @@ def section_size(sec: dict) -> int:
         return 1
 
 
+def section_min(sec: dict) -> int:
+    """The daily floor for a section; a section carrying one must be filled."""
+    try:
+        return max(0, min(10, int(sec.get("min_workers", 0))))
+    except (TypeError, ValueError):
+        return 0
+
+
 def section_required(sec: dict) -> bool:
     return bool(sec.get("required"))
+
+
+def section_must_fill(sec: dict) -> bool:
+    """max_workers 0 switches a row off entirely and outranks any minimum."""
+    return bool(section_size(sec)) and (section_required(sec) or section_min(sec) > 0)
+
+
+def section_target(sec: dict) -> int:
+    """How many names to place: the target, never fewer than the floor."""
+    return max(section_size(sec), section_min(sec))
+
+
+def max_daily_absence() -> int:
+    try:
+        return max(0, min(20, int(get_config().get("max_daily_absence", 2))))
+    except (TypeError, ValueError):
+        return 2
 
 
 def section_label(w: dict, sec: dict) -> str:
