@@ -132,7 +132,7 @@ def validate_schedule(schedule: dict, lang: str = "he") -> list:
 
         for wp in cfg.active_workplaces():
             missing = next((s for s in cfg.workplace_sections(wp)
-                            if cfg.section_must_fill(s)
+                            if cfg.section_required(s) and cfg.section_size(s)
                             and not day.get(s["row_key"])), None)
             if missing:
                 errors.append(f"{d_str}: " + t(
@@ -144,10 +144,17 @@ def validate_schedule(schedule: dict, lang: str = "he") -> list:
                 if not floor or not cfg.section_size(sec):
                     continue
                 n = len([e for e in str(day.get(sec["row_key"], "")).split("+") if e])
-                if n < floor:
+                if n and n < floor:
                     errors.append(f"{d_str}: " + t(
                         "warn_sec_min", lang, w=cfg.workplace_name(wp),
                         s=cfg.section_label(wp, sec), n=floor))
+            wp_floor = cfg.workplace_min_sections(wp)
+            staffed = len([s for s in cfg.workplace_sections(wp)
+                           if cfg.section_size(s) and day.get(s["row_key"])])
+            if staffed < wp_floor:
+                errors.append(f"{d_str}: " + t(
+                    "warn_wp_min_sections", lang, w=cfg.workplace_name(wp),
+                    n=wp_floor, c=staffed))
 
         placed = {}                       # employee → the section holding them
         for wp, sec in sections:
@@ -268,40 +275,101 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
 
     away = cfg.away_today(day)      # vacation and trip both mean unavailable
 
-    def _pick(sec, busy):
+    def _pick(sec, busy, n):
+        """Place exactly n names in a section, or "" when even that fails."""
         if not cfg.section_size(sec):
             return ""
-        size, floor = cfg.section_target(sec), cfg.section_min(sec)
+        want = max(1, min(n, cfg.section_target(sec)))
         group = cfg.group_by_id(sec.get("group_id"))
         pool = [e for e in (cfg.group_employees(sec.get("group_id"))
                             if group else cfg.all_employees())
                 if e not in away and e != other_empl and e not in busy]
-        if len(pool) < max(1, floor):        # the floor cannot be met
+        if len(pool) < want:                 # the floor cannot be met
             return ""
         counts = history.get(sec["row_key"], {})
-        if size >= 2:
-            return _least_used(_combos(pool, min(size, len(pool))), counts)
+        if want >= 2:
+            return _least_used(_combos(pool, want), counts)
         return _least_used(pool, counts)
 
+    def _top_up(sec, busy):
+        """Grow a section that already holds its floor up to max_workers."""
+        have = [e for e in str(day.get(sec["row_key"], "")).split("+") if e]
+        want = cfg.section_target(sec) - len(have)
+        if want <= 0:
+            return
+        group = cfg.group_by_id(sec.get("group_id"))
+        pool = [e for e in (cfg.group_employees(sec.get("group_id"))
+                            if group else cfg.all_employees())
+                if e not in away and e != other_empl and e not in busy]
+        if not pool:
+            return
+        counts = history.get(sec["row_key"], {})
+        add = (_least_used(_combos(pool, min(want, len(pool))), counts)
+               if want >= 2 else _least_used(pool, counts))
+        if not add:
+            return
+        day[sec["row_key"]] = "+".join(have + [e for e in str(add).split("+") if e])
+        busy.update(e for e in str(add).split("+") if e)
+
+    wp_rows, skipped = {}, set()
     for wp in cfg.active_workplaces():
-        assignable = [s for s in cfg.workplace_sections(wp)
-                      if cfg.section_size(s) and s["row_key"] not in governed]
-        open_secs = [s for s in assignable if not day.get(s["row_key"])]
-        # required rows first, on a trial set we can throw away
+        wp_rows[wp["id"]] = [s for s in cfg.workplace_sections(wp)
+                             if cfg.section_size(s) and s["row_key"] not in governed]
+
+    # Pass 1 — in priority order, every workplace takes only what it must, so a
+    # high-priority workplace cannot spend the people a later one needs to reach
+    # its own minimum. Pass 2 tops the rows up afterwards.
+    for wp in cfg.active_workplaces():
+        rows = wp_rows[wp["id"]]
+        open_secs = lambda: [s for s in rows if not day.get(s["row_key"])]
+        # required rows are hard: all of them, or the workplace is skipped whole.
+        # They go first — a role marked required outranks every other row here.
         trial, busy, ok = {}, set(taken), True
-        for sec in (s for s in open_secs if cfg.section_must_fill(s)):
-            choice = _pick(sec, busy)
+        for sec in [s for s in open_secs() if cfg.section_required(s)]:
+            choice = _pick(sec, busy, max(1, cfg.section_min(sec)))
             if not choice:
                 ok = False
                 break
             trial[sec["row_key"]] = choice
             busy.update(e for e in str(choice).split("+") if e)
         if not ok:
+            skipped.add(wp["id"])
             continue                            # whole workplace skipped today
         day.update(trial)
         taken |= busy
-        for sec in (s for s in open_secs if not cfg.section_must_fill(s)):
-            choice = _pick(sec, taken)
+        # rows carrying their own daily floor come next — preferred, but soft:
+        # one that cannot be filled leaves the workplace standing, because the
+        # "at least N roles" rule below decides whether the workplace is short
+        for sec in [s for s in open_secs() if cfg.section_min(s) > 0]:
+            choice = _pick(sec, taken, cfg.section_min(sec))
+            if not choice:
+                continue
+            day[sec["row_key"]] = choice
+            taken.update(e for e in str(choice).split("+") if e)
+        # "at least N roles staffed": fill spares until the floor is reached,
+        # taking whichever role still has someone available
+        floor = cfg.workplace_min_sections(wp)
+        for sec in open_secs():
+            if len([s for s in rows if day.get(s["row_key"])]) >= floor:
+                break
+            choice = _pick(sec, taken, 1)
+            if not choice:
+                continue
+            day[sec["row_key"]] = choice
+            taken.update(e for e in str(choice).split("+") if e)
+
+    # Pass 2 — the discretionary half: top staffed rows up to max_workers, then
+    # fill whatever optional rows are still open, priority order again.
+    for wp in cfg.active_workplaces():
+        if wp["id"] in skipped:
+            continue
+        for sec in wp_rows[wp["id"]]:
+            if day.get(sec["row_key"]):
+                _top_up(sec, taken)
+        for sec in wp_rows[wp["id"]]:
+            if day.get(sec["row_key"]):
+                continue
+            choice = _pick(sec, taken, 1)
             if not choice:
                 continue
             day[sec["row_key"]] = choice

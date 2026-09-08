@@ -75,6 +75,7 @@ DEFAULTS = {
     # ones further down the list.
     "workplaces": [
         {"id": "wp1", "name": "EMB", "active": True, "notes": "", "priority": 1,
+         "min_sections_filled": 1,
          "sections": [
             {"id": "s1", "name": "IL", "group_id": "g1", "row_key": "emb_il",
              "max_workers": 1, "min_workers": 1, "required": True},
@@ -82,6 +83,7 @@ DEFAULTS = {
              "max_workers": 2, "min_workers": 1, "required": True},
         ]},
         {"id": "wp2", "name": "דירה", "active": True, "notes": "", "priority": 2,
+         "min_sections_filled": 1,
          "sections": [
             {"id": "s3", "name": "IL", "group_id": "g1", "row_key": "apt_il",
              "max_workers": 1, "min_workers": 1, "required": False},
@@ -370,6 +372,12 @@ def _migrate(cfg: dict, raw: dict) -> dict:
             w["priority"] = max(1, min(MAX_WORKPLACES, int(w.get("priority") or i + 1)))
         except (TypeError, ValueError):
             w["priority"] = i + 1
+        if w.get("min_sections_filled") is None:
+            w["min_sections_filled"] = 1
+        try:
+            w["min_sections_filled"] = max(0, min(10, int(w["min_sections_filled"])))
+        except (TypeError, ValueError):
+            w["min_sections_filled"] = 1
         w["sections"] = [x for x in w.get("sections", []) if x and x.get("row_key")]
         for sec in w["sections"]:
             sec["required"] = bool(sec.get("required"))
@@ -560,6 +568,17 @@ def section_size(sec: dict) -> int:
         return max(0, min(10, int(sec.get("max_workers", 1))))
     except (TypeError, ValueError):
         return 1
+
+
+def workplace_min_sections(w: dict) -> int:
+    """How many of a workplace's roles must end up staffed, capped by how many
+    roles it actually has switched on."""
+    cap = len([s for s in workplace_sections(w) if section_size(s)])
+    try:
+        n = int(w.get("min_sections_filled", 1))
+    except (TypeError, ValueError):
+        n = 1
+    return max(0, min(cap, n))
 
 
 def section_min(sec: dict) -> int:

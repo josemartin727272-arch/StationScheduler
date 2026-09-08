@@ -313,6 +313,7 @@ wp_priority:"סדר עדיפות",wp_sec_required:"חובה לשיבוץ",
 wp_prio_hint:"מקומות עבודה משובצים לפי סדר עדיפות. אם תפקיד חובה לא מאויש — המקום כולו מדולג.",
 warn_wp_skipped:"מקום {w} לא אויש — אין עובדים זמינים לתפקיד חובה {s}",
 warn_sec_min:"מקום {w}: תפקיד {s} זקוק לפחות {n} עובדים",
+warn_wp_min_sections:"מקום {w}: רק {c} תפקידים מאוישים, נדרשים לפחות {n}",
 warn_daily_absence:"יותר מ-{n} עובדים נעדרים (חופשה + נסיעה)",
 wd_pick:"סמן את ימי העבודה",wd_label:"תווית בטבלה",wd_none:"⚠️ חייב לבחור לפחות יום עבודה אחד",
 wd_hours_title:"שעות עבודה — אפשרויות",wd_hours_hint:"שורה לכל ערך · אותה רשימה מוצעת בכל ימי העבודה",
@@ -332,6 +333,8 @@ sv_holiday:"ערך חג",sv_vehicle:"רכב מיוחד",
 wt_hint:"לכל יעד: שדה, ערך מסוים (או \"כל ערך\"), וכמה פעמים בשבוע",
 wt_any:"— כל ערך —",wt_add:"➕ הוסף יעד",wt_none:"אין יעדים שבועיים — הוסף יעד",
 wp_sec_size:"מספר עובדים לשיבוץ",wp_sec_min:"מינימום לשיבוץ יומי",
+wp_min_sections:"מינימום תפקידים מאוישים",
+wp_min_sections_hint:"כמה תפקידים לפחות צריכים להיות מאוישים מתוך כל התפקידים",
 max_absence:"מגבלת היעדרות יומית (חופשה + נסיעה)",
 max_absence_hint:"מספר מקסימלי של עובדים שיכולים להיות בחופשה או נסיעה ביום אחד",
 add_row:"הוסף שורה",row_name:"שם השורה",input_type:"סוג קלט",type_select:"רשימת בחירה",type_text:"טקסט חופשי",
@@ -414,6 +417,7 @@ wp_priority:"Priority",wp_sec_required:"Required",
 wp_prio_hint:"Workplaces are staffed in priority order. If a required role cannot be filled, the whole workplace is skipped.",
 warn_wp_skipped:"{w} was not staffed — no employee available for the required role {s}",
 warn_sec_min:"{w}: role {s} needs at least {n} employees",
+warn_wp_min_sections:"{w}: only {c} roles staffed, at least {n} required",
 warn_daily_absence:"More than {n} employees are away (vacation + trip)",
 wd_pick:"Select the working days",wd_label:"Label in the table",wd_none:"⚠️ At least one working day is required",
 wd_hours_title:"Work hours — options",wd_hours_hint:"One value per line · the same list is offered on every working day",
@@ -433,6 +437,8 @@ sv_holiday:"Holiday value",sv_vehicle:"Special vehicle",
 wt_hint:"Each quota: a row, one specific value (or \"any value\"), and how many times a week",
 wt_any:"— any value —",wt_add:"➕ Add quota",wt_none:"No weekly quotas — add one",
 wp_sec_size:"Employees to assign",wp_sec_min:"Daily minimum",
+wp_min_sections:"Roles that must be staffed",
+wp_min_sections_hint:"How many of this workplace\u2019s roles must end up staffed",
 max_absence:"Daily absence limit (vacation + trip)",
 max_absence_hint:"How many employees may be on vacation or away on a trip on one day",
 add_row:"Add row",row_name:"Row name",input_type:"Input type",type_select:"Dropdown",type_text:"Free text",
@@ -515,6 +521,7 @@ wp_priority:"Prioridad",wp_sec_required:"Obligatorio",
 wp_prio_hint:"Los lugares se cubren por orden de prioridad. Si un puesto obligatorio no se cubre, se omite todo el lugar.",
 warn_wp_skipped:"{w} no fue cubierto — no hay empleado disponible para el puesto obligatorio {s}",
 warn_sec_min:"{w}: el puesto {s} necesita al menos {n} empleados",
+warn_wp_min_sections:"{w}: solo {c} puestos cubiertos, se requieren al menos {n}",
 warn_daily_absence:"Más de {n} empleados ausentes (vacaciones + viaje)",
 wd_pick:"Selecciona los días laborables",wd_label:"Etiqueta en la tabla",wd_none:"⚠️ Se requiere al menos un día laborable",
 wd_hours_title:"Horas de trabajo — opciones",wd_hours_hint:"Un valor por línea · la misma lista se ofrece todos los días laborables",
@@ -534,6 +541,8 @@ sv_holiday:"Valor feriado",sv_vehicle:"Vehículo especial",
 wt_hint:"Cada meta: una fila, un valor específico (o \"cualquier valor\") y cuántas veces por semana",
 wt_any:"— cualquier valor —",wt_add:"➕ Agregar meta",wt_none:"No hay metas semanales — agrega una",
 wp_sec_size:"Empleados a asignar",wp_sec_min:"Mínimo diario",
+wp_min_sections:"Puestos que deben cubrirse",
+wp_min_sections_hint:"Cuántos puestos de este lugar deben quedar cubiertos",
 max_absence:"Límite de ausencias diarias (vacaciones + viaje)",
 max_absence_hint:"Cuántos empleados pueden estar de vacaciones o de viaje en un mismo día",
 add_row:"Agregar fila",row_name:"Nombre de fila",input_type:"Tipo de entrada",type_select:"Lista",type_text:"Texto libre",
@@ -582,15 +591,15 @@ const DEFAULT_CONFIG = {
      the whole workplace is skipped that day and its people stay free for the
      ones further down the list. */
   workplaces: [
-    { id:"wp1", name:"EMB", active:true, notes:"", priority:1, sections:[
+    { id:"wp1", name:"EMB", active:true, notes:"", priority:1, min_sections_filled:1, sections:[
       { id:"s1", name:"IL", group_id:"g1", row_key:"emb_il", max_workers:1, min_workers:1, required:true },
       { id:"s2", name:"PE", group_id:"g2", row_key:"emb_pe", max_workers:2, min_workers:1, required:true } ] },
-    { id:"wp2", name:"דירה", active:true, notes:"", priority:2, sections:[
+    { id:"wp2", name:"דירה", active:true, notes:"", priority:2, min_sections_filled:1, sections:[
       { id:"s3", name:"IL", group_id:"g1", row_key:"apt_il", max_workers:1, min_workers:1, required:false },
       { id:"s4", name:"PE", group_id:"g2", row_key:"apt_pe", max_workers:1, min_workers:0, required:false } ] },
-    { id:"wp3", name:"", active:false, notes:"", priority:3, sections:[] },
-    { id:"wp4", name:"", active:false, notes:"", priority:4, sections:[] },
-    { id:"wp5", name:"", active:false, notes:"", priority:5, sections:[] }
+    { id:"wp3", name:"", active:false, notes:"", priority:3, min_sections_filled:1, sections:[] },
+    { id:"wp4", name:"", active:false, notes:"", priority:4, min_sections_filled:1, sections:[] },
+    { id:"wp5", name:"", active:false, notes:"", priority:5, min_sections_filled:1, sections:[] }
   ],
   work_days: {
     days: ["monday","tuesday","wednesday","thursday","friday"],
@@ -882,6 +891,8 @@ function migrateConfig(cfg, raw){
     if(w.priority==null) w.priority=i+1;
     w.priority=Math.max(1,Math.min(MAX_WORKPLACES,parseInt(w.priority,10)||i+1));
     w.sections=(w.sections||[]).filter(x=>x&&x.row_key);
+    if(w.min_sections_filled==null) w.min_sections_filled=1;
+    w.min_sections_filled=Math.max(0,Math.min(10,parseInt(w.min_sections_filled,10)||0));
     w.sections.forEach(sec=>{
       sec.required=!!sec.required;
       sec.min_workers=Math.max(0,Math.min(10,parseInt(sec.min_workers,10)||0));
@@ -1090,6 +1101,13 @@ function sectionLabel(x){
 }
 function newId(prefix){ return prefix+Date.now().toString(36)+Math.random().toString(36).slice(2,5); }
 /* how many employees a section takes; 0 means "never assign this row" */
+/* how many of a workplace's roles must end up staffed, capped by how many
+   roles it actually has switched on */
+function wpMinSections(w){
+  const cap=wpSections(w).filter(sec=>sectionSize(sec)>0).length;
+  const n=parseInt(w&&w.min_sections_filled,10);
+  return Math.max(0, Math.min(cap, isNaN(n)?1:n));
+}
 /* the daily floor for a section; a section carrying one must be filled */
 function sectionMin(sec){
   const n=parseInt(sec&&sec.min_workers,10);
@@ -1468,36 +1486,87 @@ function autoAssign(){
     secs.forEach(x=>{ const v=day[x.sec.row_key];
       if(v) String(v).split("+").forEach(e=>taken.add(e)); });
     const away=awayToday(day);          // vacation and trip both mean unavailable
-    const pickFor=(sec,busy)=>{
-      const g=groupById(sec.group_id), size=sectionTarget(sec), min=sectionMin(sec);
+    /* place exactly n names in a section, or "" when even that cannot be met */
+    const pickN=(sec,busy,n)=>{
       if(!sectionSize(sec)) return "";
+      const g=groupById(sec.group_id);
+      const want=Math.max(1,Math.min(n,sectionTarget(sec)));
       const pool=(g?groupEmps(g.id):allEmps())
         .filter(e=>!away.has(e)&&e!==other&&!busy.has(e));
-      if(pool.length<Math.max(1,min)) return "";     // the floor cannot be met
-      return size===1?leastUsed(pool,H(sec.row_key))
-                     :leastUsed(combos(pool,Math.min(size,pool.length)),H(sec.row_key));
+      if(pool.length<want) return "";                // the floor cannot be met
+      return want===1?leastUsed(pool,H(sec.row_key))
+                     :leastUsed(combos(pool,want),H(sec.row_key));
     };
+    /* grow a section that already holds its floor up to max_workers */
+    const topUp=(sec,busy)=>{
+      const have=String(day[sec.row_key]||"").split("+").filter(Boolean);
+      const want=sectionTarget(sec)-have.length;
+      if(want<=0) return;
+      const g=groupById(sec.group_id);
+      const pool=(g?groupEmps(g.id):allEmps())
+        .filter(e=>!away.has(e)&&e!==other&&!busy.has(e));
+      if(!pool.length) return;
+      const add=want===1?leastUsed(pool,H(sec.row_key))
+                        :leastUsed(combos(pool,Math.min(want,pool.length)),H(sec.row_key));
+      if(!add) return;
+      day[sec.row_key]=have.concat(String(add).split("+").filter(Boolean)).join("+");
+      String(add).split("+").forEach(e=>busy.add(e));
+    };
+    const wpRows=new Map(), skipped=new Set();
+    activeWorkplaces().forEach(w=>
+      wpRows.set(w, wpSections(w).filter(sec=>free(sec.row_key)&&sectionSize(sec)>0)));
+    /* Pass 1 — in priority order, every workplace takes only what it must, so
+       a high-priority workplace cannot spend the people a later one needs to
+       reach its own minimum. Pass 2 tops the rows up afterwards. */
     activeWorkplaces().forEach(w=>{
-      const list=wpSections(w).filter(sec=>free(sec.row_key)&&sectionSize(sec)>0);
-      const open=list.filter(sec=>!day[sec.row_key]);
-      /* required rows first, on a trial set we can throw away */
+      const list=wpRows.get(w);
+      const open=()=>list.filter(sec=>!day[sec.row_key]);
+      /* required rows are hard: all of them, or the workplace is skipped whole.
+         They go first — a role marked required outranks every other row here. */
       const trial=new Map(), busy=new Set(taken);
       let ok=true;
-      for(const sec of open.filter(sectionMustFill)){
-        const c=pickFor(sec,busy);
+      for(const sec of open().filter(sec=>sec.required)){
+        const c=pickN(sec,busy,Math.max(1,sectionMin(sec)));
         if(!c){ ok=false; break; }
         trial.set(sec.row_key,c);
         String(c).split("+").forEach(e=>busy.add(e));
       }
-      if(!ok) return;                       // whole workplace skipped today
+      if(!ok){ skipped.add(w); return; }   // whole workplace skipped today
       trial.forEach((v,rk)=>{ day[rk]=v; });
       busy.forEach(e=>taken.add(e));
-      for(const sec of open.filter(sec=>!sectionMustFill(sec))){
-        const c=pickFor(sec,taken);
+      /* rows carrying their own daily floor come next — preferred, but soft:
+         one that cannot be filled leaves the workplace standing, because the
+         "at least N roles" rule below decides whether the workplace is short */
+      for(const sec of open().filter(sec=>sectionMin(sec)>0)){
+        const c=pickN(sec,taken,sectionMin(sec));
         if(!c) continue;
         day[sec.row_key]=c;
         String(c).split("+").forEach(e=>taken.add(e));
       }
+      /* "at least N roles staffed": fill spares until the floor is reached,
+         taking whichever role still has someone available */
+      const filled=()=>list.filter(sec=>day[sec.row_key]).length;
+      for(const sec of open()){
+        if(filled()>=wpMinSections(w)) break;
+        const c=pickN(sec,taken,1);
+        if(!c) continue;
+        day[sec.row_key]=c;
+        String(c).split("+").forEach(e=>taken.add(e));
+      }
+    });
+    /* Pass 2 — the discretionary half: top staffed rows up to max_workers,
+       then fill whatever optional rows are still open, priority order again */
+    activeWorkplaces().forEach(w=>{
+      if(skipped.has(w)) return;
+      const list=wpRows.get(w);
+      list.forEach(sec=>{ if(day[sec.row_key]) topUp(sec,taken); });
+      list.forEach(sec=>{
+        if(day[sec.row_key]) return;
+        const c=pickN(sec,taken,1);
+        if(!c) return;
+        day[sec.row_key]=c;
+        String(c).split("+").forEach(e=>taken.add(e));
+      });
     });
 
     if(free("arrival_point")&&!day.arrival_point) day.arrival_point=leastUsed(opts("arrival_point"),H("arrival_point"),"arrival_point");
@@ -1573,17 +1642,23 @@ function validate(){
     });
     activeWorkplaces().forEach(w=>{
       const missing=wpSections(w).find(sec=>
-        sectionMustFill(sec)&&!day[sec.row_key]);
+        sec.required&&sectionSize(sec)>0&&!day[sec.row_key]);
       if(missing) errs.push({lvl:"warn", msg:d+": "+
         t("warn_wp_skipped",{w:wpName(w), s:sectionLabel({wp:w,sec:missing})})});
-      /* a section may be filled and still be under its daily floor */
+      /* a role that is staffed but under its own daily floor. An empty
+         non-required role is left to the "at least N roles" check below —
+         under that rule an empty role is a choice, not a shortfall */
       wpSections(w).forEach(sec=>{
         const min=sectionMin(sec);
         if(!min||!sectionSize(sec)) return;
         const n=String(day[sec.row_key]||"").split("+").filter(Boolean).length;
-        if(n<min) errs.push({lvl:"warn", msg:d+": "+t("warn_sec_min",
+        if(n&&n<min) errs.push({lvl:"warn", msg:d+": "+t("warn_sec_min",
           {w:wpName(w), s:sectionLabel({wp:w,sec}), n:min})});
       });
+      const floor=wpMinSections(w);
+      const staffed=wpSections(w).filter(sec=>sectionSize(sec)>0&&day[sec.row_key]).length;
+      if(staffed<floor) errs.push({lvl:"warn", msg:d+": "+
+        t("warn_wp_min_sections",{w:wpName(w), n:floor, c:staffed})});
     });
     /* someone cannot be on holiday and away on a trip at once */
     const vacNames=awayList(day,"vacation"), tripNames=awayList(day,"trip");
@@ -1893,6 +1968,10 @@ function workplacesPanel(){
         <button class="btn small" data-wpdn="${esc(w.id)}" ${i===act.length-1?"disabled":""}>↓</button>
       </span></label>
     </div>
+    <label>${t("wp_min_sections")}<br>
+      <input type="number" min="0" max="10" style="width:80px"
+        data-wpminsec="${esc(w.id)}" value="${wpMinSections(w)}">
+      <span class="hint">${t("wp_min_sections_hint")}</span></label>
     <h3 style="font-size:.9rem">${t("wp_sections")}</h3>`;
     wpSections(w).forEach(sc=>{
       h+=`<div class="sec-row">
@@ -3127,6 +3206,9 @@ function wireSettings(){
       const w=workplacesAll().find(x=>x.id===ta.dataset.wpnotes); if(w) w.notes=ta.value; });
     const sec=(id,wp)=>{ const w=workplacesAll().find(x=>x.id===wp);
       return w?(w.sections||[]).find(x=>x.id===id):null; };
+    document.querySelectorAll("[data-wpminsec]").forEach(inp=>{
+      const w=workplacesAll().find(x=>x.id===inp.dataset.wpminsec);
+      if(w) w.min_sections_filled=Math.max(0,Math.min(10,parseInt(inp.value,10)||0)); });
     document.querySelectorAll("[data-scname]").forEach(inp=>{
       const x=sec(inp.dataset.scname,inp.dataset.wp); if(x) x.name=inp.value.trim(); });
     document.querySelectorAll("[data-scgroup]").forEach(sl=>{
