@@ -161,10 +161,27 @@ table.stats th{background:#eef2f7}
 .log-tbl tr.lg-bak  td{background:#f3ecfa}
 .log-tbl tr.lg-trip td{background:#e6f6f4}
 /* away rows: a checkbox per employee, several may be ticked */
-td.away-cell{padding:3px;text-align:start}
-.away-chk{display:flex;align-items:center;gap:5px;border-radius:6px;
-  padding:2px 5px;margin:2px 0;font-size:.8rem;white-space:nowrap;cursor:pointer}
-.away-chk input{width:16px;height:16px;min-height:auto;margin:0;flex:none}
+td.away-cell{padding:3px}
+.tagbox{display:flex;flex-wrap:wrap;gap:3px;align-items:center;cursor:pointer;
+  border:1px solid #e3e8ee;background:#fbfcfe;border-radius:8px;
+  padding:3px 5px;min-height:44px}
+.tagbox:hover{border-color:var(--primary-lt)}
+.tag{display:inline-flex;align-items:center;gap:3px;height:20px;border-radius:10px;
+  font-size:11px;padding:0 3px 0 7px;white-space:nowrap}
+[dir=rtl] .tag{padding:0 7px 0 3px}
+.tag-trip{background:#e8f4fd;color:#1565c0}
+.tag-vac{background:#fff3e0;color:#e65100}
+.tag-x{border:none;background:rgba(0,0,0,.12);color:#555;border-radius:50%;
+  width:14px;height:14px;min-height:auto;line-height:1;font-size:11px;padding:0;
+  cursor:pointer;display:flex;align-items:center;justify-content:center}
+.tag-x:hover{background:rgba(0,0,0,.28);color:#000}
+.tag-caret{margin-inline-start:auto;color:var(--muted);font-size:11px}
+.away-pop{position:fixed;z-index:400;background:#fff;border:1px solid var(--border);
+  border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.18);padding:5px;
+  max-height:260px;overflow:auto;min-width:170px}
+.away-opt{display:flex;align-items:center;gap:6px;border-radius:6px;
+  padding:5px 7px;margin:2px 0;font-size:.85rem;white-space:nowrap;cursor:pointer}
+.away-opt input{width:16px;height:16px;min-height:auto;margin:0;flex:none}
 /* guide — reuses the app's cards and accordions; the only additions are a
    readable measure, a chapter scale, and the two callout colours */
 .guide-lead{color:var(--muted);font-size:.92rem;line-height:1.6}
@@ -268,7 +285,9 @@ act_mark_trip:"נסיעה",log_trip_on:"{e} סומן בנסיעה ב-{d}",log_tr
 monday:"שני",tuesday:"שלישי",wednesday:"רביעי",thursday:"חמישי",friday:"שישי",saturday:"שבת",sunday:"ראשון",
 warn_target:"אזהרה: {f} = {v} מופיע {n} פעמים, צריך {t}",warn_target_any:"אזהרה: {f} מולא {n} פעמים, צריך {t}",
 warn_extra_m:"אזהרה: {f} בוקר הוא {n}, צריך {t}",warn_extra_n:"אזהרה: {f} צהריים הוא {n}, צריך {t}",
-err_sec_vac:"{e} שובץ ל-{s} אך הוא בחופשה",err_sec_other:"{e} שובץ ל-{s} אך הוא במשימת אחר",
+err_sec_vac:"{e} שובץ ל-{s} אך הוא בחופשה",
+err_sec_trip:"{e} שובץ ל-{s} אך הוא בנסיעה",
+err_sec_both:"{e} שובץ ל-{s} אך הוא בחופשה ובנסיעה",err_sec_other:"{e} שובץ ל-{s} אך הוא במשימת אחר",
 err_sec_none:"אין עובד פנוי מקבוצת {g} עבור {s}",warn_sec_dup:"{e} משובץ גם ל-{s} וגם ל-{s2}",
 edit:"עדכן",row_updated:"השורה עודכנה",
 s_employees:"👤 קבוצות עובדים ותקציבי חופשה",s_workplaces:"🏢 מקומות עבודה",s_workdays:"📆 ימי עבודה",
@@ -363,7 +382,9 @@ act_mark_trip:"Trip",log_trip_on:"{e} marked on a trip on {d}",log_trip_off:"{e}
 monday:"Mon",tuesday:"Tue",wednesday:"Wed",thursday:"Thu",friday:"Fri",saturday:"Sat",sunday:"Sun",
 warn_target:"Warning: {f} = {v} appears {n} times, should be {t}",warn_target_any:"Warning: {f} is filled {n} times, should be {t}",
 warn_extra_m:"Warning: morning {f} is {n}, should be {t}",warn_extra_n:"Warning: noon {f} is {n}, should be {t}",
-err_sec_vac:"{e} assigned to {s} but is on vacation",err_sec_other:"{e} assigned to {s} but has another task",
+err_sec_vac:"{e} assigned to {s} but is on vacation",
+err_sec_trip:"{e} assigned to {s} but is away on a trip",
+err_sec_both:"{e} assigned to {s} but is on vacation and on a trip",err_sec_other:"{e} assigned to {s} but has another task",
 err_sec_none:"No employee available from group {g} for {s}",warn_sec_dup:"{e} is assigned to both {s} and {s2}",
 edit:"Update",row_updated:"Row updated",
 s_employees:"👤 Employee groups & vacation budgets",s_workplaces:"🏢 Workplaces",s_workdays:"📆 Work days",
@@ -458,7 +479,9 @@ act_mark_trip:"Viaje",log_trip_on:"{e} marcado de viaje el {d}",log_trip_off:"{e
 monday:"Lun",tuesday:"Mar",wednesday:"Mié",thursday:"Jue",friday:"Vie",saturday:"Sáb",sunday:"Dom",
 warn_target:"Advertencia: {f} = {v} aparece {n} veces, debe ser {t}",warn_target_any:"Advertencia: {f} se llenó {n} veces, debe ser {t}",
 warn_extra_m:"Advertencia: {f} mañana es {n}, debe ser {t}",warn_extra_n:"Advertencia: {f} mediodía es {n}, debe ser {t}",
-err_sec_vac:"{e} asignado a {s} pero está de vacaciones",err_sec_other:"{e} asignado a {s} pero tiene otra tarea",
+err_sec_vac:"{e} asignado a {s} pero está de vacaciones",
+err_sec_trip:"{e} asignado a {s} pero está de viaje",
+err_sec_both:"{e} asignado a {s} pero está de vacaciones y de viaje",err_sec_other:"{e} asignado a {s} pero tiene otra tarea",
 err_sec_none:"Ningún empleado disponible del grupo {g} para {s}",warn_sec_dup:"{e} está asignado a {s} y también a {s2}",
 edit:"Actualizar",row_updated:"Fila actualizada",
 s_employees:"👤 Grupos de empleados y presupuestos",s_workplaces:"🏢 Lugares de trabajo",s_workdays:"📆 Días laborables",
@@ -1003,6 +1026,13 @@ function awayList(day, field){
   }
   return typeof v==="string"&&v ? v.split(",").map(x=>x.trim()).filter(Boolean) : [];
 }
+/* why one person is unavailable that day: "vacation", "trip", "both" or "" */
+function awayReason(day, name){
+  const v=awayList(day,"vacation").includes(name);
+  const p=awayList(day,"trip").includes(name);
+  return v&&p?"both":v?"vacation":p?"trip":"";
+}
+const AWAY_MSG = {vacation:"err_sec_vac", trip:"err_sec_trip", both:"err_sec_both"};
 /* everyone unavailable that day, whatever the reason */
 function awayToday(day){
   const out=new Set();
@@ -1527,7 +1557,8 @@ function validate(){
       const rk=x.sec.row_key, g=groupById(x.sec.group_id), lbl=sectionLabel(x);
       const people=String(day[rk]||"").split("+").filter(Boolean);
       people.forEach(e=>{
-        if(away.has(e)) errs.push({lvl:"err",msg:"❌ "+d+": "+t("err_sec_vac",{e,s:lbl})});
+        const why=awayReason(day,e);
+        if(why) errs.push({lvl:"err",msg:"❌ "+d+": "+t(AWAY_MSG[why],{e,s:lbl})});
         else if(e===other) errs.push({lvl:"err",msg:"❌ "+d+": "+t("err_sec_other",{e,s:lbl})});
         if(placed[e]) errs.push({lvl:"warn",msg:d+": "+t("warn_sec_dup",{e,s:placed[e],s2:lbl})});
         else placed[e]=lbl;
@@ -1638,6 +1669,77 @@ function viewSched(){
   return h;
 }
 
+/* ── away rows as tags with a picker ─────────────────────────────────────── */
+/* The picker is fixed-position and lives on <body>: inside the scrolling table
+   wrapper it would be clipped by the overflow, which no z-index can undo. */
+function awayTags(dk, rk){
+  const names=awayList(S.days[dk],rk);
+  const cls=rk==="trip"?"tag-trip":"tag-vac";
+  return names.map(n=>`<span class="tag ${cls}">${esc(n)}`+
+      `<button class="tag-x" data-rm="${esc(n)}" aria-label="${esc(t("delete"))}">×</button></span>`).join("")+
+    `<span class="tag-caret" aria-hidden="true">▾</span>`;
+}
+let _awayPop=null, _awayDirty=false;
+function closeAwayPop(){
+  if(!_awayPop) return;
+  _awayPop.remove(); _awayPop=null;
+  document.removeEventListener("mousedown", awayOutside, true);
+  window.removeEventListener("resize", closeAwayPop);
+  /* it is fixed-positioned, so it cannot follow a scroll — close it instead */
+  window.removeEventListener("scroll", closeAwayPop, true);
+  if(_awayDirty){ _awayDirty=false; render(); }   // section pickers follow who is away
+}
+function awayOutside(ev){
+  if(_awayPop && !_awayPop.contains(ev.target) && !ev.target.closest(".tagbox")) closeAwayPop();
+}
+function refreshAwayCell(dk, rk){
+  const box=document.querySelector(`.tagbox[data-dk="${dk}"][data-away="${rk}"]`);
+  if(box) box.innerHTML=awayTags(dk,rk);
+}
+function toggleAway(dk, rk, name, on){
+  const list=awayList(S.days[dk],rk).filter(x=>x!==name);
+  if(on) list.push(name);
+  S.days[dk][rk]=list;
+  if(rk==="trip")
+    logAction("mark_trip", on?"log_trip_on":"log_trip_off", {e:name, d:fmtDM(dk)},
+      {week:Object.keys(S.days).sort()[0], changes:1});
+  S.dirty=true; _awayDirty=true; saveDraft();
+  refreshAwayCell(dk,rk); updateStatus();
+  /* keep an open picker in step with a tag removed from the cell */
+  if(_awayPop && _awayPop.dataset.dk===dk && _awayPop.dataset.away===rk) _awayPop._paint();
+}
+function openAwayPop(box){
+  const dk=box.dataset.dk, rk=box.dataset.away;
+  const wasFor=_awayPop&&_awayPop.dataset.dk===dk&&_awayPop.dataset.away===rk;
+  closeAwayPop();
+  if(wasFor) return;                       // clicking the same box closes it
+  const pop=document.createElement("div");
+  pop.className="away-pop"; pop.dataset.dk=dk; pop.dataset.away=rk;
+  const paint=()=>{
+    const on=awayList(S.days[dk],rk);
+    pop.innerHTML=activeGroups().map(g=>groupEmps(g.id).map(e=>
+      `<label class="away-opt" style="background:${esc(g.color||"#fff")}">`+
+      `<input type="checkbox" data-emp="${esc(e)}" ${on.includes(e)?"checked":""}> ${esc(e)}</label>`
+    ).join("")).join("")||`<div class="hint" style="padding:6px">${t("away_none")}</div>`;
+    pop.querySelectorAll("[data-emp]").forEach(cb=>cb.onchange=()=>{
+      toggleAway(dk,rk,cb.dataset.emp,cb.checked); });
+  };
+  pop._paint=paint;
+  paint();
+  document.body.appendChild(pop);
+  /* sit under the cell, or flip above it when the bottom of the window is
+     closer than the picker is tall — clamping to the viewport instead would
+     leave it floating far from the cell it belongs to */
+  const r=box.getBoundingClientRect(), h=pop.offsetHeight;
+  const below=r.bottom+4+h<=window.innerHeight-8;
+  pop.style.top=(below?r.bottom+4:Math.max(8, r.top-h-4))+"px";
+  pop.style.left=Math.max(8, Math.min(r.left, window.innerWidth-pop.offsetWidth-8))+"px";
+  _awayPop=pop;
+  document.addEventListener("mousedown", awayOutside, true);
+  window.addEventListener("resize", closeAwayPop);
+  window.addEventListener("scroll", closeAwayPop, true);
+}
+
 /* live refresh of badge / error list / save-dot without a full re-render */
 function updateStatus(){
   const b=document.getElementById("statusBadge");
@@ -1670,14 +1772,8 @@ function renderRow(rk,keys){
     if(rk==="work_hours"){
       h+=selCell(dk,"work_hours",hourOptions(),day.work_hours);
     } else if(AWAY_ROWS.includes(rk)){
-      /* every employee, any number of them, tinted by their group */
-      const on=awayList(day,rk);
-      let c="";
-      activeGroups().forEach(g=>groupEmps(g.id).forEach(e=>{
-        c+=`<label class="away-chk" style="background:${esc(g.color||"#fff")}">`+
-           `<input type="checkbox" data-dk="${dk}" data-away="${esc(rk)}" data-emp="${esc(e)}"`+
-           ` ${on.includes(e)?"checked":""}> ${esc(e)}</label>`; }));
-      h+=`<td class="away-cell">${c||`<span class="hint">${t("away_none")}</span>`}</td>`;
+      h+=`<td class="away-cell"><div class="tagbox" data-dk="${dk}" data-away="${esc(rk)}">`+
+         awayTags(dk,rk)+`</div></td>`;
     } else if(sx){
       const g=groupById(sx.sec.group_id);
       const away=awayToday(day);
@@ -2824,16 +2920,14 @@ function wire(){
     if($("btnPrint")) $("btnPrint").onclick=doPrint;
     const sb=$("statusBadge"); if(sb) sb.onclick=()=>{ const el=$("errList");
       if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); };
-    document.querySelectorAll("table.sched [data-away]").forEach(cb=>{
-      cb.onchange=()=>{
-        const dk=cb.dataset.dk, f=cb.dataset.away, e=cb.dataset.emp;
-        const list=awayList(S.days[dk],f).filter(x=>x!==e);
-        if(cb.checked) list.push(e);
-        S.days[dk][f]=list;
-        if(f==="trip")
-          logAction("mark_trip", cb.checked?"log_trip_on":"log_trip_off",
-            {e, d:fmtDM(dk)}, {week:Object.keys(S.days).sort()[0], changes:1});
-        S.dirty=true; saveDraft(); render();
+    closeAwayPop();
+    document.querySelectorAll("table.sched .tagbox").forEach(box=>{
+      box.onclick=ev=>{
+        const rm=ev.target.closest("[data-rm]");
+        if(rm){ ev.stopPropagation();
+          toggleAway(box.dataset.dk, box.dataset.away, rm.dataset.rm, false);
+          return; }
+        openAwayPop(box);
       };
     });
     document.querySelectorAll("table.sched select,table.sched input:not([data-away])").forEach(el=>{

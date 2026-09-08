@@ -143,9 +143,11 @@ def validate_schedule(schedule: dict, lang: str = "he") -> list:
             away = cfg.away_today(day)
             people = [e for e in str(day.get(row_key, "")).split("+") if e]
             for e in people:
-                if e in away:
-                    errors.append(f"❌ {d_str}: " +
-                                  t("err_sec_vac", lang, e=e, s=label))
+                why = cfg.away_reason(day, e)
+                if why:
+                    errors.append(f"❌ {d_str}: " + t(
+                        {"vacation": "err_sec_vac", "trip": "err_sec_trip",
+                         "both": "err_sec_both"}[why], lang, e=e, s=label))
                 elif e == other_empl:
                     errors.append(f"❌ {d_str}: " +
                                   t("err_sec_other", lang, e=e, s=label))

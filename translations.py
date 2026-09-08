@@ -1,6 +1,8 @@
 TRANSLATIONS = {
     "he": {
         "err_sec_vac": "{e} שובץ ל-{s} אך הוא בחופשה",
+        "err_sec_trip": "{e} שובץ ל-{s} אך הוא בנסיעה",
+        "err_sec_both": "{e} שובץ ל-{s} אך הוא בחופשה ובנסיעה",
         "err_sec_other": "{e} שובץ ל-{s} אך הוא במשימת אחר",
         "err_sec_none": "אין עובד פנוי מקבוצת {g} עבור {s}",
         "warn_sec_dup": "{e} משובץ גם ל-{s} וגם ל-{s2}",
@@ -169,6 +171,8 @@ TRANSLATIONS = {
     },
     "en": {
         "err_sec_vac": "{e} assigned to {s} but is on vacation",
+        "err_sec_trip": "{e} assigned to {s} but is away on a trip",
+        "err_sec_both": "{e} assigned to {s} but is on vacation and on a trip",
         "err_sec_other": "{e} assigned to {s} but has another task",
         "err_sec_none": "No employee available from group {g} for {s}",
         "warn_sec_dup": "{e} is assigned to both {s} and {s2}",
@@ -337,6 +341,8 @@ TRANSLATIONS = {
     },
     "es": {
         "err_sec_vac": "{e} asignado a {s} pero está de vacaciones",
+        "err_sec_trip": "{e} asignado a {s} pero está de viaje",
+        "err_sec_both": "{e} asignado a {s} pero está de vacaciones y de viaje",
         "err_sec_other": "{e} asignado a {s} pero tiene otra tarea",
         "err_sec_none": "Ningún empleado disponible del grupo {g} para {s}",
         "warn_sec_dup": "{e} está asignado a {s} y también a {s2}",

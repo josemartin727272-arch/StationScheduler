@@ -499,6 +499,13 @@ def away_list(day: dict, field: str) -> list:
     return out
 
 
+def away_reason(day: dict, name: str) -> str:
+    """Why one person is unavailable: "vacation", "trip", "both" or ""."""
+    on_vac = name in away_list(day, "vacation")
+    on_trip = name in away_list(day, "trip")
+    return "both" if on_vac and on_trip else "vacation" if on_vac else "trip" if on_trip else ""
+
+
 def away_today(day: dict) -> set:
     """Everyone unavailable that day, whatever the reason."""
     out = set()
