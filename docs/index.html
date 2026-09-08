@@ -71,8 +71,16 @@ td.cell-yellow select{background:var(--yellow)}
    Nothing inside the schedule itself ever turns yellow. */
 .badge{cursor:pointer}
 .warn-pop{position:fixed;z-index:400;background:#fff;border:1px solid var(--border);
-  border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.14);padding:6px;
-  max-height:300px;overflow:auto;min-width:240px;max-width:min(420px,92vw)}
+  border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.14);
+  display:flex;flex-direction:column;max-height:400px;
+  min-width:240px;max-width:min(420px,92vw)}
+.warn-pop .wp-head{display:flex;align-items:center;gap:8px;padding:6px 8px;
+  border-block-end:1px solid var(--border);font-size:.85rem;color:var(--muted)}
+.warn-pop .wp-head span{flex:1}
+.warn-pop .wp-x{border:0;background:none;font-size:1rem;line-height:1;cursor:pointer;
+  color:var(--muted);padding:2px 6px;border-radius:6px;min-height:auto}
+.warn-pop .wp-x:hover{background:var(--bg);color:var(--text)}
+.warn-pop .wp-body{overflow-y:auto;overscroll-behavior:contain;padding:6px}
 .warn-pop .wl{padding:6px 8px;border-radius:6px;font-size:.85rem;line-height:1.45;
   border-inline-start:3px solid var(--muted)}
 .warn-pop .wl+.wl{margin-block-start:4px}
@@ -284,7 +292,7 @@ log_settings:"ההגדרות עודכנו",log_add_row:"נוספה השורה \"
 log_export_week:"ייצוא הסידור לשבוע {w}",log_backup:"גיבוי מלא הורד",log_restore:"שוחזר מגיבוי",
 log_cfg_export:"ייצוא הגדרות",log_cfg_import:"ייבוא הגדרות",guide_lead:"מדריך קצר לכל מה שהמערכת יודעת לעשות. פתח פרק כדי לקרוא אותו.",
 week_start:"תחילת שבוע",generate:"צור סידור",auto_assign:"⚡ שיבוץ אוטומטי",save:"💾 שמור",export_excel:"📤 ייצוא Excel",print:"🖨️ הדפסה",
-warn_count:"מספר הערות על הסידור",
+warn_count:"מספר הערות על הסידור",close:"סגור",
 warn_sec_cross_group:"{e} שובץ ל-{s} אף שאינו בקבוצה {g}",
 saved:"הסידור נשמר בארכיון",valid:"הסידור תקין ✓",replace_q:"קיים סידור שמור לשבוע זה — להחליף?",yes:"כן",no:"ביטול",
 row_dates:"תאריכים",row_days:"ימים",row_work_hours:"שעות עבודה",row_entry:"כניסה",row_exit:"יציאה",
@@ -392,7 +400,7 @@ log_settings:"Settings updated",log_add_row:"Added the row \"{r}\"",log_del_row:
 log_export_week:"Exported the schedule for {w}",log_backup:"Full backup downloaded",log_restore:"Restored from a backup",
 log_cfg_export:"Settings exported",log_cfg_import:"Settings imported",guide_lead:"A short guide to everything the app can do. Open a chapter to read it.",
 week_start:"Week start",generate:"New Schedule",auto_assign:"⚡ Auto Assign",save:"💾 Save",export_excel:"📤 Export Excel",print:"🖨️ Print",
-warn_count:"Notes on this schedule",
+warn_count:"Notes on this schedule",close:"Close",
 warn_sec_cross_group:"{e} was placed at {s} though they are not in group {g}",
 saved:"Schedule saved to archive",valid:"Schedule is valid ✓",replace_q:"A schedule exists for this week — replace?",yes:"Yes",no:"Cancel",
 row_dates:"Dates",row_days:"Days",row_work_hours:"Work Hours",row_entry:"Entry",row_exit:"Exit",
@@ -500,7 +508,7 @@ log_settings:"Configuración actualizada",log_add_row:"Se agregó la fila \"{r}\
 log_export_week:"Se exportó el horario de {w}",log_backup:"Respaldo completo descargado",log_restore:"Restaurado desde un respaldo",
 log_cfg_export:"Configuración exportada",log_cfg_import:"Configuración importada",guide_lead:"Una guía breve de todo lo que hace la app. Abre un capítulo para leerlo.",
 week_start:"Inicio de semana",generate:"Nuevo Horario",auto_assign:"⚡ Asignación Automática",save:"💾 Guardar",export_excel:"📤 Exportar Excel",print:"🖨️ Imprimir",
-warn_count:"Observaciones del horario",
+warn_count:"Observaciones del horario",close:"Cerrar",
 warn_sec_cross_group:"{e} fue asignado a {s} aunque no pertenece al grupo {g}",
 saved:"Horario guardado en archivo",valid:"El horario es válido ✓",replace_q:"Existe un horario para esta semana — ¿reemplazar?",yes:"Sí",no:"Cancelar",
 row_dates:"Fechas",row_days:"Días",row_work_hours:"Horas de Trabajo",row_entry:"Ingreso",row_exit:"Salida",
@@ -1861,20 +1869,32 @@ function openAwayPop(box){
 }
 
 /* ── the warnings popover ─────────────────────────────────────────────────
-   A short list under the badge. It lives on <body> and is fixed-positioned,
-   so nothing in the page can clip it, and a scroll closes it rather than
-   letting it drift away from the badge it belongs to. */
-let _warnPop=null;
+   A list under the badge. It lives on <body> and is fixed-positioned, so
+   nothing in the page can clip it and its own scrollbar works freely. A page
+   scroll re-anchors it to the badge rather than closing it — closing on
+   scroll made the list unreadable the moment you reached for it. It goes away
+   on its ✕, on a click anywhere outside, or on a second click on the badge. */
+let _warnPop=null, _warnBadge=null;
 function closeWarnPop(){
   if(!_warnPop) return;
-  _warnPop.remove(); _warnPop=null;
-  document.removeEventListener("mousedown", warnOutside, true);
-  window.removeEventListener("resize", closeWarnPop);
-  window.removeEventListener("scroll", closeWarnPop, true);
+  _warnPop.remove(); _warnPop=null; _warnBadge=null;
+  document.removeEventListener("click", warnOutside);
+  window.removeEventListener("resize", placeWarnPop);
+  window.removeEventListener("scroll", placeWarnPop, true);
 }
 function warnOutside(ev){
-  if(_warnPop && !_warnPop.contains(ev.target) && ev.target.id!=="statusBadge")
-    closeWarnPop();
+  if(!_warnPop) return;
+  if(_warnPop.contains(ev.target)) return;          // inside, including its scrollbar
+  if(_warnBadge&&_warnBadge.contains(ev.target)) return;  // the badge toggles itself
+  closeWarnPop();
+}
+/* keep it under the badge as the page moves beneath it */
+function placeWarnPop(){
+  if(!_warnPop||!_warnBadge) return;
+  const r=_warnBadge.getBoundingClientRect(), h=_warnPop.offsetHeight;
+  const below=r.bottom+6+h<=window.innerHeight-8;
+  _warnPop.style.top=(below?r.bottom+6:Math.max(8, r.top-h-6))+"px";
+  _warnPop.style.left=Math.max(8, Math.min(r.left, window.innerWidth-_warnPop.offsetWidth-8))+"px";
 }
 function openWarnPop(badge){
   const was=!!_warnPop;
@@ -1883,18 +1903,21 @@ function openWarnPop(badge){
   const errs=S.days?validate():[];
   const pop=document.createElement("div");
   pop.className="warn-pop";
-  pop.innerHTML=errs.length
-    ?errs.map(e=>`<div class="wl ${e.lvl}">${esc(e.msg)}</div>`).join("")
-    :`<div class="wl ok">${esc(t("valid"))}</div>`;
+  pop.innerHTML=`<div class="wp-head"><span>${errs.length?"⚠️ "+errs.length:"✓"}</span>
+      <button type="button" class="wp-x" aria-label="${esc(t("close"))}">✕</button></div>
+    <div class="wp-body">`+
+    (errs.length
+      ?errs.map(e=>`<div class="wl ${e.lvl}">${esc(e.msg)}</div>`).join("")
+      :`<div class="wl ok">${esc(t("valid"))}</div>`)+`</div>`;
+  pop.querySelector(".wp-x").onclick=closeWarnPop;
   document.body.appendChild(pop);
-  const r=badge.getBoundingClientRect(), h=pop.offsetHeight;
-  const below=r.bottom+6+h<=window.innerHeight-8;
-  pop.style.top=(below?r.bottom+6:Math.max(8, r.top-h-6))+"px";
-  pop.style.left=Math.max(8, Math.min(r.left, window.innerWidth-pop.offsetWidth-8))+"px";
-  _warnPop=pop;
-  document.addEventListener("mousedown", warnOutside, true);
-  window.addEventListener("resize", closeWarnPop);
-  window.addEventListener("scroll", closeWarnPop, true);
+  _warnPop=pop; _warnBadge=badge;
+  placeWarnPop();
+  /* not capture: the click that opened this one is still on its way up, and
+     the badge guard in warnOutside is what keeps it from closing right away */
+  document.addEventListener("click", warnOutside);
+  window.addEventListener("resize", placeWarnPop);
+  window.addEventListener("scroll", placeWarnPop, true);
 }
 /* live refresh of the badge / save-dot without a full re-render */
 function updateStatus(){
@@ -1904,7 +1927,7 @@ function updateStatus(){
     b.className="badge "+(errs.length?"bad":"good");
     b.textContent=errs.length?`⚠️ ${errs.length}`:`✓ ${t("valid_short")}`;
     b.title=errs.length?t("warn_count"):t("valid");
-    if(_warnPop){ closeWarnPop(); openWarnPop(b); }
+    if(_warnPop){ const bd=_warnBadge; closeWarnPop(); openWarnPop(bd||b); }
   }
   const dot=document.getElementById("saveDot");
   if(dot) dot.style.display=S.dirty?"inline-block":"none";
