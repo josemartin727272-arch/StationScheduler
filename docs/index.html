@@ -131,6 +131,10 @@ table.stats th{background:#eef2f7}
 .lz2{width:96px;height:96px;top:22px;inset-inline-end:-30px}
 .lz3{width:190px;height:190px;bottom:-80px;inset-inline-end:-56px}
 .lz4{width:74px;height:74px;bottom:26px;inset-inline-start:-24px}
+#homeIcon{cursor:pointer;border-radius:8px;padding:0 2px}
+#homeIcon:hover{filter:brightness(1.15)}
+#homeIcon:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.l-welcome{color:var(--muted);font-size:.95rem;margin-bottom:10px}
 .l-mark{font-size:72px;line-height:1;margin-bottom:14px}
 .l-title{font-size:28px;font-weight:500;color:#1a1a1a;margin:0 0 6px}
 .l-sub{color:#f5c842;letter-spacing:2px;font-size:.78rem;font-weight:600;margin-bottom:30px}
@@ -218,7 +222,7 @@ details.guide-ch>summary{font-size:1rem;gap:10px}
 </head>
 <body>
 <header>
-  <h1>🚕 <span id="hTitle"></span></h1>
+  <h1><span id="homeIcon" role="button" tabindex="0">🚕</span> <span id="hTitle"></span></h1>
   <nav id="nav"></nav>
   <span id="langBtns"></span>
 </header>
@@ -231,7 +235,8 @@ details.guide-ch>summary{font-size:1rem;gap:10px}
 /* ═══════════════ i18n ═══════════════ */
 const I18N = {
 he:{app_title:"אשר סידור מוניות",nav_sched:"📋 סידור",nav_settings:"⚙️ הגדרות",nav_archive:"📁 ארכיון",nav_stats:"📊 סטטיסטיקה",
-nav_guide:"📖 מדריך",enter_system:"כניסה למערכת",
+nav_guide:"📖 מדריך",nav_home:"🏠 בית",home_tip:"דף הבית",welcome:"ברוך הבא",
+enter_system:"כניסה למערכת",
 s_log:"📋 לוג שינויים",log_time:"תאריך ושעה",log_action:"פעולה",log_details:"פרטים",log_changes:"שינויים",
 log_hint:"{n} הפעולות האחרונות. הלוג נשמר על המכשיר בלבד.",log_empty:"אין עדיין פעולות בלוג",
 log_clear:"🗑 נקה לוג",log_clear_q:"למחוק את כל הלוג? פעולה זו בלתי הפיכה.",log_cleared:"הלוג נוקה",
@@ -323,7 +328,8 @@ err_axis_ud:"ציר {a}: סכום U+D הוא {n}%, חייב 100%",
 err_axis_rule_pct:"{f} {v}: סכום אחוזי הצירים הוא {n}%, חייב 100%",
 warn_axis_rule:"{f} {a} לא מותר עבור {e} {v}"},
 en:{app_title:"Asher Taxi Scheduler",nav_sched:"📋 Schedule",nav_settings:"⚙️ Settings",nav_archive:"📁 Archive",nav_stats:"📊 Statistics",
-nav_guide:"📖 Guide",enter_system:"Enter System",
+nav_guide:"📖 Guide",nav_home:"🏠 Home",home_tip:"Home",welcome:"Welcome",
+enter_system:"Enter System",
 s_log:"📋 Change log",log_time:"Date and time",log_action:"Action",log_details:"Details",log_changes:"Changes",
 log_hint:"The last {n} actions. The log is kept on this device only.",log_empty:"Nothing in the log yet",
 log_clear:"🗑 Clear log",log_clear_q:"Clear the whole log? This cannot be undone.",log_cleared:"Log cleared",
@@ -415,7 +421,8 @@ err_axis_ud:"Axis {a}: U+D totals {n}%, must be 100%",
 err_axis_rule_pct:"{f} {v}: axis shares total {n}%, must be 100%",
 warn_axis_rule:"{f} {a} is not allowed for {e} {v}"},
 es:{app_title:"Asher Programador de Taxis",nav_sched:"📋 Horario",nav_settings:"⚙️ Configuración",nav_archive:"📁 Archivo",nav_stats:"📊 Estadísticas",
-nav_guide:"📖 Guía",enter_system:"Entrar al Sistema",
+nav_guide:"📖 Guía",nav_home:"🏠 Inicio",home_tip:"Inicio",welcome:"Bienvenido",
+enter_system:"Entrar al Sistema",
 s_log:"📋 Registro de cambios",log_time:"Fecha y hora",log_action:"Acción",log_details:"Detalles",log_changes:"Cambios",
 log_hint:"Las últimas {n} acciones. El registro se guarda solo en este dispositivo.",log_empty:"Todavía no hay nada en el registro",
 log_clear:"🗑 Borrar registro",log_clear_q:"¿Borrar todo el registro? No se puede deshacer.",log_cleared:"Registro borrado",
@@ -1528,10 +1535,15 @@ function render(){
   document.documentElement.dir=(S.lang==="he")?"rtl":"ltr";
   document.title=t("app_title")+" 🚕";
   document.getElementById("hTitle").textContent=t("app_title");
+  const home=document.getElementById("homeIcon");
+  home.title=t("home_tip");
+  home.setAttribute("aria-label",t("home_tip"));
+  home.onclick=goHome;
+  home.onkeydown=ev=>{ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); goHome(); } };
   const nav=document.getElementById("nav");
   nav.innerHTML=S.screen==="landing" ? "" :
-    [["sched","nav_sched"],["settings","nav_settings"],["archive","nav_archive"],
-     ["stats","nav_stats"],["guide","nav_guide"]]
+    [["landing","nav_home"],["sched","nav_sched"],["settings","nav_settings"],
+     ["archive","nav_archive"],["stats","nav_stats"],["guide","nav_guide"]]
     .map(([id,k])=>`<button data-nav="${id}" class="${S.screen===id?"active":""}">${t(k)}</button>`).join("");
   nav.querySelectorAll("button").forEach(b=>b.onclick=()=>{S.screen=b.dataset.nav;S.pendingConfirm=null;render();});
   const app=document.getElementById("app");
@@ -2122,6 +2134,7 @@ function viewStats(){
 }
 
 /* ═══════════════ screen 0: landing ═══════════════ */
+function goHome(){ S.screen="landing"; S.pendingConfirm=null; render(); }
 /* Shown once per page load. The nav lives on the card itself, so the header's
    own nav is hidden while it is up. */
 const LANDING_NAV=[["sched","nav_sched"],["settings","nav_settings"],
@@ -2130,6 +2143,7 @@ function viewLanding(){
   return `<div class="landing">
     <span class="lz lz1"></span><span class="lz lz2"></span>
     <span class="lz lz3"></span><span class="lz lz4"></span>
+    <div class="l-welcome">${esc(t("welcome"))}</div>
     <div class="l-mark">🚕</div>
     <h1 class="l-title">${esc(t("app_title"))}</h1>
     <div class="l-sub">ASHER TAXI SCHEDULER</div>
