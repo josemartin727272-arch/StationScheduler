@@ -60,7 +60,7 @@ ACTIVE_GROUPS = cfg.active_groups()
 ALL_EMPLOYEES = cfg.all_employees()
 SECTIONS = cfg.all_sections()                 # [(workplace, section)]
 SECTION_KEYS = cfg.section_row_keys()
-VAC_FIELDS = cfg.vac_fields()
+AWAY_FIELDS = cfg.AWAY_ROWS
 WORK_HOURS = [""] + cfg.hour_options()
 ENTRY_OPTIONS = cfg.options_with_blank("entry")
 EXIT_OPTIONS  = cfg.options_with_blank("exit")
@@ -779,7 +779,8 @@ def _render_stats(schedules: list, title: str):
     if not schedules:
         st.info("אין נתונים לתקופה זו" if lang=="he" else "No data for this period")
         return
-    emp_counts, field_counts, num_days, vacation_counts, other_counts = compute_stats(schedules)
+    (emp_counts, field_counts, num_days, vacation_counts, other_counts,
+     trip_counts) = compute_stats(schedules)
 
     st.markdown(f"**{title}** — {len(schedules)} {'שבועות' if lang=='he' else 'weeks'} · {num_days} {'ימים' if lang=='he' else 'days'}")
 
@@ -1118,14 +1119,7 @@ def generate_print_html(sched: dict, dk_list: list, lng: str) -> str:
     """Generate a self-contained, printable HTML table of the schedule."""
     # Rows follow the configured order; "vacation" fans out to one column
     # per active employee group.
-    PRINT_ROWS = []
-    for rk in cfg.reorderable_row_keys():
-        if rk == "vacation":
-            for g in cfg.active_groups():
-                PRINT_ROWS.append((cfg.vac_field(g),
-                                   cfg.row_label("vacation", lng) + " " + cfg.group_name(g)))
-        else:
-            PRINT_ROWS.append((rk, cfg.row_label(rk, lng)))
+    PRINT_ROWS = [(rk, cfg.row_label(rk, lng)) for rk in cfg.reorderable_row_keys()]
 
     py_keys = ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"]
 
@@ -1144,9 +1138,7 @@ def generate_print_html(sched: dict, dk_list: list, lng: str) -> str:
             SECTION_DIVIDERS[secs[0]["row_key"]] = "― " + cfg.workplace_name(w) + " ―"
     for k in ("arrival_point", "vehicle_morning", "vehicle_noon"):
         SECTION_DIVIDERS.setdefault(k, "― " + cfg.row_label(k, lng) + " ―")
-    first_vac = cfg.vac_fields()
-    if first_vac:
-        SECTION_DIVIDERS.setdefault(first_vac[0], "― " + cfg.row_label("vacation", lng) + " ―")
+    SECTION_DIVIDERS.setdefault("trip", "― " + cfg.row_label("trip", lng) + " ―")
 
     body_rows = ""
     for rk, rlabel in PRINT_ROWS:
@@ -1157,6 +1149,8 @@ def generate_print_html(sched: dict, dk_list: list, lng: str) -> str:
         cells = f"<td class='label'>{rlabel}</td>"
         for dk in dk_list:
             val = sched[dk].get(rk, "") or ""
+            if rk in cfg.AWAY_ROWS:
+                val = ", ".join(cfg.away_list(sched[dk], rk))
             cls = ""
             if rk == "vehicle_morning" or rk == "vehicle_noon":
                 cls = " yellow" if val == "YELLOW" else (" black" if val == "BLACK" else "")
@@ -1301,20 +1295,17 @@ st.divider()
 if st.session_state.get("auto_assigned"):
     st.session_state.auto_assigned = False
 
-    ALL_DISPLAY_FIELDS = []
-    for _rk in cfg.reorderable_row_keys():
-        if _rk == "vacation":
-            for _g in cfg.active_groups():
-                ALL_DISPLAY_FIELDS.append(
-                    (cfg.vac_field(_g), "Vacation " + cfg.group_name(_g)))
-        else:
-            ALL_DISPLAY_FIELDS.append((_rk, cfg.row_label(_rk, lang)))
+    ALL_DISPLAY_FIELDS = [(_rk, cfg.row_label(_rk, lang))
+                          for _rk in cfg.reorderable_row_keys()]
 
     import pandas as pd
     day_labels_en = [schedule[dk]["date"].strftime("%a %d/%m") for dk in day_keys]
     rows = {}
     for field, label in ALL_DISPLAY_FIELDS:
-        rows[label] = {dl: (schedule[dk].get(field, "") or "") for dl, dk in zip(day_labels_en, day_keys)}
+        rows[label] = {dl: (", ".join(cfg.away_list(schedule[dk], field))
+                            if field in cfg.AWAY_ROWS
+                            else (schedule[dk].get(field, "") or ""))
+                       for dl, dk in zip(day_labels_en, day_keys)}
     df = pd.DataFrame(rows).T
     df.index.name = ""
 
@@ -1387,9 +1378,9 @@ def render_row(rk: str):
             elif sx:
                 _wp, _sec = sx
                 _grp = cfg.group_by_id(_sec.get("group_id"))
-                _vac = day.get(cfg.vac_field(_grp), "") if _grp else ""
+                _away = cfg.away_today(day)
                 _people = [e for e in (cfg.group_employees(_sec.get("group_id"))
-                                       if _grp else ALL_EMPLOYEES) if e != _vac]
+                                       if _grp else ALL_EMPLOYEES) if e not in _away]
                 avail = [""] + _people
                 _size = cfg.section_size(_sec)
                 if _size >= 2:
@@ -1471,14 +1462,10 @@ def render_row(rk: str):
                     day[rk] = st.text_input("", value=day.get(rk, ""),
                         key=ck, label_visibility="collapsed")
 
-            elif rk == "vacation":
-                for _g in ACTIVE_GROUPS:
-                    _f = cfg.vac_field(_g)
-                    _av = [""] + cfg.group_employees(_g["id"])
-                    _cur = day.get(_f, "")
-                    day[_f] = st.selectbox(cfg.group_name(_g), _av,
-                        index=_av.index(_cur) if _cur in _av else 0,
-                        key=f"{ck}_{_g['id']}", label_visibility="collapsed")
+            elif rk in cfg.AWAY_ROWS:
+                day[rk] = st.multiselect(rk, ALL_EMPLOYEES,
+                    default=[e for e in cfg.away_list(day, rk) if e in ALL_EMPLOYEES],
+                    key=ck, label_visibility="collapsed")
 
         schedule[dk] = day
 
@@ -1504,7 +1491,8 @@ st.session_state.schedule = schedule
 st.divider()
 with st.expander("📊 " + ("סיכום שוויון שבועי" if lang=="he" else "Weekly Equality Summary")):
     import pandas as pd
-    emp_counts, field_counts, num_days_w, vacation_counts_w, other_counts_w = compute_stats([schedule])
+    (emp_counts, field_counts, num_days_w, vacation_counts_w, other_counts_w,
+     trip_counts_w) = compute_stats([schedule])
 
     st.markdown("**👤 " + ("חלוקת עובדים" if lang=="he" else "Employee Distribution") + "**")
     emp_rows = {}

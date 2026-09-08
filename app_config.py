@@ -12,7 +12,7 @@ CONFIG_PATH = Path(__file__).parent / "config.json"
 
 # Rows that exist regardless of configuration. Workplace-section rows and
 # custom rows are spliced in at "@workplaces" / "@custom" (see row_keys()).
-# "dates"/"days" are header rows; "vacation" expands to one column per group.
+# "dates"/"days" are header rows; "trip"/"vacation" each hold a list of names.
 FIXED_ROW_ORDER = [
     "dates", "days", "work_hours",
     "entry", "exit",
@@ -25,7 +25,7 @@ FIXED_ROW_ORDER = [
     "vehicle_noon", "axis_noon", "wait_noon",
     "taxi_emb", "taxi_arrival_noon",
     "@custom",
-    "vacation",
+    "trip", "vacation",
 ]
 
 MAX_GROUPS = 5
@@ -38,8 +38,10 @@ DEFAULT_VAC_BUDGET = 14
 DOW_ORDER = ["monday", "tuesday", "wednesday", "thursday", "friday",
              "saturday", "sunday"]
 
-# The two groups that shipped as IL/PE keep their original vacation field names
-# so that already-archived weeks stay readable.
+# Vacation and trip each hold a plain list of names. Weeks archived before this
+# held one name per group in vacation_il / vacation_pe / vacation_<id>, so reads
+# fall back to those and old archives keep counting.
+AWAY_ROWS = ["vacation", "trip"]
 LEGACY_VAC = {"g1": "vacation_il", "g2": "vacation_pe"}
 
 # Which config option list feeds each fixed select row.
@@ -470,13 +472,39 @@ def all_employees() -> list:
     return out
 
 
-def vac_field(g: dict) -> str:
-    """Vacation column name for a group; the two original groups keep theirs."""
-    return LEGACY_VAC.get(g.get("id"), "vacation_" + str(g.get("id")))
+def legacy_vac_fields() -> list:
+    """The per-group vacation columns older archives were written with."""
+    return [LEGACY_VAC.get(g.get("id"), "vacation_" + str(g.get("id")))
+            for g in groups()]
 
 
-def vac_fields() -> list:
-    return [vac_field(g) for g in active_groups()]
+def away_list(day: dict, field: str) -> list:
+    """Names marked in one away row on one day, new shape or old."""
+    if not day:
+        return []
+    value = day.get(field)
+    if isinstance(value, list):
+        return [n for n in value if n]
+    out = []
+    if field == "vacation":
+        for f in legacy_vac_fields():
+            name = day.get(f)
+            if name and name not in out:
+                out.append(name)
+    if isinstance(value, str) and value:
+        for name in value.split(","):
+            name = name.strip()
+            if name and name not in out:
+                out.append(name)
+    return out
+
+
+def away_today(day: dict) -> set:
+    """Everyone unavailable that day, whatever the reason."""
+    out = set()
+    for field in AWAY_ROWS:
+        out.update(away_list(day, field))
+    return out
 
 
 # ── workplaces & their sections ────────────────────────────────────────────
@@ -621,7 +649,7 @@ def target_fields() -> list:
     custom = {r["key"]: r for r in custom_rows()}
     out = []
     for k in natural_row_keys():
-        if k in ("dates", "days", "vacation") or k in text_rows:
+        if k in ("dates", "days") or k in AWAY_ROWS or k in text_rows:
             continue
         if k in custom and custom[k].get("input") != "select":
             continue
@@ -845,7 +873,7 @@ def all_row_keys() -> list:
 
 def schedule_fields() -> list:
     """Every field a day object carries."""
-    return [k for k in reorderable_row_keys() if k != "vacation"] + vac_fields()
+    return list(reorderable_row_keys())
 
 
 BASE_ROW_KEYS = [k for k in FIXED_ROW_ORDER if not k.startswith("@")]

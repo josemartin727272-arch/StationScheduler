@@ -159,6 +159,12 @@ table.stats th{background:#eef2f7}
 .log-tbl tr.lg-del  td{background:#fdecea}
 .log-tbl tr.lg-exp  td{background:#fef8e3}
 .log-tbl tr.lg-bak  td{background:#f3ecfa}
+.log-tbl tr.lg-trip td{background:#e6f6f4}
+/* away rows: a checkbox per employee, several may be ticked */
+td.away-cell{padding:3px;text-align:start}
+.away-chk{display:flex;align-items:center;gap:5px;border-radius:6px;
+  padding:2px 5px;margin:2px 0;font-size:.8rem;white-space:nowrap;cursor:pointer}
+.away-chk input{width:16px;height:16px;min-height:auto;margin:0;flex:none}
 /* guide — reuses the app's cards and accordions; the only additions are a
    readable measure, a chapter scale, and the two callout colours */
 .guide-lead{color:var(--muted);font-size:.92rem;line-height:1.6}
@@ -256,7 +262,9 @@ row_other_empl:"אחר",row_arrival_point:"נקודת הגעה",row_theater:"ת�
 row_vehicle_morning:"סוג רכב בוקר",row_axis_morning:"ציר בוקר",row_wait_morning:"מקום המתנה בוקר",
 row_taxi_apt:"מונית מיוחדת לדירה",row_taxi_arrival:"מונית מיוחדת הגעה",row_vehicle_noon:"סוג רכב צהריים",
 row_axis_noon:"ציר צהריים",row_wait_noon:"מקום המתנה צהריים",row_taxi_emb:"מונית מיוחדת EMB",
-row_taxi_arrival_noon:"מונית מיוחדת הגעה צהריים",row_vacation:"חופשות",
+row_taxi_arrival_noon:"מונית מיוחדת הגעה צהריים",row_vacation:"חופשות",row_trip:"נסיעה",
+away_none:"אין",warn_vac_trip:"{e} מסומן גם בחופשה וגם בנסיעה",
+act_mark_trip:"נסיעה",log_trip_on:"{e} סומן בנסיעה ב-{d}",log_trip_off:"{e} הוסר מנסיעה ב-{d}",
 monday:"שני",tuesday:"שלישי",wednesday:"רביעי",thursday:"חמישי",friday:"שישי",saturday:"שבת",sunday:"ראשון",
 warn_target:"אזהרה: {f} = {v} מופיע {n} פעמים, צריך {t}",warn_target_any:"אזהרה: {f} מולא {n} פעמים, צריך {t}",
 warn_extra_m:"אזהרה: {f} בוקר הוא {n}, צריך {t}",warn_extra_n:"אזהרה: {f} צהריים הוא {n}, צריך {t}",
@@ -349,7 +357,9 @@ row_other_empl:"Other",row_arrival_point:"Arrival Point",row_theater:"Theater",r
 row_vehicle_morning:"Morning Vehicle",row_axis_morning:"Morning Axis",row_wait_morning:"Morning Wait Spot",
 row_taxi_apt:"Special Taxi Apartment",row_taxi_arrival:"Special Taxi Arrival",row_vehicle_noon:"Noon Vehicle",
 row_axis_noon:"Noon Axis",row_wait_noon:"Noon Wait Spot",row_taxi_emb:"Special Taxi EMB",
-row_taxi_arrival_noon:"Special Taxi Arrival Noon",row_vacation:"Vacations",
+row_taxi_arrival_noon:"Special Taxi Arrival Noon",row_vacation:"Vacations",row_trip:"Trip",
+away_none:"None",warn_vac_trip:"{e} is marked both on vacation and on a trip",
+act_mark_trip:"Trip",log_trip_on:"{e} marked on a trip on {d}",log_trip_off:"{e} taken off the trip on {d}",
 monday:"Mon",tuesday:"Tue",wednesday:"Wed",thursday:"Thu",friday:"Fri",saturday:"Sat",sunday:"Sun",
 warn_target:"Warning: {f} = {v} appears {n} times, should be {t}",warn_target_any:"Warning: {f} is filled {n} times, should be {t}",
 warn_extra_m:"Warning: morning {f} is {n}, should be {t}",warn_extra_n:"Warning: noon {f} is {n}, should be {t}",
@@ -442,7 +452,9 @@ row_other_empl:"Otro",row_arrival_point:"Punto de Llegada",row_theater:"Teatro",
 row_vehicle_morning:"Vehículo Mañana",row_axis_morning:"Ruta Mañana",row_wait_morning:"Punta Llegada Mañana",
 row_taxi_apt:"Taxi R",row_taxi_arrival:"Taxi Llegada",row_vehicle_noon:"Vehículo Mediodía",
 row_axis_noon:"Ruta Mediodía",row_wait_noon:"Punta Llegada Mediodía",row_taxi_emb:"Taxi Emb",
-row_taxi_arrival_noon:"Taxi Llegada Mediodía",row_vacation:"Vacaciones",
+row_taxi_arrival_noon:"Taxi Llegada Mediodía",row_vacation:"Vacaciones",row_trip:"Viaje",
+away_none:"Ninguno",warn_vac_trip:"{e} está marcado de vacaciones y de viaje a la vez",
+act_mark_trip:"Viaje",log_trip_on:"{e} marcado de viaje el {d}",log_trip_off:"{e} quitado del viaje el {d}",
 monday:"Lun",tuesday:"Mar",wednesday:"Mié",thursday:"Jue",friday:"Vie",saturday:"Sáb",sunday:"Dom",
 warn_target:"Advertencia: {f} = {v} aparece {n} veces, debe ser {t}",warn_target_any:"Advertencia: {f} se llenó {n} veces, debe ser {t}",
 warn_extra_m:"Advertencia: {f} mañana es {n}, debe ser {t}",warn_extra_n:"Advertencia: {f} mediodía es {n}, debe ser {t}",
@@ -648,7 +660,7 @@ const PCT_LABELS = {entry:()=>rowLabel("entry"), exit:()=>rowLabel("exit"),
 const FIXED_ROW_ORDER = ["work_hours","entry","exit","escort_morning","school","escort_noon",
   "@workplaces","other_empl","arrival_point","theater","@extras",
   "vehicle_morning","axis_morning","wait_morning","taxi_apt","taxi_arrival",
-  "vehicle_noon","axis_noon","wait_noon","taxi_emb","taxi_arrival_noon","@custom","vacation"];
+  "vehicle_noon","axis_noon","wait_noon","taxi_emb","taxi_arrival_noon","@custom","trip","vacation"];
 /* which config option list feeds each select row */
 const ROW_OPTS = {work_hours:null, entry:"entry", exit:"exit", escort_morning:"escort",
   escort_noon:"escort", arrival_point:"arrival_point", theater:"theater",
@@ -658,7 +670,7 @@ const ROW_OPTS = {work_hours:null, entry:"entry", exit:"exit", escort_morning:"e
 const TEXT_ROWS = new Set(["school"]);
 /* fixed rows that carry a "◈" divider above them; workplaces add their own
    heading, named after the workplace */
-const FIXED_DIVIDERS = ["arrival_point","vehicle_morning","vehicle_noon","vacation"];
+const FIXED_DIVIDERS = ["arrival_point","vehicle_morning","vehicle_noon","trip"];
 const FIXED_HISTORY_FIELDS = ["entry","exit","arrival_point","theater",
   "axis_morning","axis_noon","wait_morning","wait_noon","taxi_apt","taxi_arrival",
   "vehicle_morning","vehicle_noon","taxi_emb","taxi_arrival_noon"];
@@ -674,6 +686,7 @@ const LOG_MAX = 200, LOG_SHOW = 50;
 const LOG_STYLE = {
   save_schedule:{icon:"💾", cls:"lg-save"},   auto_assign:{icon:"⚡", cls:"lg-auto"},
   save_settings:{icon:"⚙️", cls:"lg-set"},    delete_row:{icon:"🗑", cls:"lg-del"},
+  mark_trip:{icon:"🧳", cls:"lg-trip"},
   add_row:{icon:"➕", cls:"lg-add"},           export_excel:{icon:"📤", cls:"lg-exp"},
   backup:{icon:"📦", cls:"lg-bak"},            restore:{icon:"📦", cls:"lg-bak"}
 };
@@ -891,6 +904,7 @@ let S = {
   try{
     const d = JSON.parse(localStorage.getItem(LS.draft)||"null");
     if (d && d.weekStart && d.days){ S.weekStart=d.weekStart; S.days=d.days; S.dirty=!!d.dirty; }
+    if (S.days) Object.values(S.days).forEach(normalizeAway);
   }catch(e){}
 })();
 function saveDraft(){ localStorage.setItem(LS.draft, JSON.stringify({weekStart:S.weekStart, days:S.days, dirty:S.dirty})); }
@@ -969,11 +983,38 @@ function allEmps(){
     e=(e||"").trim(); if(e&&!seen.has(e)){ seen.add(e); out.push(e); } }));
   return out;
 }
-/* The two groups that shipped as IL/PE keep their original vacation field
-   names so that already-archived weeks stay readable. */
+/* Vacation and trip each hold a plain list of names. Weeks archived before
+   this held one name per group in vacation_il / vacation_pe / vacation_<id>,
+   so reads fall back to those and old archives keep counting. */
+const AWAY_ROWS = ["vacation","trip"];
 const LEGACY_VAC = {g1:"vacation_il", g2:"vacation_pe"};
-function vacField(g){ return LEGACY_VAC[g.id]||("vacation_"+g.id); }
-function vacFields(){ return activeGroups().map(vacField); }
+function legacyVacField(g){ return LEGACY_VAC[g.id]||("vacation_"+g.id); }
+function legacyVacFields(){ return (CFG.groups||[]).map(legacyVacField); }
+/* names marked in one away row on one day, new shape or old */
+function awayList(day, field){
+  if(!day) return [];
+  const v=day[field];
+  if(Array.isArray(v)) return v.filter(Boolean);
+  if(field==="vacation"){
+    const out=[];
+    legacyVacFields().forEach(f=>{ const n=day[f]; if(n&&!out.includes(n)) out.push(n); });
+    if(typeof v==="string"&&v) v.split(",").map(x=>x.trim()).forEach(n=>{ if(n&&!out.includes(n)) out.push(n); });
+    return out;
+  }
+  return typeof v==="string"&&v ? v.split(",").map(x=>x.trim()).filter(Boolean) : [];
+}
+/* everyone unavailable that day, whatever the reason */
+function awayToday(day){
+  const out=new Set();
+  AWAY_ROWS.forEach(f=>awayList(day,f).forEach(n=>out.add(n)));
+  return out;
+}
+/* fold a legacy week into the new shape so it saves back clean */
+function normalizeAway(day){
+  AWAY_ROWS.forEach(f=>{ if(!Array.isArray(day[f])) day[f]=awayList(day,f); });
+  legacyVacFields().forEach(f=>{ if(f in day) delete day[f]; });
+  return day;
+}
 function defaultVacBudget(){ return DEFAULT_VAC_BUDGET; }
 
 /* ── workplaces & their sections ────────────────────────────────────────── */
@@ -1043,7 +1084,7 @@ function targetFieldValues(key){
 /* rows offered in the quota field picker: every select row, by its own label */
 function targetFields(){
   return naturalRowKeys().filter(k=>{
-    if(k==="vacation"||TEXT_ROWS.has(k)) return false;
+    if(AWAY_ROWS.includes(k)||TEXT_ROWS.has(k)) return false;
     const cr=customRows().find(r=>r.key===k);
     if(cr&&cr.input!=="select") return false;
     return true;
@@ -1149,13 +1190,7 @@ function reorderableKeys(){
   return order.concat(natural.filter(k=>!order.includes(k)));
 }
 /* every field a day object carries */
-function scheduleFields(){
-  const keys=naturalRowKeys();
-  /* the vacation row is what renders the per-group columns; delete the row and
-     the columns go with it */
-  return keys.filter(k=>k!=="vacation")
-    .concat(keys.includes("vacation")?vacFields():[]);
-}
+function scheduleFields(){ return naturalRowKeys(); }
 /* the counters auto-assign balances against */
 function historyFields(){ return FIXED_HISTORY_FIELDS.concat(sectionRowKeys(), extraRowKeys()); }
 /* row key → the divider text shown above it */
@@ -1197,6 +1232,7 @@ function resyncDays(){
   for(const dk in fresh){
     const old=S.days[dk]; if(!old) continue;
     for(const f in fresh[dk]) if(old[f]!=null) fresh[dk][f]=old[f];
+    AWAY_ROWS.forEach(f=>{ fresh[dk][f]=awayList(old,f); });
   }
   S.days=fresh; saveDraft();
 }
@@ -1371,12 +1407,12 @@ function autoAssign(){
     /* whatever is already on the day (manual or quota-placed) is spoken for */
     secs.forEach(x=>{ const v=day[x.sec.row_key];
       if(v) String(v).split("+").forEach(e=>taken.add(e)); });
+    const away=awayToday(day);          // vacation and trip both mean unavailable
     const pickFor=(sec,busy)=>{
       const g=groupById(sec.group_id), size=sectionSize(sec);
       if(!size) return "";
-      const vac=g?(day[vacField(g)]||""):"";
       const pool=(g?groupEmps(g.id):allEmps())
-        .filter(e=>e!==vac&&e!==other&&!busy.has(e));
+        .filter(e=>!away.has(e)&&e!==other&&!busy.has(e));
       if(!pool.length) return "";
       return size===1?leastUsed(pool,H(sec.row_key))
                      :leastUsed(combos(pool,Math.min(size,pool.length)),H(sec.row_key));
@@ -1481,19 +1517,23 @@ function validate(){
       if(missing) errs.push({lvl:"warn", msg:d+": "+
         t("warn_wp_skipped",{w:wpName(w), s:sectionLabel({wp:w,sec:missing})})});
     });
+    /* someone cannot be on holiday and away on a trip at once */
+    const vacNames=awayList(day,"vacation"), tripNames=awayList(day,"trip");
+    vacNames.filter(e=>tripNames.includes(e)).forEach(e=>
+      errs.push({lvl:"warn", msg:d+": "+t("warn_vac_trip",{e})}));
+    const away=awayToday(day);
     const placed={};                          // employee → the section holding them
     secs.forEach(x=>{
       const rk=x.sec.row_key, g=groupById(x.sec.group_id), lbl=sectionLabel(x);
-      const vac=g?(day[vacField(g)]||""):"";
       const people=String(day[rk]||"").split("+").filter(Boolean);
       people.forEach(e=>{
-        if(e===vac) errs.push({lvl:"err",msg:"❌ "+d+": "+t("err_sec_vac",{e,s:lbl})});
+        if(away.has(e)) errs.push({lvl:"err",msg:"❌ "+d+": "+t("err_sec_vac",{e,s:lbl})});
         else if(e===other) errs.push({lvl:"err",msg:"❌ "+d+": "+t("err_sec_other",{e,s:lbl})});
         if(placed[e]) errs.push({lvl:"warn",msg:d+": "+t("warn_sec_dup",{e,s:placed[e],s2:lbl})});
         else placed[e]=lbl;
       });
       if(!people.length&&!x.sec.required&&sectionSize(x.sec)>0){
-        const pool=(g?groupEmps(g.id):allEmps()).filter(e=>e!==vac&&e!==other);
+        const pool=(g?groupEmps(g.id):allEmps()).filter(e=>!away.has(e)&&e!==other);
         if(!pool.length) errs.push({lvl:"err",msg:"❌ "+d+": "+
           t("err_sec_none",{s:lbl,g:g?groupName(g):"—"})});
       }
@@ -1629,19 +1669,19 @@ function renderRow(rk,keys){
     const dk=keys[i], day=S.days[dk];
     if(rk==="work_hours"){
       h+=selCell(dk,"work_hours",hourOptions(),day.work_hours);
-    } else if(rk==="vacation"){
-      /* one picker per active group, tinted with that group's colour */
+    } else if(AWAY_ROWS.includes(rk)){
+      /* every employee, any number of them, tinted by their group */
+      const on=awayList(day,rk);
       let c="";
-      activeGroups().forEach(g=>{ const f=vacField(g);
-        c+=`<select data-dk="${dk}" data-f="${f}" title="${esc(groupName(g))}"`+
-           ` style="background:${esc(g.color||"#fff")}"><option value=""></option>`+
-           groupEmps(g.id).map(e=>`<option ${e===day[f]?"selected":""}>${esc(e)}</option>`).join("")+
-           `</select>`; });
-      h+=`<td>${c||"&nbsp;"}</td>`;
+      activeGroups().forEach(g=>groupEmps(g.id).forEach(e=>{
+        c+=`<label class="away-chk" style="background:${esc(g.color||"#fff")}">`+
+           `<input type="checkbox" data-dk="${dk}" data-away="${esc(rk)}" data-emp="${esc(e)}"`+
+           ` ${on.includes(e)?"checked":""}> ${esc(e)}</label>`; }));
+      h+=`<td class="away-cell">${c||`<span class="hint">${t("away_none")}</span>`}</td>`;
     } else if(sx){
       const g=groupById(sx.sec.group_id);
-      const vac=g?(day[vacField(g)]||""):"";
-      const avail=(g?groupEmps(g.id):allEmps()).filter(e=>e!==vac);
+      const away=awayToday(day);
+      const avail=(g?groupEmps(g.id):allEmps()).filter(e=>!away.has(e));
       const size=sectionSize(sx.sec);
       const list=avail.slice();
       if(size>=2) list.push(...combos(avail,Math.min(size,avail.length)));
@@ -1902,7 +1942,8 @@ function rowKind(k){
 function labelledRowKeys(){ return naturalRowKeys(); }
 /* every identifier a new row must not collide with */
 function takenRowKeys(){
-  const out=new Set(naturalRowKeys().concat(vacFields(), ["dates","days","vacation","date"]));
+  const out=new Set(naturalRowKeys().concat(legacyVacFields(),
+    ["dates","days","vacation","trip","date"]));
   Object.keys(I18N.he).forEach(k=>{ if(k.startsWith("row_")) out.add(k.slice(4)); });
   (CFG.custom_rows||[]).forEach(r=>{ if(r&&r.key) out.add(r.key); });
   return out;
@@ -2051,8 +2092,7 @@ function computeStats(schedules){
   const roles=sectionRowKeys();                 // one column per workplace role
   const emps=allEmps();
   const empC={}; emps.forEach(e=>{ empC[e]={}; roles.forEach(r=>empC[e][r]=0); });
-  const vac={}, oth={}; emps.forEach(e=>{vac[e]=0;oth[e]=0;});
-  const vFields=vacFields();
+  const vac={}, trip={}, oth={}; emps.forEach(e=>{vac[e]=0;trip[e]=0;oth[e]=0;});
   const fields=["entry","exit","escort_morning","escort_noon","arrival_point","theater",
     "vehicle_morning","axis_morning","wait_morning","taxi_apt","taxi_arrival",
     "vehicle_noon","axis_noon","wait_noon","taxi_emb","taxi_arrival_noon"]
@@ -2064,10 +2104,11 @@ function computeStats(schedules){
     /* a section may hold a pair ("A+B") — credit both */
     roles.forEach(r=>String(day[r]||"").split("+").forEach(e=>{ if(e&&empC[e]) empC[e][r]++; }));
     fields.forEach(f=>{ const v=day[f]; if(v) fieldC[f][v]=(fieldC[f][v]||0)+1; });
-    vFields.forEach(f=>{ const v=day[f]; if(v&&vac[v]!=null) vac[v]++; });
+    awayList(day,"vacation").forEach(e=>{ if(vac[e]!=null) vac[e]++; });
+    awayList(day,"trip").forEach(e=>{ if(trip[e]!=null) trip[e]++; });
     const o=day.other_empl; if(o&&oth[o]!=null) oth[o]++;
   }});
-  return {empC,fieldC,nd,vac,oth,roles};
+  return {empC,fieldC,nd,vac,trip,oth,roles};
 }
 function viewStats(){
   const arch=loadArchive();
@@ -2101,13 +2142,15 @@ function viewStats(){
   const avgTot=allEmps().length?sumTot/allEmps().length:0;
   h+=`<div class="card"><h3>👤 ${t("st_employees")}</h3><div class="tbl-wrap"><table class="stats"><tr><th></th>`;
   st.roles.forEach(r=>h+=`<th>${esc(rowLabel(r))}</th>`);
-  h+=`<th>${t("total_col")}</th><th>${t("st_vac_col")}</th><th>${t("st_other")}</th></tr>`;
+  h+=`<th>${t("total_col")}</th><th>${t("st_vac_col")}</th><th>${t("row_trip")}</th>
+    <th>${t("st_other")}</th></tr>`;
   allEmps().forEach(e=>{ h+=`<tr><th>${esc(e)}</th>`;
     st.roles.forEach(r=>{ const c=st.empC[e]?st.empC[e][r]:0; const p=st.nd?Math.round(c/st.nd*100):0;
       h+=`<td>${c} <small>(${p}%)</small></td>`; });
     const off=avgTot&&Math.abs(totals[e]-avgTot)>0.2*avgTot;
     h+=`<td style="${off?"color:var(--danger);font-weight:700":""}">${totals[e]}</td>`;
-    h+=`<td>${st.vac[e]||0}</td><td>${st.oth[e]||0}</td></tr>`; });
+    h+=`<td>${st.vac[e]||0}</td><td>${(st.trip&&st.trip[e])||0}</td>
+      <td>${st.oth[e]||0}</td></tr>`; });
   h+=`</table></div></div>`;
   /* vacation budget */
   h+=`<div class="card"><h3>🏖 ${t("st_vacation")}</h3><div class="tbl-wrap"><table class="stats">
@@ -2691,8 +2734,8 @@ function scheduleCsv(days){
   const BOM="﻿"; const q=v=>`"${String(v==null?"":v).replace(/"/g,'""')}"`;
   let rows=[[t("row_dates"),...keys.map(fmtDM)],[t("row_days"),...keys.map(dayLabel)]];
   for(const rk of reorderableKeys()){
-    if(rk==="vacation"){
-      rows.push([rowLabel(rk),...keys.map(k=>vacFields().map(f=>days[k][f]).filter(Boolean).join(" / "))]);
+    if(AWAY_ROWS.includes(rk)){
+      rows.push([rowLabel(rk),...keys.map(k=>awayList(days[k],rk).join(", "))]);
     } else rows.push([rowLabel(rk),...keys.map(k=>days[k][rk]||"")]);
   }
   return BOM+rows.map(r=>r.map(q).join(",")).join("\r\n");
@@ -2701,10 +2744,11 @@ function statsCsv(st,label){
   const q=v=>`"${String(v==null?"":v).replace(/"/g,'""')}"`;
   const lines=[[label],[],
     [t("st_employees")],
-    ["",...st.roles.map(r=>rowLabel(r)),t("total_col"),t("st_vac_col"),t("st_other")]];
+    ["",...st.roles.map(r=>rowLabel(r)),t("total_col"),t("st_vac_col"),t("row_trip"),t("st_other")]];
   allEmps().forEach(e=>{
     const tot=st.roles.reduce((s,r)=>s+(st.empC[e]?st.empC[e][r]:0),0);
-    lines.push([e,...st.roles.map(r=>st.empC[e]?st.empC[e][r]:0),tot,st.vac[e]||0,st.oth[e]||0]);
+    lines.push([e,...st.roles.map(r=>st.empC[e]?st.empC[e][r]:0),tot,
+      st.vac[e]||0,(st.trip&&st.trip[e])||0,st.oth[e]||0]);
   });
   lines.push([]);
   lines.push([t("st_fields")]);
@@ -2732,8 +2776,8 @@ function doPrint(){
   keys.forEach(dk=>h+=`<th>${esc(dayLabel(dk))}<br>${fmtDM(dk)}</th>`);
   h+=`</tr>`;
   for(const rk of reorderableKeys()){
-    if(rk==="vacation"){
-      h+=`<tr><td class="label">${esc(rowLabel(rk))}</td>${keys.map(k=>`<td>${esc(vacFields().map(f=>S.days[k][f]).filter(Boolean).join(" / "))}</td>`).join("")}</tr>`;
+    if(AWAY_ROWS.includes(rk)){
+      h+=`<tr><td class="label">${esc(rowLabel(rk))}</td>${keys.map(k=>`<td>${esc(awayList(S.days[k],rk).join(", "))}</td>`).join("")}</tr>`;
     } else {
       h+=`<tr><td class="label">${esc(rowLabel(rk))}</td>${keys.map(k=>{
         const v=S.days[k][rk]||"";
@@ -2780,9 +2824,21 @@ function wire(){
     if($("btnPrint")) $("btnPrint").onclick=doPrint;
     const sb=$("statusBadge"); if(sb) sb.onclick=()=>{ const el=$("errList");
       if(el) el.scrollIntoView({behavior:"smooth",block:"start"}); };
-    document.querySelectorAll("table.sched select,table.sched input").forEach(el=>{
+    document.querySelectorAll("table.sched [data-away]").forEach(cb=>{
+      cb.onchange=()=>{
+        const dk=cb.dataset.dk, f=cb.dataset.away, e=cb.dataset.emp;
+        const list=awayList(S.days[dk],f).filter(x=>x!==e);
+        if(cb.checked) list.push(e);
+        S.days[dk][f]=list;
+        if(f==="trip")
+          logAction("mark_trip", cb.checked?"log_trip_on":"log_trip_off",
+            {e, d:fmtDM(dk)}, {week:Object.keys(S.days).sort()[0], changes:1});
+        S.dirty=true; saveDraft(); render();
+      };
+    });
+    document.querySelectorAll("table.sched select,table.sched input:not([data-away])").forEach(el=>{
       el.onchange=()=>{ S.days[el.dataset.dk][el.dataset.f]=el.value; S.dirty=true; saveDraft();
-        const rerender=vacFields().concat(sectionRowKeys(), extraRowKeys(),
+        const rerender=sectionRowKeys().concat(extraRowKeys(),
           ["vehicle_morning","vehicle_noon","theater","other_empl","entry","exit"]);
         if(rerender.includes(el.dataset.f)) render();
         else updateStatus(); };
@@ -2813,6 +2869,7 @@ function wire(){
       window.__restoreData=null; S.pendingConfirm=null; render(); };
     document.querySelectorAll("[data-load]").forEach(b=>b.onclick=()=>{
       const wk=b.dataset.load; S.days=JSON.parse(JSON.stringify(loadArchive()[wk])); S.weekStart=wk;
+      Object.values(S.days).forEach(normalizeAway);
       S.dirty=false; saveDraft(); S.screen="sched"; toast("✅ "+t("loaded")); render(); });
     document.querySelectorAll("[data-csv]").forEach(b=>b.onclick=()=>{
       downloadCsv(loadArchive()[b.dataset.csv], b.dataset.csv);

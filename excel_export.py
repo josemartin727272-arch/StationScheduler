@@ -71,7 +71,7 @@ def export_to_excel(schedule: dict, week_start: date, lang: str = "he") -> bytes
             if isinstance(value, str):
                 widest = max(widest, len(value))
         widest = max(widest, len(" / ".join(
-            str(schedule[dk].get(f, "")) for f in cfg.vac_fields()
+            str(schedule[dk].get(f, "")) for f in cfg.legacy_vac_fields()
             if schedule[dk].get(f))))
     day_width = max(14, min(32, widest + 2))
     for col_idx in range(2, num_days + 2):
@@ -120,6 +120,7 @@ def export_to_excel(schedule: dict, week_start: date, lang: str = "he") -> bytes
     # Special formatting by row key
     row_bg_map = {
         "vacation": COLOR_VACATION,
+        "trip": COLOR_VACATION,
         "vehicle_morning": None,  # handled by value
         "vehicle_noon": None,
         "udex": None,
@@ -135,17 +136,16 @@ def export_to_excel(schedule: dict, week_start: date, lang: str = "he") -> bytes
 
         for col_idx, dk in enumerate(day_keys, start=2):
             day = schedule[dk]
-            # vacation combines one column per active employee group
-            if rk == "vacation":
-                val = " / ".join(p for p in
-                                 (day.get(f, "") for f in cfg.vac_fields()) if p)
+            # the away rows each hold a list of names
+            if rk in cfg.AWAY_ROWS:
+                val = ", ".join(cfg.away_list(day, rk))
             else:
                 val = day.get(rk, "")
             c = ws.cell(row=excel_row, column=col_idx, value=val)
 
             # Special coloring
             bg = row_bg
-            if rk == "vacation" and val:
+            if rk in cfg.AWAY_ROWS and val:
                 bg = COLOR_VACATION
             elif rk in ("vehicle_morning", "vehicle_noon") and val == "YELLOW":
                 bg = COLOR_YELLOW

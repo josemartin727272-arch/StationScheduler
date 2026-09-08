@@ -12,7 +12,7 @@ import app_config as cfg
 DAYS_ORDER = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"]
 
 # Which rows are manually entered (not auto-assigned)
-MANUAL_ROWS = {"escort_morning", "escort_noon", "other_empl", "vacation"}
+MANUAL_ROWS = {"escort_morning", "escort_noon", "other_empl", "vacation", "trip"}
 
 # Which rows are optional (can be blank)
 OPTIONAL_ROWS = {"escort_morning", "escort_noon"}
@@ -110,6 +110,12 @@ def validate_schedule(schedule: dict, lang: str = "he") -> list:
         other_empl = day.get("other_empl", "")
         d_str = day.get("date").strftime("%d/%m") if day.get("date") else day_key
         # the axis must be one the day's entry/exit permits
+        # someone cannot be on holiday and away on a trip at once
+        on_vac = cfg.away_list(day, "vacation")
+        for name in cfg.away_list(day, "trip"):
+            if name in on_vac:
+                errors.append(f"{d_str}: " + t("warn_vac_trip", lang, e=name))
+
         for value_field, axis_field in (("entry", "axis_morning"),
                                         ("exit", "axis_noon")):
             value, axis = day.get(value_field, ""), day.get(axis_field, "")
@@ -134,10 +140,10 @@ def validate_schedule(schedule: dict, lang: str = "he") -> list:
             row_key = sec["row_key"]
             group = cfg.group_by_id(sec.get("group_id"))
             label = cfg.section_label(wp, sec)
-            vac = day.get(cfg.vac_field(group), "") if group else ""
+            away = cfg.away_today(day)
             people = [e for e in str(day.get(row_key, "")).split("+") if e]
             for e in people:
-                if e == vac:
+                if e in away:
                     errors.append(f"❌ {d_str}: " +
                                   t("err_sec_vac", lang, e=e, s=label))
                 elif e == other_empl:
@@ -151,7 +157,7 @@ def validate_schedule(schedule: dict, lang: str = "he") -> list:
             if not people and not cfg.section_required(sec) and cfg.section_size(sec):
                 pool = [e for e in (cfg.group_employees(sec.get("group_id"))
                                     if group else cfg.all_employees())
-                        if e not in (vac, other_empl)]
+                        if e not in away and e != other_empl]
                 if not pool:
                     errors.append(f"❌ {d_str}: " + t(
                         "err_sec_none", lang, s=label,
@@ -244,15 +250,16 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
         if day.get(sec["row_key"]):
             taken.update(e for e in str(day[sec["row_key"]]).split("+") if e)
 
+    away = cfg.away_today(day)      # vacation and trip both mean unavailable
+
     def _pick(sec, busy):
         size = cfg.section_size(sec)
         if not size:
             return ""
         group = cfg.group_by_id(sec.get("group_id"))
-        vac = day.get(cfg.vac_field(group), "") if group else ""
         pool = [e for e in (cfg.group_employees(sec.get("group_id"))
                             if group else cfg.all_employees())
-                if e not in (vac, other_empl) and e not in busy]
+                if e not in away and e != other_empl and e not in busy]
         if not pool:
             return ""
         counts = history.get(sec["row_key"], {})

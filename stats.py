@@ -51,6 +51,8 @@ def compute_stats(schedules: list) -> tuple:
         field_counts    {field_key: {value: count}}
         num_days        total number of working days across all schedules
         vacation_counts {employee: days_on_vacation}
+        other_counts    {employee: days_on_another_task}
+        trip_counts     {employee: days_away_on_a_trip}
     """
     all_employees = cfg.all_employees()
     roles = cfg.section_row_keys()
@@ -59,6 +61,7 @@ def compute_stats(schedules: list) -> tuple:
     for _et in cfg.active_extras():          # one column per extra-task row
         field_counts.setdefault(cfg.extra_row_key(_et), {})
     vacation_counts = {e: 0 for e in all_employees}
+    trip_counts = {e: 0 for e in all_employees}
     other_counts = {e: 0 for e in all_employees}
     num_days = 0
 
@@ -82,18 +85,21 @@ def compute_stats(schedules: list) -> tuple:
                         val = _EXIT_NORMALIZE.get(val, val)
                     field_counts[field][val] = field_counts[field].get(val, 0) + 1
 
-            # Vacation — one column per active group
-            for vac_field in cfg.vac_fields():
-                vac = day.get(vac_field, "")
-                if vac and vac in vacation_counts:
-                    vacation_counts[vac] += 1
+            # Vacation and trip are separate name lists
+            for name in cfg.away_list(day, "vacation"):
+                if name in vacation_counts:
+                    vacation_counts[name] += 1
+            for name in cfg.away_list(day, "trip"):
+                if name in trip_counts:
+                    trip_counts[name] += 1
 
             # Other task
             other = day.get("other_empl", "")
             if other and other in other_counts:
                 other_counts[other] += 1
 
-    return emp_counts, field_counts, num_days, vacation_counts, other_counts
+    return (emp_counts, field_counts, num_days, vacation_counts, other_counts,
+            trip_counts)
 
 
 # 90-day window: covers ~13 weeks so year-boundary never creates a cold start
