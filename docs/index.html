@@ -1498,27 +1498,59 @@ function autoAssign(){
                      :leastUsed(combos(pool,want),H(sec.row_key));
     };
     /* grow a section that already holds its floor up to max_workers */
-    const topUp=(sec,busy)=>{
+    const topUp=(sec,busy,owed)=>{
       const have=String(day[sec.row_key]||"").split("+").filter(Boolean);
-      const want=sectionTarget(sec)-have.length;
+      let want=sectionTarget(sec)-have.length;
       if(want<=0) return;
       const g=groupById(sec.group_id);
       const pool=(g?groupEmps(g.id):allEmps())
         .filter(e=>!away.has(e)&&e!==other&&!busy.has(e));
-      if(!pool.length) return;
+      /* never grow a row past its floor on someone a later workplace needs */
+      want=Math.min(want, pool.length-((owed&&owed.get(sec.group_id||""))||0));
+      if(want<1||!pool.length) return;
       const add=want===1?leastUsed(pool,H(sec.row_key))
                         :leastUsed(combos(pool,Math.min(want,pool.length)),H(sec.row_key));
       if(!add) return;
       day[sec.row_key]=have.concat(String(add).split("+").filter(Boolean)).join("+");
       String(add).split("+").forEach(e=>busy.add(e));
     };
-    const wpRows=new Map(), skipped=new Set();
-    activeWorkplaces().forEach(w=>
+    const wpRows=new Map(), skipped=new Set(), order=activeWorkplaces();
+    order.forEach(w=>
       wpRows.set(w, wpSections(w).filter(sec=>free(sec.row_key)&&sectionSize(sec)>0)));
+    const groupOf=sec=>sec.group_id||"";
+    /* people of a group still up for grabs right now */
+    const freeIn=(gid,busy)=>{
+      const g=groupById(gid);
+      return (g?groupEmps(g.id):allEmps())
+        .filter(e=>!away.has(e)&&e!==other&&!busy.has(e)).length;
+    };
+    /* The planning step: heads each group still owes to the minimums of the
+       workplaces further down the priority list. A workplace may spend these
+       on its own minimum — priority decides that — but never on a spare. */
+    const owedAfter=(idx,busy)=>{
+      const need=new Map(), add=(gid,n)=>need.set(gid,(need.get(gid)||0)+n);
+      order.slice(idx+1).forEach(w2=>{
+        const rows=wpRows.get(w2), open=rows.filter(sec=>!day[sec.row_key]);
+        const req=open.filter(sec=>sec.required);
+        req.forEach(sec=>add(groupOf(sec),Math.max(1,sectionMin(sec))));
+        /* one head per role it is still short of, taken from whichever role
+           has the most people free — that is the one it will actually use */
+        let short=wpMinSections(w2)-rows.filter(sec=>day[sec.row_key]).length-req.length;
+        open.filter(sec=>!sec.required)
+          .sort((a,b)=>freeIn(groupOf(b),busy)-freeIn(groupOf(a),busy))
+          .forEach(sec=>{ if(short>0){ add(groupOf(sec),1); short--; } });
+      });
+      return need;
+    };
+    /* a spare head: taken only from what no later workplace is counting on */
+    const pickSpare=(sec,busy,n,owed)=>{
+      const slack=freeIn(groupOf(sec),busy)-(owed.get(groupOf(sec))||0);
+      return slack<1?"":pickN(sec,busy,Math.min(n,slack));
+    };
     /* Pass 1 — in priority order, every workplace takes only what it must, so
        a high-priority workplace cannot spend the people a later one needs to
-       reach its own minimum. Pass 2 tops the rows up afterwards. */
-    activeWorkplaces().forEach(w=>{
+       reach its own minimum. Pass 2 hands out the spares afterwards. */
+    order.forEach((w,idx)=>{
       const list=wpRows.get(w);
       const open=()=>list.filter(sec=>!day[sec.row_key]);
       /* required rows are hard: all of them, or the workplace is skipped whole.
@@ -1543,26 +1575,31 @@ function autoAssign(){
         day[sec.row_key]=c;
         String(c).split("+").forEach(e=>taken.add(e));
       }
-      /* "at least N roles staffed": fill spares until the floor is reached,
-         taking whichever role still has someone available */
+      /* "at least N roles staffed": fill roles until the floor is reached,
+         starting with the one whose group the workplaces below need least —
+         staffing this one through PE when IL is idle would starve them */
       const filled=()=>list.filter(sec=>day[sec.row_key]).length;
-      for(const sec of open()){
-        if(filled()>=wpMinSections(w)) break;
-        const c=pickN(sec,taken,1);
-        if(!c) continue;
-        day[sec.row_key]=c;
-        String(c).split("+").forEach(e=>taken.add(e));
+      if(filled()<wpMinSections(w)){
+        const owed=owedAfter(idx,taken);
+        const slack=sec=>freeIn(groupOf(sec),taken)-(owed.get(groupOf(sec))||0);
+        for(const sec of open().slice().sort((a,b)=>slack(b)-slack(a))){
+          if(filled()>=wpMinSections(w)) break;
+          const c=pickN(sec,taken,1);
+          if(!c) continue;
+          day[sec.row_key]=c;
+          String(c).split("+").forEach(e=>taken.add(e));
+        }
       }
     });
     /* Pass 2 — the discretionary half: top staffed rows up to max_workers,
        then fill whatever optional rows are still open, priority order again */
-    activeWorkplaces().forEach(w=>{
+    order.forEach((w,idx)=>{
       if(skipped.has(w)) return;
-      const list=wpRows.get(w);
-      list.forEach(sec=>{ if(day[sec.row_key]) topUp(sec,taken); });
+      const list=wpRows.get(w), owed=owedAfter(idx,taken);
+      list.forEach(sec=>{ if(day[sec.row_key]) topUp(sec,taken,owed); });
       list.forEach(sec=>{
         if(day[sec.row_key]) return;
-        const c=pickN(sec,taken,1);
+        const c=pickSpare(sec,taken,1,owed);
         if(!c) return;
         day[sec.row_key]=c;
         String(c).split("+").forEach(e=>taken.add(e));

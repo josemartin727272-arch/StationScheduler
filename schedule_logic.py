@@ -291,7 +291,7 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
             return _least_used(_combos(pool, want), counts)
         return _least_used(pool, counts)
 
-    def _top_up(sec, busy):
+    def _top_up(sec, busy, owed):
         """Grow a section that already holds its floor up to max_workers."""
         have = [e for e in str(day.get(sec["row_key"], "")).split("+") if e]
         want = cfg.section_target(sec) - len(have)
@@ -301,7 +301,9 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
         pool = [e for e in (cfg.group_employees(sec.get("group_id"))
                             if group else cfg.all_employees())
                 if e not in away and e != other_empl and e not in busy]
-        if not pool:
+        # never grow a row past its floor on someone a later workplace needs
+        want = min(want, len(pool) - owed.get(sec.get("group_id") or "", 0))
+        if want < 1 or not pool:
             return
         counts = history.get(sec["row_key"], {})
         add = (_least_used(_combos(pool, min(want, len(pool))), counts)
@@ -311,15 +313,54 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
         day[sec["row_key"]] = "+".join(have + [e for e in str(add).split("+") if e])
         busy.update(e for e in str(add).split("+") if e)
 
+    order = cfg.active_workplaces()
     wp_rows, skipped = {}, set()
-    for wp in cfg.active_workplaces():
+    for wp in order:
         wp_rows[wp["id"]] = [s for s in cfg.workplace_sections(wp)
                              if cfg.section_size(s) and s["row_key"] not in governed]
 
+    def _free_in(gid, busy):
+        """People of a group still up for grabs right now."""
+        group = cfg.group_by_id(gid)
+        pool = cfg.group_employees(gid) if group else cfg.all_employees()
+        return len([e for e in pool
+                    if e not in away and e != other_empl and e not in busy])
+
+    def _owed_after(idx, busy):
+        """The planning step: heads each group still owes to the minimums of the
+        workplaces further down the priority list. A workplace may spend these
+        on its own minimum — priority decides that — but never on a spare."""
+        need = {}
+        for wp2 in order[idx + 1:]:
+            rows = wp_rows[wp2["id"]]
+            open_rows = [s for s in rows if not day.get(s["row_key"])]
+            req = [s for s in open_rows if cfg.section_required(s)]
+            for sec in req:
+                gid = sec.get("group_id") or ""
+                need[gid] = need.get(gid, 0) + max(1, cfg.section_min(sec))
+            # one head per role it is still short of, taken from whichever role
+            # has the most people free — that is the one it will actually use
+            short = (cfg.workplace_min_sections(wp2)
+                     - len([s for s in rows if day.get(s["row_key"])]) - len(req))
+            for sec in sorted((s for s in open_rows if not cfg.section_required(s)),
+                              key=lambda s: -_free_in(s.get("group_id"), busy)):
+                if short <= 0:
+                    break
+                gid = sec.get("group_id") or ""
+                need[gid] = need.get(gid, 0) + 1
+                short -= 1
+        return need
+
+    def _pick_spare(sec, busy, n, owed):
+        """A spare head: only from what no later workplace is counting on."""
+        slack = (_free_in(sec.get("group_id"), busy)
+                 - owed.get(sec.get("group_id") or "", 0))
+        return "" if slack < 1 else _pick(sec, busy, min(n, slack))
+
     # Pass 1 — in priority order, every workplace takes only what it must, so a
     # high-priority workplace cannot spend the people a later one needs to reach
-    # its own minimum. Pass 2 tops the rows up afterwards.
-    for wp in cfg.active_workplaces():
+    # its own minimum. Pass 2 hands out the spares afterwards.
+    for idx, wp in enumerate(order):
         rows = wp_rows[wp["id"]]
         open_secs = lambda: [s for s in rows if not day.get(s["row_key"])]
         # required rows are hard: all of them, or the workplace is skipped whole.
@@ -346,30 +387,37 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
                 continue
             day[sec["row_key"]] = choice
             taken.update(e for e in str(choice).split("+") if e)
-        # "at least N roles staffed": fill spares until the floor is reached,
-        # taking whichever role still has someone available
+        # "at least N roles staffed": fill roles until the floor is reached,
+        # starting with the one whose group the workplaces below need least —
+        # staffing this one through PE when IL is idle would starve them
         floor = cfg.workplace_min_sections(wp)
-        for sec in open_secs():
-            if len([s for s in rows if day.get(s["row_key"])]) >= floor:
-                break
-            choice = _pick(sec, taken, 1)
-            if not choice:
-                continue
-            day[sec["row_key"]] = choice
-            taken.update(e for e in str(choice).split("+") if e)
+        staffed = lambda: len([s for s in rows if day.get(s["row_key"])])
+        if staffed() < floor:
+            owed = _owed_after(idx, taken)
+            slack = lambda s: (_free_in(s.get("group_id"), taken)
+                               - owed.get(s.get("group_id") or "", 0))
+            for sec in sorted(open_secs(), key=lambda s: -slack(s)):
+                if staffed() >= floor:
+                    break
+                choice = _pick(sec, taken, 1)
+                if not choice:
+                    continue
+                day[sec["row_key"]] = choice
+                taken.update(e for e in str(choice).split("+") if e)
 
     # Pass 2 — the discretionary half: top staffed rows up to max_workers, then
     # fill whatever optional rows are still open, priority order again.
-    for wp in cfg.active_workplaces():
+    for idx, wp in enumerate(order):
         if wp["id"] in skipped:
             continue
+        owed = _owed_after(idx, taken)
         for sec in wp_rows[wp["id"]]:
             if day.get(sec["row_key"]):
-                _top_up(sec, taken)
+                _top_up(sec, taken, owed)
         for sec in wp_rows[wp["id"]]:
             if day.get(sec["row_key"]):
                 continue
-            choice = _pick(sec, taken, 1)
+            choice = _pick_spare(sec, taken, 1, owed)
             if not choice:
                 continue
             day[sec["row_key"]] = choice
