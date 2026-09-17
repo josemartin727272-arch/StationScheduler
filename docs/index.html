@@ -391,6 +391,7 @@ warn_wp_skipped:"מקום {w}: תפקיד החובה {s} נשאר ריק — א�
 warn_sec_min:"מקום {w}: תפקיד {s} זקוק לפחות {n} עובדים",
 warn_wp_min_sections:"מקום {w}: רק {c} תפקידים מאוישים, נדרשים לפחות {n}",
 warn_daily_absence:"יותר מ-{n} עובדים נעדרים (חופשה + נסיעה)",
+warn_holiday_busy:"היום מסומן חג אך יש בו שיבוץ",
 wd_pick:"סמן את ימי העבודה",wd_label:"תווית בטבלה",wd_none:"⚠️ חייב לבחור לפחות יום עבודה אחד",
 wd_hours_title:"שעות עבודה — אפשרויות",wd_hours_hint:"שורה לכל ערך · אותה רשימה מוצעת בכל ימי העבודה",
 et_add:"➕ הוסף משימה",et_remove:"🗑 מחק משימה",et_max:"הגעת למספר המשימות המרבי (5)",
@@ -508,6 +509,7 @@ warn_wp_skipped:"{w}: the required role {s} is empty — nobody available",
 warn_sec_min:"{w}: role {s} needs at least {n} employees",
 warn_wp_min_sections:"{w}: only {c} roles staffed, at least {n} required",
 warn_daily_absence:"More than {n} employees are away (vacation + trip)",
+warn_holiday_busy:"This day is marked a holiday but carries assignments",
 wd_pick:"Select the working days",wd_label:"Label in the table",wd_none:"⚠️ At least one working day is required",
 wd_hours_title:"Work hours — options",wd_hours_hint:"One value per line · the same list is offered on every working day",
 et_add:"➕ Add task",et_remove:"🗑 Delete task",et_max:"Maximum number of tasks reached (5)",
@@ -625,6 +627,7 @@ warn_wp_skipped:"{w}: el puesto obligatorio {s} quedó vacío — nadie disponib
 warn_sec_min:"{w}: el puesto {s} necesita al menos {n} empleados",
 warn_wp_min_sections:"{w}: solo {c} puestos cubiertos, se requieren al menos {n}",
 warn_daily_absence:"Más de {n} empleados ausentes (vacaciones + viaje)",
+warn_holiday_busy:"Este día está marcado como festivo pero tiene asignaciones",
 wd_pick:"Selecciona los días laborables",wd_label:"Etiqueta en la tabla",wd_none:"⚠️ Se requiere al menos un día laborable",
 wd_hours_title:"Horas de trabajo — opciones",wd_hours_hint:"Un valor por línea · la misma lista se ofrece todos los días laborables",
 et_add:"➕ Agregar tarea",et_remove:"🗑 Eliminar tarea",et_max:"Número máximo de tareas alcanzado (5)",
@@ -1144,6 +1147,20 @@ function dayLabel(isoStr){
   if(custom && (S.lang==="he" || custom!==shipped)) return custom;
   return t("dow_"+n) || custom || n;
 }
+/* A day whose hours say it is a holiday is not a working day: the automatic
+   assignment leaves it alone entirely. The word is matched rather than the
+   whole value, so "חג" and "8:00-13:00 חג" both count, in any of the three
+   languages and in any casing. The station's own holiday value counts too,
+   whatever it was renamed to. */
+const HOLIDAY_WORDS=["חג","holiday","festivo"];
+function isHolidayValue(v){
+  const x=String(v||"").trim().toLowerCase();
+  if(!x) return false;
+  const own=String((CFG.special_values||{}).holiday||"").trim().toLowerCase();
+  if(own&&x.includes(own)) return true;
+  return HOLIDAY_WORDS.some(w=>x.includes(w));
+}
+function isHolidayDay(day){ return isHolidayValue(day&&day.work_hours); }
 /* one shared work-hours list, offered on every working day */
 function hourOptions(){ return (((CFG.work_days||{}).hour_options)||[]).filter(Boolean); }
 
@@ -1532,6 +1549,9 @@ function bump(h,f,v){ if(!v)return; h[f]=h[f]||{}; h[f][v]=(h[f][v]||0)+1; }
 function applyWeeklyTargets(keys, hist){
   const byField={}, holiday=CFG.special_values.holiday;
   weeklyTargets().forEach(t=>{ (byField[t.field]=byField[t.field]||[]).push(t); });
+  /* a holiday day is out of bounds for quotas as well — otherwise the week's
+     counts would be spent on a day nobody works */
+  const open=keys.filter(k=>!isHolidayDay(S.days[k]));
   const present=new Set(naturalRowKeys());
   for(const f in byField){
     if(!present.has(f)) continue;      // a quota left over from a deleted row
@@ -1544,14 +1564,14 @@ function applyWeeklyTargets(keys, hist){
     /* exact-value quotas first */
     list.filter(t=>t.value).forEach(t=>{
       let need=t.count-keys.filter(k=>S.days[k][f]===t.value).length;
-      const free=shuffle(keys.filter(k=>!S.days[k][f]));
+      const free=shuffle(open.filter(k=>!S.days[k][f]));
       while(need-->0&&free.length){ S.days[free.shift()][f]=t.value; counts[t.value]=(counts[t.value]||0)+1; }
     });
     if(anyT){
       /* "any value" quota: fill up to count days, leave the rest blank */
       let need=anyT.count-keys.filter(k=>S.days[k][f]).length;
       const pool=targetFieldValues(f).filter(v=>!claimed.includes(v));
-      const free=shuffle(keys.filter(k=>!S.days[k][f]));
+      const free=shuffle(open.filter(k=>!S.days[k][f]));
       while(need-->0&&free.length&&pool.length){
         const c=leastUsed(pool,counts); counts[c]=(counts[c]||0)+1;
         S.days[free.shift()][f]=c;
@@ -1559,7 +1579,7 @@ function applyWeeklyTargets(keys, hist){
     } else {
       /* only exact-value quotas: the other days take the unclaimed values */
       const pool=targetFieldValues(f).filter(v=>!claimed.includes(v));
-      if(pool.length) keys.forEach(k=>{
+      if(pool.length) open.forEach(k=>{
         if(!S.days[k][f]){ const c=leastUsed(pool,counts); counts[c]=(counts[c]||0)+1; S.days[k][f]=c; }
       });
     }
@@ -1579,6 +1599,9 @@ function autoAssign(){
   const hFields=historyFields();
   const gov=governedFields();
 
+  /* every pass below works on these, never on a day marked a holiday */
+  const workKeys=keys.filter(k=>!isHolidayDay(S.days[k]));
+
   applyWeeklyTargets(keys, hist);
 
   const weekly={};                    // in-week usage so days differ
@@ -1590,6 +1613,8 @@ function autoAssign(){
 
   keys.forEach(dk=>{
     const day=S.days[dk];
+    /* a holiday: nothing is added, and whatever was typed by hand stays */
+    if(isHolidayDay(day)) return;
     const other=day.other_empl||"";
 
     /* entry ↔ morning axis and exit ↔ noon axis. The value chooses the axis
@@ -1674,7 +1699,7 @@ function autoAssign(){
   ["vehicle_morning","vehicle_noon"].forEach(f=>{
     if(!free(f)) return;
     const counts={...(hist[f]||{})};
-    keys.forEach(k=>{ if(!S.days[k][f]){
+    workKeys.forEach(k=>{ if(!S.days[k][f]){
       const c=leastUsed(opts("vehicle"),counts,"vehicle"); counts[c]=(counts[c]||0)+1; S.days[k][f]=c; } });
   });
 
@@ -1684,7 +1709,7 @@ function autoAssign(){
     if(!free(rk)) return;
     const mVals=(et.morning_values||[]).filter(Boolean),
           tVals=(et.noon_values||[]).filter(Boolean), tg2=extraTargets(et);
-    let open=shuffle(keys.filter(k=>!S.days[k][rk]));
+    let open=shuffle(workKeys.filter(k=>!S.days[k][rk]));
     let mNeed=tg2.morning-keys.filter(k=>mVals.includes(S.days[k][rk])).length;
     let tNeed=tg2.noon   -keys.filter(k=>tVals.includes(S.days[k][rk])).length;
     const mh={...(hist[rk]||{})}, th={...(hist[rk]||{})};
@@ -1693,7 +1718,7 @@ function autoAssign(){
   });
 
   /* taxis only on special-vehicle slots — each taxi row has its own option list */
-  keys.forEach(k=>{ const day=S.days[k];
+  workKeys.forEach(k=>{ const day=S.days[k];
     const ym=day.vehicle_morning===VS, yn=day.vehicle_noon===VS;
     ["taxi_apt","taxi_arrival"].forEach(f=>{ day[f]=ym?(day[f]||leastUsed(opts(f),hist[f]||{},f)):""; });
     day.taxi_emb=yn?(day.taxi_emb||leastUsed(opts("taxi_emb"),hist.taxi_emb||{},"taxi_apt")):"";
@@ -1716,6 +1741,12 @@ function validate(){
   const quotas=weeklyTargets().map(q=>({...q, seen:0}));
   for(const dk of Object.keys(S.days).sort()){
     const day=S.days[dk], d=fmtDM(dk);
+    /* the hours themselves and the away rows are not assignments */
+    if(isHolidayDay(day)){
+      const busy=reorderableKeys().some(rk=>
+        rk!=="work_hours" && !AWAY_ROWS.includes(rk) && day[rk]);
+      if(busy) errs.push({lvl:"warn", msg:d+": "+t("warn_holiday_busy")});
+    }
     quotas.forEach(q=>{
       const v=day[q.field];
       if(q.value?v===q.value:!!v) q.seen++;

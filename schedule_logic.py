@@ -92,6 +92,12 @@ def validate_schedule(schedule: dict, lang: str = "he") -> list:
     quotas = [dict(q, seen=0) for q in cfg.weekly_targets()]
 
     for day_key, day in schedule.items():
+        # the hours themselves and the away rows are not assignments
+        if cfg.is_holiday_day(day):
+            d_str = (day.get("date").strftime("%d/%m") if day.get("date") else day_key)
+            if any(day.get(rk) for rk in cfg.reorderable_row_keys()
+                   if rk != "work_hours" and rk not in cfg.AWAY_ROWS):
+                errors.append(f"{d_str}: " + t("warn_holiday_busy", lang))
         for q in quotas:
             value = day.get(q["field"], "")
             if (value == q["value"]) if q["value"] else bool(value):
@@ -250,6 +256,9 @@ def auto_assign_day(day: dict, history: dict, week_days: list) -> dict:
       auto_assign_week_vehicles_udex
     """
     day = day.copy()
+    # a holiday: nothing is added, and whatever was typed by hand stays
+    if cfg.is_holiday_day(day):
+        return day
     other_empl = day.get("other_empl", "")
     gov = cfg.governed_fields()          # quota-governed rows are filled later
 
@@ -365,7 +374,9 @@ def apply_weekly_targets(schedule: dict, history: dict = None) -> dict:
     it; a field carrying only value quotas fills its remaining days from the
     values no quota claimed."""
     history = history or {}
-    keys = list(schedule.keys())
+    # a holiday day is out of bounds for quotas as well — otherwise the week's
+    # counts would be spent on a day nobody works
+    keys = [k for k in schedule if not cfg.is_holiday_day(schedule[k])]
     by_field = {}
     for q in cfg.weekly_targets():
         by_field.setdefault(q["field"], []).append(q)
@@ -416,7 +427,8 @@ def auto_assign_week_vehicles_udex(schedule: dict, history: dict = None) -> dict
     """
     if history is None:
         history = {}
-    keys = list(schedule.keys())
+    # every pass below works on these, never on a day marked a holiday
+    keys = [k for k in schedule if not cfg.is_holiday_day(schedule[k])]
     gov = cfg.governed_fields()
     vehicle_special = cfg.special("vehicle_special")
 

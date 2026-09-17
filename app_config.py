@@ -644,6 +644,28 @@ def work_day_label(dow: str) -> str:
     return labels.get(dow) or dow
 
 
+# A day whose hours say it is a holiday is not a working day: the automatic
+# assignment leaves it alone entirely. The word is matched rather than the whole
+# value, so "חג" and "8:00-13:00 חג" both count, in any of the three languages
+# and in any casing. The station's own holiday value counts too, whatever it was
+# renamed to.
+HOLIDAY_WORDS = ["חג", "holiday", "festivo"]
+
+
+def is_holiday_value(v) -> bool:
+    x = str(v or "").strip().lower()
+    if not x:
+        return False
+    own = str((get_config().get("special_values") or {}).get("holiday") or "").strip().lower()
+    if own and own in x:
+        return True
+    return any(w in x for w in HOLIDAY_WORDS)
+
+
+def is_holiday_day(day: dict) -> bool:
+    return is_holiday_value((day or {}).get("work_hours"))
+
+
 def hour_options() -> list:
     """The one work-hours list, offered on every working day."""
     return [h for h in (get_config().get("work_days") or {}).get("hour_options", []) if h]
