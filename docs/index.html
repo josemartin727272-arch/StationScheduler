@@ -254,20 +254,32 @@ details.guide-ch>summary{font-size:1rem;gap:10px}
 #printArea{display:none}
 #printBar{display:none}
 body.printing{overflow:hidden}
-body.printing #printBar{display:flex;position:fixed;inset-block-start:0;inset-inline:0;
-  z-index:500;gap:10px;align-items:center;flex-wrap:wrap;
-  padding:10px 14px;background:var(--card);border-block-end:1px solid var(--border);
+body.printing #printBar{display:block;position:fixed;inset-block-start:0;inset-inline:0;
+  z-index:500;max-height:46vh;overflow:auto;
+  padding:12px 16px;background:var(--card);border-block-end:1px solid var(--border);
   box-shadow:0 2px 10px rgba(0,0,0,.08)}
-body.printing #printBar .spacer{flex:1}
+#printBar .pb-head{display:flex;align-items:center;gap:10px;margin-block-end:10px}
+#printBar .pb-head h3{margin:0;font-size:1rem;flex:1}
+#printBar .pb-row{display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;
+  margin-block-end:10px}
+#printBar .pb-row>label{font-size:.85rem;color:var(--muted)}
+#printBar .pb-row input[type=number]{width:80px}
+#printBar .radio-row{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+#printBar .radio-row b{font-size:.85rem;color:var(--muted);font-weight:600}
 #printClose{background:#fdecea;color:var(--danger);border-color:#f5b7b1;
   font-weight:700;font-size:1rem;padding:.6rem 1.1rem}
 #printClose:hover{background:#f9d7d2}
-body.printing #printArea{display:block;position:fixed;inset:0;inset-block-start:64px;
+body.printing #printArea{display:block;position:fixed;inset:0;inset-block-start:46vh;
   z-index:499;overflow:auto;background:#fff;padding:14px}
 body.printing>header,body.printing>main{visibility:hidden}
-/* one sheet, or several small copies laid out on a grid with cut lines */
-#printArea .sheet{display:grid;gap:6mm}
-#printArea .sheet.multi .pcopy{border:1px dashed #999;padding:3mm;overflow:hidden}
+/* one sheet, or several copies cut to a size the user gives in centimetres */
+#printArea .sheet{display:grid;gap:4mm}
+#printArea .sheet.multi .pcopy{border:.5px solid #ccc;outline:1px dashed #999;
+  outline-offset:2px;overflow:hidden;position:relative}
+/* the table keeps its natural size and is scaled to fit the box, because
+   squeezing a table by width alone turns the day columns into slivers */
+#printArea .pcopy .fit{position:absolute;inset-block-start:0;inset-inline-start:0;
+  transform-origin:top var(--org,right)}
 #printArea table{border-collapse:collapse;width:100%;font-size:10px;table-layout:fixed}
 #printArea th,#printArea td{border:1px solid #999;padding:3px 5px;text-align:center;
   word-break:break-word}
@@ -297,12 +309,7 @@ body.printing>header,body.printing>main{visibility:hidden}
   <span id="langBtns"></span>
 </header>
 <main id="app"></main>
-<div id="printBar">
-  <label><span id="printOrientLbl"></span> <select id="printOrient"></select></label>
-  <button class="btn primary" id="printGo"></button>
-  <span class="spacer"></span>
-  <button class="btn" id="printClose"></button>
-</div>
+<div id="printBar"></div>
 <div id="printArea"></div>
 <div id="toast"></div>
 
@@ -330,9 +337,9 @@ print_orient:"כיוון דף",print_portrait:"לאורך",print_landscape:"לר
 s_print:"🖨️ הגדרות הדפסה",print_mode:"מצב הדפסה",
 print_single:"סידור מלא — דף A4 שלם, עותק אחד",
 print_multi:"סידורים מרובים — כמה עותקים קטנים על דף אחד",
-print_copies:"מספר עותקים בדף",print_scale:"אחוז גודל",
-print_preview:"תצוגה מקדימה של הפריסה",save_print:"שמור הגדרות הדפסה",
-print_hint:"הכיוון נבחר גם בתצוגת ההדפסה עצמה, ונשמר לכל מכשיר בנפרד.",
+print_copies:"מספר עותקים",print_w:"רוחב כל עותק (ס״מ)",print_h:"גובה כל עותק (ס״מ)",
+print_preview:"תצוגה מקדימה של הפריסה",
+
 warn_sec_cross_group:"{e} שובץ ל-{s} אף שאינו בקבוצה {g}",
 saved:"הסידור נשמר בארכיון",valid:"הסידור תקין ✓",replace_q:"קיים סידור שמור לשבוע זה — להחליף?",yes:"כן",no:"ביטול",
 row_dates:"תאריכים",row_days:"ימים",row_work_hours:"שעות עבודה",row_entry:"כניסה",row_exit:"יציאה",
@@ -447,9 +454,9 @@ print_orient:"Page direction",print_portrait:"Portrait",print_landscape:"Landsca
 s_print:"🖨️ Print settings",print_mode:"Print mode",
 print_single:"Full schedule — one whole A4 page, a single copy",
 print_multi:"Several copies — small copies laid out on one sheet",
-print_copies:"Copies per sheet",print_scale:"Size %",
-print_preview:"Layout preview",save_print:"Save print settings",
-print_hint:"The direction can also be picked in the print view itself, and is remembered per device.",
+print_copies:"Copies",print_w:"Width of each copy (cm)",print_h:"Height of each copy (cm)",
+print_preview:"Layout preview",
+
 warn_sec_cross_group:"{e} was placed at {s} though they are not in group {g}",
 saved:"Schedule saved to archive",valid:"Schedule is valid ✓",replace_q:"A schedule exists for this week — replace?",yes:"Yes",no:"Cancel",
 row_dates:"Dates",row_days:"Days",row_work_hours:"Work Hours",row_entry:"Entry",row_exit:"Exit",
@@ -564,9 +571,9 @@ print_orient:"Orientación",print_portrait:"Vertical",print_landscape:"Horizonta
 s_print:"🖨️ Ajustes de impresión",print_mode:"Modo de impresión",
 print_single:"Horario completo — una hoja A4 entera, una copia",
 print_multi:"Varias copias — copias pequeñas en una sola hoja",
-print_copies:"Copias por hoja",print_scale:"Tamaño %",
-print_preview:"Vista previa de la distribución",save_print:"Guardar ajustes de impresión",
-print_hint:"La orientación también se elige en la vista de impresión, y se recuerda por dispositivo.",
+print_copies:"Copias",print_w:"Ancho de cada copia (cm)",print_h:"Alto de cada copia (cm)",
+print_preview:"Vista previa de la distribución",
+
 warn_sec_cross_group:"{e} fue asignado a {s} aunque no pertenece al grupo {g}",
 saved:"Horario guardado en archivo",valid:"El horario es válido ✓",replace_q:"Existe un horario para esta semana — ¿reemplazar?",yes:"Sí",no:"Cancelar",
 row_dates:"Fechas",row_days:"Días",row_work_hours:"Horas de Trabajo",row_entry:"Ingreso",row_exit:"Salida",
@@ -758,8 +765,6 @@ const DEFAULT_CONFIG = {
     "SPLIT": { axes:["A","B","C","D"], pcts:{A:25, B:25, C:25, D:25} }
   },
   special_values: { holiday:"חג", vehicle_special:"YELLOW" },
-  /* How the week prints: one full page, or several small copies on one sheet. */
-  print_settings: { mode:"single", copies:4, scale:50, orientation:"portrait" },
   /* Weekly quotas, any number of them. `value:""` means "this row is filled",
      any other value means "this exact value". A field listed here is governed
      entirely by its quotas: remaining days take the other values, or stay
@@ -1025,11 +1030,9 @@ function migrateConfig(cfg, raw){
   }
   cfg.removed_rows=(cfg.removed_rows||[]).filter(Boolean);
   cfg.assignment_order=(cfg.assignment_order||[]).filter(Boolean);
-  const ps=cfg.print_settings=cfg.print_settings||{};
-  ps.mode=ps.mode==="multi"?"multi":"single";
-  ps.orientation=ps.orientation==="landscape"?"landscape":"portrait";
-  ps.copies=Math.max(1,Math.min(6,parseInt(ps.copies,10)||4));
-  ps.scale=Math.max(20,Math.min(100,parseInt(ps.scale,10)||50));
+  /* print settings used to live here; they belong to the print view now, and
+     to the device rather than to the station */
+  delete cfg.print_settings;
   cfg.max_daily_absence=Math.max(0,Math.min(20,parseInt(cfg.max_daily_absence,10)||0));
   cfg.weekly_targets=(cfg.weekly_targets||[]).filter(x=>x&&x.field)
     .map(x=>({field:x.field, value:x.value||"", count:Math.max(0,parseInt(x.count,10)||0)}));
@@ -2064,47 +2067,6 @@ function renderRow(rk,keys){
 }
 
 /* ═══════════════ screen 2: settings ═══════════════ */
-/* print settings: one full page, or a sheet of small copies */
-function printPanel(){
-  const ps=printSettings();
-  const multi=ps.mode==="multi";
-  /* two questions, both as radios: the choice is between two named things,
-     and a list you must open first hides half the answer */
-  const radio=(name,val,cur,label)=>
-    `<label class="chk"><input type="radio" name="${name}" value="${val}"
-      ${val===cur?"checked":""}> ${esc(label)}</label>`;
-  let h=`<h3 style="font-size:.9rem">${t("print_mode")}</h3>
-    <div class="radio-col">
-      ${radio("pMode","single",ps.mode,t("print_single"))}
-      ${radio("pMode","multi",ps.mode,t("print_multi"))}
-    </div>`;
-  /* the copy fields belong to the multi answer, so they arrive with it */
-  if(multi) h+=`<div class="grid2" style="margin-top:12px">
-    <label>${t("print_copies")}<br>
-      <input type="number" min="1" max="6" id="pCopies" value="${ps.copies}"></label>
-    <label>${t("print_scale")}<br>
-      <input type="number" min="20" max="100" step="5" id="pScale" value="${ps.scale}"></label>
-  </div>`;
-  h+=`<h3 style="font-size:.9rem">${t("print_orient")}</h3>
-    <div class="radio-col">
-      ${radio("pOrient","portrait",ps.orientation,t("print_portrait"))}
-      ${radio("pOrient","landscape",ps.orientation,t("print_landscape"))}
-    </div>
-  <h3 style="font-size:.9rem">${t("print_preview")}</h3>
-  ${printPreview(ps)}
-  <div class="hint">${t("print_hint")}</div>
-  <p><button class="btn primary" id="savePrint">${t("save_print")}</button></p>`;
-  return h;
-}
-/* a sketch of the sheet, at the same column count the printer will use */
-function printPreview(ps){
-  const n=ps.mode==="multi"?ps.copies:1;
-  const cols=n<=2?1:2;
-  const land=ps.orientation==="landscape";
-  return `<div class="plan-prev" style="grid-template-columns:repeat(${cols},1fr);
-    aspect-ratio:${land?"1.414/1":"1/1.414"};width:${land?"200px":"150px"}">`+
-    Array.from({length:n},(_,i)=>`<span>${i+1}</span>`).join("")+`</div>`;
-}
 function sect(key,title,body,open){
   return `<details class="sect" data-sect="${key}" ${open?"open":""}><summary>${title}</summary>
     <div class="inner">${body}</div></details>`;
@@ -2343,7 +2305,6 @@ function viewSettings(){
   const tgt=`${targetsPanel()}${pctTables()}`;
   h+=sect("targets",t("s_targets"),tgt);
   h+=sect("notes",t("s_notes"),notesPanel());
-  h+=sect("print",t("s_print"),printPanel());
   h+=sect("log",t("s_log"),logPanel());
   return h;
 }
@@ -3579,13 +3540,22 @@ function downloadCsv(days,weekStart){
    A screen, not a straight window.print(): the page size and orientation are
    settled before the browser dialog opens, because a browser cannot be talked
    out of its own default once it is up. */
+/* The print settings belong to the print view: they are decisions about one
+   sheet of paper, not about the station, so they live on the device and not
+   in the config. */
+const PRINT_DEFAULTS={ mode:"single", copies:4, w:8, h:6, orientation:"portrait" };
 function printSettings(){
-  const p=CFG.print_settings||{};
+  let saved={};
+  try{ saved=JSON.parse(localStorage.getItem("agenda_print")||"{}"); }catch(e){}
+  const p={...PRINT_DEFAULTS, ...saved};
   return { mode:p.mode==="multi"?"multi":"single",
-           orientation:localStorage.getItem("agenda_print_orient")
-             ||(p.orientation==="landscape"?"landscape":"portrait"),
+           orientation:p.orientation==="landscape"?"landscape":"portrait",
            copies:Math.max(1,Math.min(6,parseInt(p.copies,10)||4)),
-           scale:Math.max(20,Math.min(100,parseInt(p.scale,10)||50)) };
+           w:Math.max(2,Math.min(30,parseFloat(p.w)||8)),
+           h:Math.max(2,Math.min(30,parseFloat(p.h)||6)) };
+}
+function savePrintSettings(ps){
+  try{ localStorage.setItem("agenda_print", JSON.stringify(ps)); }catch(e){}
 }
 /* one copy of the week as a table */
 function printTable(){
@@ -3612,45 +3582,128 @@ function applyPageRule(orient){
   if(!st){ st=document.createElement("style"); st.id="pageStyle"; document.head.appendChild(st); }
   st.textContent=`@page{size:A4 ${orient};margin:5mm}`;
 }
+const CM=96/2.54;                          // one centimetre in CSS pixels
+/* How many copies fit across the sheet. auto-fill alone would pack a row as
+   tight as the paper allows — four copies would come out three and one — so
+   the track list stays auto-fill and the container is given the width of the
+   column count we actually want: as square a block as the page can hold. */
+function printCols(ps){
+  const usable=(ps.orientation==="landscape"?29.7:21)-1;   // A4 less 5mm margins
+  const fit=Math.max(1,Math.floor(usable/(ps.w+0.4)));
+  return Math.max(1, Math.min(fit, Math.ceil(Math.sqrt(ps.copies))));
+}
 function paintPrintArea(){
   const ps=printSettings(), one=printTable();
   const area=document.getElementById("printArea");
-  if(ps.mode==="multi"){
-    /* up to two columns: a third would leave a week's worth of day columns
-       too narrow to read at any scale */
-    const cols=ps.copies<=2?1:2;
-    const rows=Math.ceil(ps.copies/cols);
-    area.innerHTML=`<div class="sheet multi" style="grid-template-columns:repeat(${cols},1fr);
-      grid-template-rows:repeat(${rows},1fr)">`+
-      Array.from({length:ps.copies},()=>
-        `<div class="pcopy" style="zoom:${ps.scale}%">${one}</div>`).join("")+`</div>`;
-  } else {
-    area.innerHTML=`<div class="sheet">${one}</div>`;
-  }
+  if(ps.mode!=="multi"){ area.innerHTML=`<div class="sheet">${one}</div>`; return; }
+  const cols=printCols(ps);
+  area.innerHTML=`<div class="sheet multi"
+    style="grid-template-columns:repeat(auto-fill,${ps.w}cm);
+           width:${(cols*ps.w+(cols-1)*0.4).toFixed(2)}cm">`+
+    Array.from({length:ps.copies},()=>
+      `<div class="pcopy" style="width:${ps.w}cm;height:${ps.h}cm">
+         <div class="fit">${one}</div></div>`).join("")+`</div>`;
+  /* Each copy is a miniature of the full sheet, so the table is laid out at
+     the width a whole page would give it and only then scaled down. Measuring
+     it inside the small box instead would let the box's width wrap the table,
+     which turns it tall and narrow and wastes most of the paper. */
+  const rtl=document.documentElement.dir==="rtl";
+  const pageW=((ps.orientation==="landscape"?29.7:21)-1)*CM;
+  area.querySelectorAll(".pcopy").forEach(box=>{
+    const fit=box.querySelector(".fit");
+    fit.style.setProperty("--org", rtl?"right":"left");
+    fit.style.transform="none";
+    fit.style.width=pageW+"px";
+    const h=fit.scrollHeight;
+    if(!h) return;
+    const scale=Math.min((ps.w*CM)/pageW, (ps.h*CM)/h);
+    fit.style.transform=`scale(${scale.toFixed(4)})`;
+  });
 }
 function closePrint(){
   document.body.classList.remove("printing");
   document.getElementById("printArea").innerHTML="";
+  document.getElementById("printBar").innerHTML="";
+}
+/* the sketch of the sheet, at the column count the printer will use */
+function printPreview(ps){
+  const n=ps.mode==="multi"?ps.copies:1;
+  const cols=ps.mode==="multi"?printCols(ps):1;
+  const land=ps.orientation==="landscape";
+  return `<div class="plan-prev" style="grid-template-columns:repeat(${cols},1fr);
+    aspect-ratio:${land?"1.414/1":"1/1.414"};width:${land?"190px":"135px"}">`+
+    Array.from({length:n},(_,i)=>`<span>${i+1}</span>`).join("")+`</div>`;
+}
+function paintPrintBar(){
+  const ps=printSettings();
+  const radio=(name,val,cur,label)=>
+    `<label class="chk"><input type="radio" name="${name}" value="${val}"
+      ${val===cur?"checked":""}> ${esc(label)}</label>`;
+  document.getElementById("printBar").innerHTML=`
+    <div class="pb-head">
+      <h3>${esc(t("s_print"))}</h3>
+      <button class="btn" id="printClose">✕ ${esc(t("close"))}</button>
+    </div>
+    <div class="radio-row"><b>${esc(t("print_mode"))}</b>
+      ${radio("pvMode","single",ps.mode,t("print_single"))}
+      ${radio("pvMode","multi",ps.mode,t("print_multi"))}
+    </div>
+    ${ps.mode==="multi"?`<div class="pb-row">
+      <label>${esc(t("print_copies"))}<br>
+        <input type="number" min="1" max="6" id="pvCopies" value="${ps.copies}"></label>
+      <label>${esc(t("print_w"))}<br>
+        <input type="number" min="2" max="30" step="0.5" id="pvW" value="${ps.w}"></label>
+      <label>${esc(t("print_h"))}<br>
+        <input type="number" min="2" max="30" step="0.5" id="pvH" value="${ps.h}"></label>
+    </div>`:""}
+    <div class="radio-row"><b>${esc(t("print_orient"))}</b>
+      ${radio("pvOrient","portrait",ps.orientation,t("print_portrait"))}
+      ${radio("pvOrient","landscape",ps.orientation,t("print_landscape"))}
+    </div>
+    <div class="pb-row">${printPreview(ps)}
+      <button class="btn primary" id="printGo">${esc(t("print"))}</button></div>`;
+  wirePrintBar();
+}
+function wirePrintBar(){
+  const bar=document.getElementById("printBar");
+  const pick=name=>{ const el=bar.querySelector(`input[name="${name}"]:checked`);
+                     return el?el.value:null; };
+  const read=()=>{
+    const num=(id,d)=>{ const el=bar.querySelector("#"+id);
+                        return el?parseFloat(el.value)||d:d; };
+    const cur=printSettings();
+    return { mode:pick("pvMode")==="multi"?"multi":"single",
+             orientation:pick("pvOrient")==="landscape"?"landscape":"portrait",
+             copies:Math.max(1,Math.min(6,num("pvCopies",cur.copies))),
+             w:Math.max(2,Math.min(30,num("pvW",cur.w))),
+             h:Math.max(2,Math.min(30,num("pvH",cur.h))) };
+  };
+  const apply=(repaintBar)=>{
+    const ps=read();
+    savePrintSettings(ps);
+    applyPageRule(ps.orientation);
+    if(repaintBar) paintPrintBar(); else {
+      const el=bar.querySelector(".plan-prev");
+      if(el) el.outerHTML=printPreview(printSettings());
+    }
+    paintPrintArea();
+  };
+  /* the mode changes which fields exist, so that one redraws the panel */
+  bar.querySelectorAll('input[name="pvMode"]').forEach(r=>r.onchange=()=>apply(true));
+  bar.querySelectorAll('input[name="pvOrient"]').forEach(r=>r.onchange=()=>apply(false));
+  ["pvCopies","pvW","pvH"].forEach(id=>{
+    const el=bar.querySelector("#"+id);
+    if(el) el.oninput=el.onchange=()=>apply(false);
+  });
+  bar.querySelector("#printGo").onclick=()=>window.print();
+  bar.querySelector("#printClose").onclick=closePrint;
 }
 function doPrint(){
   if(!S.days) return;
-  const ps=printSettings();
-  applyPageRule(ps.orientation);
-  paintPrintArea();
-  const sel=document.getElementById("printOrient");
-  sel.innerHTML=[["portrait","print_portrait"],["landscape","print_landscape"]]
-    .map(([v,k])=>`<option value="${v}" ${v===ps.orientation?"selected":""}>${esc(t(k))}</option>`).join("");
-  document.getElementById("printOrientLbl").textContent=t("print_orient");
-  sel.onchange=()=>{
-    /* the choice is per device, not per station — it follows the printer */
-    localStorage.setItem("agenda_print_orient", sel.value);
-    applyPageRule(sel.value); paintPrintArea();
-  };
-  document.getElementById("printGo").textContent="🖨️ "+t("print");
-  document.getElementById("printGo").onclick=()=>window.print();
-  document.getElementById("printClose").textContent="✕ "+t("close");
-  document.getElementById("printClose").onclick=closePrint;
+  applyPageRule(printSettings().orientation);
   document.body.classList.add("printing");
+  paintPrintBar();
+  paintPrintArea();
 }
 
 /* ═══════════════ wiring ═══════════════ */
@@ -3963,38 +4016,6 @@ function wireSettings(){
     et.active=false;                     // switched off; its values are kept
     saveConfig(); resyncDays(); render(); reopen("extra");
   });
-  /* ── print settings ── */
-  const pPick=name=>{
-    const el=document.querySelector(`[data-sect="print"] input[name="${name}"]:checked`);
-    return el?el.value:null;
-  };
-  const readPrint=(peek)=>{
-    const cur=CFG.print_settings||{};
-    const ps={ mode:pPick("pMode")==="multi"?"multi":"single",
-      copies:Math.max(1,Math.min(6,parseInt($("pCopies")&&$("pCopies").value,10)||cur.copies||4)),
-      scale:Math.max(20,Math.min(100,parseInt($("pScale")&&$("pScale").value,10)||cur.scale||50)),
-      orientation:pPick("pOrient")==="landscape"?"landscape":"portrait" };
-    if(!peek) CFG.print_settings=ps;
-    return ps;
-  };
-  const pRepaint=()=>{
-    const el=document.querySelector('[data-sect="print"] .plan-prev');
-    if(el) el.outerHTML=printPreview(readPrint(true));
-  };
-  document.querySelectorAll('[data-sect="print"] input[name="pMode"]').forEach(r=>
-    r.onchange=()=>{ readPrint(); saveConfig(); render(); reopen("print"); });
-  document.querySelectorAll('[data-sect="print"] input[name="pOrient"]').forEach(r=>
-    r.onchange=pRepaint);
-  ["pCopies","pScale"].forEach(id=>{
-    const el=$(id); if(el) el.oninput=el.onchange=pRepaint; });
-  if($("savePrint")) $("savePrint").onclick=()=>{
-    readPrint();
-    /* the print view reads its orientation from here on a device that has not
-       chosen one of its own */
-    localStorage.setItem("agenda_print_orient", CFG.print_settings.orientation);
-    saveConfig(); render(); reopen("print");
-    toast("✅ "+t("settings_saved"));
-  };
   /* ── free-text assignment notes ── */
   if($("saveNotes")) $("saveNotes").onclick=()=>{
     CFG.assign_notes=$("assignNotes").value;
