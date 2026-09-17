@@ -276,19 +276,24 @@ body.printing>header,body.printing>main{visibility:hidden}
    copies are laid out at their real size with type measured in points — the
    table is never scaled, because scaling shrinks the letters along with
    everything else and the paper comes out unreadable. */
-#printArea .sheet.multi{display:block}
-#printArea .pcopy{display:inline-block;vertical-align:top;overflow:hidden;
-  border:1pt dashed #999;box-sizing:border-box;padding:1mm;margin:0 0 2mm 2mm}
+/* an explicit gap rather than per-copy margins: the column arithmetic has to
+   match the paper exactly, and a margin on every copy adds one gap too many */
+#printArea .sheet.multi{display:flex;flex-wrap:wrap;gap:2mm;align-content:flex-start}
+#printArea .pcopy{overflow:hidden;flex:none;
+  border:1pt dashed #999;box-sizing:border-box;padding:1mm}
 /* the print table: points, not pixels, so the printer gets real sizes */
-.print-table{width:100%;border-collapse:collapse;table-layout:fixed;
-  font-family:Arial,Helvetica,sans-serif;font-size:7pt}
+.print-table{width:100%!important;border-collapse:collapse;table-layout:fixed;
+  font-family:Arial,Helvetica,sans-serif;font-size:8pt}
+/* landscape gives the day columns more width but less height, so the type
+   comes down a point to keep all the rows on one sheet */
+#printArea.land .sheet:not(.multi) .print-table{font-size:7pt}
 .print-table th,.print-table td{border:.5pt solid #000;padding:2pt 3pt;
   text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .print-table th{font-weight:700;background:#f0f0f0;
   -webkit-print-color-adjust:exact;print-color-adjust:exact}
 .print-table td{font-weight:500}
 .print-table td.label{text-align:start;font-weight:600;background:#f7f7f7;
-  width:25mm;white-space:normal;
+  font-size:6.5pt;white-space:normal;
   -webkit-print-color-adjust:exact;print-color-adjust:exact}
 /* a workplace row wears its group's colour, whatever the station chose */
 .print-table tr.grp td{background:var(--bg);
@@ -297,7 +302,8 @@ body.printing>header,body.printing>main{visibility:hidden}
   -webkit-print-color-adjust:exact;print-color-adjust:exact}
 .print-head{font-size:8pt;font-weight:700;margin:0 0 2pt;font-family:Arial,sans-serif}
 /* a small copy gets smaller type and tighter rows — still points, still real */
-.pcopy .print-table{font-size:5.5pt;line-height:1.05}
+.pcopy .print-table{font-size:var(--pt,5.5pt);line-height:1.05}
+.pcopy .print-table td.label{font-size:calc(var(--pt,5.5pt) - .5pt)}
 .pcopy .print-table th,.pcopy .print-table td{padding:.5pt 1pt;white-space:normal}
 .pcopy .print-table td.label{width:14mm}
 .pcopy .print-head{font-size:6pt;margin:0 0 1pt}
@@ -355,6 +361,7 @@ print_single:"סידור מלא — דף A4 שלם, עותק אחד",
 print_multi:"סידורים מרובים — כמה עותקים קטנים על דף אחד",
 print_copies:"מספר עותקים",print_w:"רוחב כל עותק (ס״מ)",print_h:"גובה כל עותק (ס״מ)",
 print_preview:"תצוגה מקדימה של הפריסה",
+print_auto:"מלא את כל הדף אוטומטית",print_auto_size:"{c}×{r} על הדף · כל עותק {w}×{h} ס״מ",
 print_clipped:"⚠️ העותק נמוך מדי — {n} שורות נחתכות. דרוש גובה של כ-{h} ס״מ לשבוע מלא.",
 
 warn_sec_cross_group:"{e} שובץ ל-{s} אף שאינו בקבוצה {g}",
@@ -474,6 +481,7 @@ print_single:"Full schedule — one whole A4 page, a single copy",
 print_multi:"Several copies — small copies laid out on one sheet",
 print_copies:"Copies",print_w:"Width of each copy (cm)",print_h:"Height of each copy (cm)",
 print_preview:"Layout preview",
+print_auto:"Fill the whole sheet automatically",print_auto_size:"{c}×{r} on the sheet · each copy {w}×{h}cm",
 print_clipped:"⚠️ The copy is too short — {n} rows are cut off. A full week needs about {h}cm.",
 
 warn_sec_cross_group:"{e} was placed at {s} though they are not in group {g}",
@@ -593,6 +601,7 @@ print_single:"Horario completo — una hoja A4 entera, una copia",
 print_multi:"Varias copias — copias pequeñas en una sola hoja",
 print_copies:"Copias",print_w:"Ancho de cada copia (cm)",print_h:"Alto de cada copia (cm)",
 print_preview:"Vista previa de la distribución",
+print_auto:"Llenar toda la hoja automáticamente",print_auto_size:"{c}×{r} en la hoja · cada copia {w}×{h} cm",
 print_clipped:"⚠️ La copia es muy baja — se cortan {n} filas. Una semana completa necesita unos {h} cm.",
 
 warn_sec_cross_group:"{e} fue asignado a {s} aunque no pertenece al grupo {g}",
@@ -3593,7 +3602,34 @@ function downloadCsv(days,weekStart){
 /* The print settings belong to the print view: they are decisions about one
    sheet of paper, not about the station, so they live on the device and not
    in the config. */
-const PRINT_DEFAULTS={ mode:"single", copies:4, w:8, h:6, orientation:"portrait" };
+const PRINT_DEFAULTS={ mode:"single", copies:4, w:8, h:6, orientation:"portrait", auto:true };
+/* A4 in millimetres, and the margin each mode prints with */
+const A4={ portrait:[210,297], landscape:[297,210] };
+/* 8mm is a comfortable margin for a portrait sheet; landscape and a sheet of
+   copies both want every millimetre of width they can get */
+function pageMargin(mode,orient){ return (mode==="multi"||orient==="landscape")?5:8; }
+/* The sheet a copy has to share. Gaps between copies come out of it. */
+function sheetBox(ps){
+  const [w,h]=A4[ps.orientation], m=pageMargin(ps.mode,ps.orientation);
+  return { w:w-2*m, h:h-2*m };
+}
+/* Copies laid out as squarely as the count allows, filling the sheet. */
+function autoCopySize(ps){
+  const cols=Math.max(1,Math.ceil(Math.sqrt(ps.copies)));
+  const rows=Math.ceil(ps.copies/cols), gap=2, box=sheetBox(ps);
+  return { cols, rows,
+           w:+(((box.w-gap*(cols-1))/cols)/10).toFixed(2),   // mm → cm
+           h:+(((box.h-gap*(rows-1))/rows)/10).toFixed(2) };
+}
+/* what a copy actually measures, auto or by hand */
+function copySize(ps){
+  if(ps.mode!=="multi") return null;
+  if(ps.auto) return autoCopySize(ps);
+  const cols=Math.max(1,Math.ceil(Math.sqrt(ps.copies)));
+  return { cols, rows:Math.ceil(ps.copies/cols), w:ps.w, h:ps.h };
+}
+/* smaller type the more copies share a row — measured to still fit */
+function copyFontPt(cols){ return cols<=1?7:cols===2?6:cols===3?5.5:5; }
 function printSettings(){
   let saved={};
   try{ saved=JSON.parse(localStorage.getItem("agenda_print")||"{}"); }catch(e){}
@@ -3602,7 +3638,8 @@ function printSettings(){
            orientation:p.orientation==="landscape"?"landscape":"portrait",
            copies:Math.max(1,Math.min(6,parseInt(p.copies,10)||4)),
            w:Math.max(2,Math.min(30,parseFloat(p.w)||8)),
-           h:Math.max(2,Math.min(30,parseFloat(p.h)||6)) };
+           h:Math.max(2,Math.min(30,parseFloat(p.h)||6)),
+           auto:p.auto!==false };
 }
 function savePrintSettings(ps){
   try{ localStorage.setItem("agenda_print", JSON.stringify(ps)); }catch(e){}
@@ -3613,10 +3650,13 @@ function savePrintSettings(ps){
 function printTable(){
   const keys=Object.keys(S.days).sort();
   const VS=CFG.special_values.vehicle_special;
-  const colW=`calc((100% - 25mm) / ${keys.length})`;
+  /* percentages, not millimetres: the table is told to be the whole page and
+     the columns divide it, so landscape fills the sheet instead of leaving a
+     strip of white down the side */
+  const labelPct=22, colW=((100-labelPct)/keys.length).toFixed(2);
   let h=`<div class="print-head">${esc(t("app_title"))} — ${fmtDM(keys[0])} → ${fmtDM(keys[keys.length-1])}</div>`;
-  h+=`<table class="print-table"><colgroup><col style="width:25mm">`+
-     keys.map(()=>`<col style="width:${colW}">`).join("")+`</colgroup>`;
+  h+=`<table class="print-table"><colgroup><col style="width:${labelPct}%">`+
+     keys.map(()=>`<col style="width:${colW}%">`).join("")+`</colgroup>`;
   h+=`<thead><tr><th>${esc(t("row_dates"))}</th>`;
   keys.forEach(dk=>h+=`<th>${esc(dayLabel(dk))}<br>${fmtDM(dk)}</th>`);
   h+=`</tr></thead><tbody>`;
@@ -3644,7 +3684,7 @@ function applyPageRule(orient,mode){
   if(!st){ st=document.createElement("style"); st.id="pageStyle"; document.head.appendChild(st); }
   /* a full sheet can afford a proper margin; a sheet of small copies wants
      every millimetre it can get */
-  st.textContent=`@page{size:A4 ${orient};margin:${mode==="multi"?"5mm":"8mm"}}`;
+  st.textContent=`@page{size:A4 ${orient};margin:${pageMargin(mode,orient)}mm}`;
 }
 const CM=96/2.54;                          // one centimetre in CSS pixels
 /* How many copies fit across the sheet. auto-fill alone would pack a row as
@@ -3659,14 +3699,17 @@ function printCols(ps){
 function paintPrintArea(){
   const ps=printSettings(), one=printTable();
   const area=document.getElementById("printArea");
+  area.classList.toggle("land", ps.orientation==="landscape");
   if(ps.mode!=="multi"){ area.innerHTML=`<div class="sheet">${one}</div>`; return; }
+  const cp=copySize(ps);
   /* Each copy is exactly the box the user asked for, at its real size — the
      type inside is 5.5pt whatever the box measures. A box too short for the
      whole week clips, and the panel says so rather than shrinking the letters
      until nobody can read them. */
-  area.innerHTML=`<div class="sheet multi">`+
+  area.innerHTML=`<div class="sheet multi" style="width:${sheetBox(ps).w}mm">`+
     Array.from({length:ps.copies},()=>
-      `<div class="pcopy" style="width:${ps.w}cm;height:${ps.h}cm">${one}</div>`).join("")+
+      `<div class="pcopy" style="width:${cp.w}cm;height:${cp.h}cm;
+         --pt:${copyFontPt(cp.cols)}pt">${one}</div>`).join("")+
     `</div>`;
 }
 /* how much of a copy actually fits inside its box */
@@ -3715,10 +3758,14 @@ function paintPrintBar(){
     ${ps.mode==="multi"?`<div class="pb-row">
       <label>${esc(t("print_copies"))}<br>
         <input type="number" min="1" max="6" id="pvCopies" value="${ps.copies}"></label>
-      <label>${esc(t("print_w"))}<br>
-        <input type="number" min="2" max="30" step="0.5" id="pvW" value="${ps.w}"></label>
-      <label>${esc(t("print_h"))}<br>
-        <input type="number" min="2" max="30" step="0.5" id="pvH" value="${ps.h}"></label>
+      <label class="chk"><input type="checkbox" id="pvAuto" ${ps.auto?"checked":""}>
+        ${esc(t("print_auto"))}</label>
+      ${ps.auto?`<span class="hint">${esc(t("print_auto_size",
+          {w:copySize(ps).w, h:copySize(ps).h, c:copySize(ps).cols, r:copySize(ps).rows}))}</span>`
+        :`<label>${esc(t("print_w"))}<br>
+            <input type="number" min="2" max="30" step="0.5" id="pvW" value="${ps.w}"></label>
+          <label>${esc(t("print_h"))}<br>
+            <input type="number" min="2" max="30" step="0.5" id="pvH" value="${ps.h}"></label>`}
     </div>`:""}
     <div class="radio-row"><b>${esc(t("print_orient"))}</b>
       ${radio("pvOrient","portrait",ps.orientation,t("print_portrait"))}
@@ -3744,11 +3791,13 @@ function wirePrintBar(){
     const num=(id,d)=>{ const el=bar.querySelector("#"+id);
                         return el?parseFloat(el.value)||d:d; };
     const cur=printSettings();
+    const auto=bar.querySelector("#pvAuto");
     return { mode:pick("pvMode")==="multi"?"multi":"single",
              orientation:pick("pvOrient")==="landscape"?"landscape":"portrait",
              copies:Math.max(1,Math.min(6,num("pvCopies",cur.copies))),
              w:Math.max(2,Math.min(30,num("pvW",cur.w))),
-             h:Math.max(2,Math.min(30,num("pvH",cur.h))) };
+             h:Math.max(2,Math.min(30,num("pvH",cur.h))),
+             auto:auto?auto.checked:cur.auto };
   };
   const apply=(repaintBar)=>{
     const ps=read();
@@ -3762,7 +3811,10 @@ function wirePrintBar(){
   };
   /* the mode changes which fields exist, so that one redraws the panel */
   bar.querySelectorAll('input[name="pvMode"]').forEach(r=>r.onchange=()=>apply(true));
-  bar.querySelectorAll('input[name="pvOrient"]').forEach(r=>r.onchange=()=>apply(false));
+  /* both of these change which fields belong on screen */
+  bar.querySelectorAll('input[name="pvOrient"]').forEach(r=>r.onchange=()=>apply(true));
+  if(bar.querySelector("#pvAuto")) bar.querySelector("#pvAuto").onchange=()=>apply(true);
+  if(bar.querySelector("#pvCopies")) bar.querySelector("#pvCopies").onchange=()=>apply(true);
   ["pvCopies","pvW","pvH"].forEach(id=>{
     const el=bar.querySelector("#"+id);
     if(el) el.oninput=el.onchange=()=>apply(false);
