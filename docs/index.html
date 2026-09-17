@@ -272,29 +272,42 @@ body.printing #printBar{display:block;position:fixed;inset-block-start:0;inset-i
 body.printing #printArea{display:block;position:fixed;inset:0;inset-block-start:46vh;
   z-index:499;overflow:auto;background:#fff;padding:14px}
 body.printing>header,body.printing>main{visibility:hidden}
-/* one sheet, or several copies cut to a size the user gives in centimetres */
-#printArea .sheet{display:grid;gap:4mm}
-#printArea .sheet.multi .pcopy{border:.5px solid #ccc;outline:1px dashed #999;
-  outline-offset:2px;overflow:hidden;position:relative}
-/* the table keeps its natural size and is scaled to fit the box, because
-   squeezing a table by width alone turns the day columns into slivers */
-#printArea .pcopy .fit{position:absolute;inset-block-start:0;inset-inline-start:0;
-  transform-origin:top var(--org,right);display:flex;flex-direction:column}
-/* the rows share out whatever height is left, so the box fills edge to edge */
-#printArea .pcopy .fit table{flex:1}
-#printArea .pcopy .fit h2{flex:none}
-#printArea table{border-collapse:collapse;width:100%;font-size:10px;table-layout:fixed}
-#printArea th,#printArea td{border:1px solid #999;padding:3px 5px;text-align:center;
-  word-break:break-word}
-#printArea th{background:#ddd}
-#printArea td.label{text-align:start;font-weight:bold;background:#f0f0f0}
-#printArea td.y{background:#fff3bf}
-#printArea h2{font-size:13px;margin:0 0 4px}
+/* One sheet, or several copies at a size the user gives in centimetres. The
+   copies are laid out at their real size with type measured in points — the
+   table is never scaled, because scaling shrinks the letters along with
+   everything else and the paper comes out unreadable. */
+#printArea .sheet.multi{display:block}
+#printArea .pcopy{display:inline-block;vertical-align:top;overflow:hidden;
+  border:1pt dashed #999;box-sizing:border-box;padding:1mm;margin:0 0 2mm 2mm}
+/* the print table: points, not pixels, so the printer gets real sizes */
+.print-table{width:100%;border-collapse:collapse;table-layout:fixed;
+  font-family:Arial,Helvetica,sans-serif;font-size:7pt}
+.print-table th,.print-table td{border:.5pt solid #000;padding:2pt 3pt;
+  text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.print-table th{font-weight:700;background:#f0f0f0;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+.print-table td{font-weight:500}
+.print-table td.label{text-align:start;font-weight:600;background:#f7f7f7;
+  width:25mm;white-space:normal;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+/* a workplace row wears its group's colour, whatever the station chose */
+.print-table tr.grp td{background:var(--bg);
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+.print-table td.y{background:#fff3bf;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+.print-head{font-size:8pt;font-weight:700;margin:0 0 2pt;font-family:Arial,sans-serif}
+/* a small copy gets smaller type and tighter rows — still points, still real */
+.pcopy .print-table{font-size:5.5pt;line-height:1.05}
+.pcopy .print-table th,.pcopy .print-table td{padding:.5pt 1pt;white-space:normal}
+.pcopy .print-table td.label{width:14mm}
+.pcopy .print-head{font-size:6pt;margin:0 0 1pt}
 @media print{
-  body>header,body>main,#toast,#printBar{display:none!important}
+  body>*:not(#printArea){display:none!important}
   body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
-  body.printing #printArea{position:static;inset:auto;overflow:visible;padding:0}
+  body.printing #printArea{position:static;inset:auto;overflow:visible;padding:0;
+    display:block!important;width:100%}
   #printArea{display:block}
+  #printArea .pcopy{page-break-inside:avoid;break-inside:avoid}
 }
 /* the layout sketch in Settings */
 .radio-col{display:flex;flex-direction:column;gap:6px;margin-block-end:4px}
@@ -342,6 +355,7 @@ print_single:"סידור מלא — דף A4 שלם, עותק אחד",
 print_multi:"סידורים מרובים — כמה עותקים קטנים על דף אחד",
 print_copies:"מספר עותקים",print_w:"רוחב כל עותק (ס״מ)",print_h:"גובה כל עותק (ס״מ)",
 print_preview:"תצוגה מקדימה של הפריסה",
+print_clipped:"⚠️ העותק נמוך מדי — {n} שורות נחתכות. דרוש גובה של כ-{h} ס״מ לשבוע מלא.",
 
 warn_sec_cross_group:"{e} שובץ ל-{s} אף שאינו בקבוצה {g}",
 saved:"הסידור נשמר בארכיון",valid:"הסידור תקין ✓",replace_q:"קיים סידור שמור לשבוע זה — להחליף?",yes:"כן",no:"ביטול",
@@ -460,6 +474,7 @@ print_single:"Full schedule — one whole A4 page, a single copy",
 print_multi:"Several copies — small copies laid out on one sheet",
 print_copies:"Copies",print_w:"Width of each copy (cm)",print_h:"Height of each copy (cm)",
 print_preview:"Layout preview",
+print_clipped:"⚠️ The copy is too short — {n} rows are cut off. A full week needs about {h}cm.",
 
 warn_sec_cross_group:"{e} was placed at {s} though they are not in group {g}",
 saved:"Schedule saved to archive",valid:"Schedule is valid ✓",replace_q:"A schedule exists for this week — replace?",yes:"Yes",no:"Cancel",
@@ -578,6 +593,7 @@ print_single:"Horario completo — una hoja A4 entera, una copia",
 print_multi:"Varias copias — copias pequeñas en una sola hoja",
 print_copies:"Copias",print_w:"Ancho de cada copia (cm)",print_h:"Alto de cada copia (cm)",
 print_preview:"Vista previa de la distribución",
+print_clipped:"⚠️ La copia es muy baja — se cortan {n} filas. Una semana completa necesita unos {h} cm.",
 
 warn_sec_cross_group:"{e} fue asignado a {s} aunque no pertenece al grupo {g}",
 saved:"Horario guardado en archivo",valid:"El horario es válido ✓",replace_q:"Existe un horario para esta semana — ¿reemplazar?",yes:"Sí",no:"Cancelar",
@@ -3591,30 +3607,44 @@ function printSettings(){
 function savePrintSettings(ps){
   try{ localStorage.setItem("agenda_print", JSON.stringify(ps)); }catch(e){}
 }
-/* one copy of the week as a table */
+/* One copy of the week, built for paper rather than for the screen: its own
+   markup, its own class, and every size in points so the printer is told what
+   the letters should actually measure. */
 function printTable(){
   const keys=Object.keys(S.days).sort();
   const VS=CFG.special_values.vehicle_special;
-  let h=`<h2>📅 ${esc(t("app_title"))} — ${keys[0]} → ${keys[keys.length-1]}</h2><table><tr><th></th>`;
+  const colW=`calc((100% - 25mm) / ${keys.length})`;
+  let h=`<div class="print-head">${esc(t("app_title"))} — ${fmtDM(keys[0])} → ${fmtDM(keys[keys.length-1])}</div>`;
+  h+=`<table class="print-table"><colgroup><col style="width:25mm">`+
+     keys.map(()=>`<col style="width:${colW}">`).join("")+`</colgroup>`;
+  h+=`<thead><tr><th>${esc(t("row_dates"))}</th>`;
   keys.forEach(dk=>h+=`<th>${esc(dayLabel(dk))}<br>${fmtDM(dk)}</th>`);
-  h+=`</tr>`;
+  h+=`</tr></thead><tbody>`;
   for(const rk of reorderableKeys()){
-    if(AWAY_ROWS.includes(rk)){
-      h+=`<tr><td class="label">${esc(rowLabel(rk))}</td>${keys.map(k=>`<td>${esc(awayList(S.days[k],rk).join(", "))}</td>`).join("")}</tr>`;
-    } else {
-      h+=`<tr><td class="label">${esc(rowLabel(rk))}</td>${keys.map(k=>{
-        const v=S.days[k][rk]||"";
-        const y=(rk==="vehicle_morning"||rk==="vehicle_noon")&&v===VS;
-        return `<td class="${y?"y":""}">${esc(v)}</td>`; }).join("")}</tr>`;
-    }
+    /* a workplace row carries its group's colour onto the paper */
+    const sx=sectionByRow(rk), g=sx?groupById(sx.sec.group_id):null;
+    const cls=g?` class="grp" style="--bg:${esc(g.color||"#eee")}"`:"";
+    h+=`<tr${cls}><td class="label">${esc(rowLabel(rk))}</td>`;
+    h+=keys.map(k=>{
+      if(AWAY_ROWS.includes(rk))
+        return `<td>${esc(awayList(S.days[k],rk).join(", "))}</td>`;
+      const v=S.days[k][rk]||"";
+      const y=(rk==="vehicle_morning"||rk==="vehicle_noon")&&v===VS;
+      /* a paired cell may break after the +, so a narrow copy shows both
+         names on two lines instead of cutting the second one off */
+      return `<td class="${y?"y":""}">${esc(v).replace(/\+/g,"+\u200B")}</td>`;
+    }).join("");
+    h+=`</tr>`;
   }
-  return h+"</table>";
+  return h+`</tbody></table>`;
 }
 /* @page cannot be set from a style property, so the rule is rewritten whole */
-function applyPageRule(orient){
+function applyPageRule(orient,mode){
   let st=document.getElementById("pageStyle");
   if(!st){ st=document.createElement("style"); st.id="pageStyle"; document.head.appendChild(st); }
-  st.textContent=`@page{size:A4 ${orient};margin:5mm}`;
+  /* a full sheet can afford a proper margin; a sheet of small copies wants
+     every millimetre it can get */
+  st.textContent=`@page{size:A4 ${orient};margin:${mode==="multi"?"5mm":"8mm"}}`;
 }
 const CM=96/2.54;                          // one centimetre in CSS pixels
 /* How many copies fit across the sheet. auto-fill alone would pack a row as
@@ -3630,40 +3660,29 @@ function paintPrintArea(){
   const ps=printSettings(), one=printTable();
   const area=document.getElementById("printArea");
   if(ps.mode!=="multi"){ area.innerHTML=`<div class="sheet">${one}</div>`; return; }
-  const cols=printCols(ps);
-  area.innerHTML=`<div class="sheet multi"
-    style="grid-template-columns:repeat(auto-fill,${ps.w}cm);
-           width:${(cols*ps.w+(cols-1)*0.4).toFixed(2)}cm">`+
+  /* Each copy is exactly the box the user asked for, at its real size — the
+     type inside is 5.5pt whatever the box measures. A box too short for the
+     whole week clips, and the panel says so rather than shrinking the letters
+     until nobody can read them. */
+  area.innerHTML=`<div class="sheet multi">`+
     Array.from({length:ps.copies},()=>
-      `<div class="pcopy" style="width:${ps.w}cm;height:${ps.h}cm">
-         <div class="fit">${one}</div></div>`).join("")+`</div>`;
-  /* Filling the box exactly and keeping the type undistorted pull against
-     each other: a uniform min() scale leaves white space whenever the box and
-     the table disagree on proportions, and max() would crop away rows. The
-     way out is to stop treating the table as a fixed picture — the scale is
-     uniform, so nothing is stretched, and the table's own rows grow to take
-     up whatever height is left. */
-  const rtl=document.documentElement.dir==="rtl";
-  const pageW=((ps.orientation==="landscape"?29.7:21)-1)*CM;   // a full sheet
-  const targetW=ps.w*CM, targetH=ps.h*CM;
-  area.querySelectorAll(".pcopy").forEach(box=>{
-    const fit=box.querySelector(".fit");
-    fit.style.setProperty("--org", rtl?"right":"left");
-    fit.style.transform="none";
-    fit.style.height="auto";
-    /* start from the type size a whole page would give, then measure how tall
-       the table insists on being at that width */
-    fit.style.width=pageW+"px";
-    let scale=targetW/pageW;
-    const natural=fit.scrollHeight;
-    if(!natural) return;
-    /* too tall to fit even after scaling? then height decides the scale, and
-       the layout widens to match so the width still comes out exact */
-    if(natural>targetH/scale) scale=targetH/natural;
-    fit.style.width=(targetW/scale)+"px";
-    fit.style.height=(targetH/scale)+"px";
-    fit.style.transform=`scale(${scale.toFixed(5)})`;
-  });
+      `<div class="pcopy" style="width:${ps.w}cm;height:${ps.h}cm">${one}</div>`).join("")+
+    `</div>`;
+}
+/* how much of a copy actually fits inside its box */
+function printOverflow(){
+  const box=document.querySelector("#printArea .pcopy");
+  if(!box) return null;
+  const need=box.scrollHeight, have=box.clientHeight;
+  const rows=box.querySelectorAll(".print-table tbody tr").length;
+  const lost=Math.round(rows*(1-have/need));
+  /* a row or less of slack is the box's own border rounding, not a loss */
+  if(need<=have+1||lost<1) return null;
+  const CMpx=96/2.54;
+  return { need:need, have:have, rows:lost,
+           /* round the suggestion up: a height that only just fits is a
+              height that clips on the next printer */
+           cm:Math.ceil(((need/have)*box.getBoundingClientRect().height)/CMpx*10)/10+0.2 };
 }
 function closePrint(){
   document.body.classList.remove("printing");
@@ -3706,8 +3725,16 @@ function paintPrintBar(){
       ${radio("pvOrient","landscape",ps.orientation,t("print_landscape"))}
     </div>
     <div class="pb-row">${printPreview(ps)}
-      <button class="btn primary" id="printGo">${esc(t("print"))}</button></div>`;
+      <button class="btn primary" id="printGo">${esc(t("print"))}</button></div>
+    <div class="hint" id="printClip"></div>`;
   wirePrintBar();
+  /* measured after the copies exist, so it reports what really happened */
+  setTimeout(()=>{
+    const el=document.getElementById("printClip"); if(!el) return;
+    const o=ps.mode==="multi"?printOverflow():null;
+    el.textContent=o?t("print_clipped",{n:o.rows, h:o.cm}):"";
+    el.style.color=o?"var(--danger)":"";
+  },0);
 }
 function wirePrintBar(){
   const bar=document.getElementById("printBar");
@@ -3726,7 +3753,7 @@ function wirePrintBar(){
   const apply=(repaintBar)=>{
     const ps=read();
     savePrintSettings(ps);
-    applyPageRule(ps.orientation);
+    applyPageRule(ps.orientation, ps.mode);
     if(repaintBar) paintPrintBar(); else {
       const el=bar.querySelector(".plan-prev");
       if(el) el.outerHTML=printPreview(printSettings());
@@ -3745,7 +3772,8 @@ function wirePrintBar(){
 }
 function doPrint(){
   if(!S.days) return;
-  applyPageRule(printSettings().orientation);
+  const ps0=printSettings();
+  applyPageRule(ps0.orientation, ps0.mode);
   document.body.classList.add("printing");
   paintPrintBar();
   paintPrintArea();
