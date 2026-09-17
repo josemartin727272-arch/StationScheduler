@@ -2,7 +2,7 @@
    request goes to the network first and the cache is the fallback for when
    there is no network. A version that is live is therefore the version you
    get on the next load, with no tabs to close first. */
-const CACHE = "agenda-pwa-v40";
+const CACHE = "agenda-pwa-v41";
 const ASSETS = [
   "./",
   "./index.html",
