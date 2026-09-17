@@ -249,18 +249,43 @@ details.guide-ch>summary{font-size:1rem;gap:10px}
 #toast.show{opacity:.95}
 .inline-confirm{display:inline-flex;gap:6px;align-items:center;background:#fdecea;
   border-radius:10px;padding:4px 8px}
-/* print */
+/* print — the preview is a real screen you can look at before printing, with
+   a bar of controls that the page size rule hides at print time */
 #printArea{display:none}
+#printBar{display:none}
+body.printing{overflow:hidden}
+body.printing #printBar{display:flex;position:fixed;inset-block-start:0;inset-inline:0;
+  z-index:500;gap:10px;align-items:center;flex-wrap:wrap;
+  padding:10px 14px;background:var(--card);border-block-end:1px solid var(--border);
+  box-shadow:0 2px 10px rgba(0,0,0,.08)}
+body.printing #printBar .spacer{flex:1}
+#printClose{background:#fdecea;color:var(--danger);border-color:#f5b7b1;
+  font-weight:700;font-size:1rem;padding:.6rem 1.1rem}
+#printClose:hover{background:#f9d7d2}
+body.printing #printArea{display:block;position:fixed;inset:0;inset-block-start:64px;
+  z-index:499;overflow:auto;background:#fff;padding:14px}
+body.printing>header,body.printing>main{visibility:hidden}
+/* one sheet, or several small copies laid out on a grid with cut lines */
+#printArea .sheet{display:grid;gap:6mm}
+#printArea .sheet.multi .pcopy{border:1px dashed #999;padding:3mm;overflow:hidden}
+#printArea table{border-collapse:collapse;width:100%;font-size:10px;table-layout:fixed}
+#printArea th,#printArea td{border:1px solid #999;padding:3px 5px;text-align:center;
+  word-break:break-word}
+#printArea th{background:#ddd}
+#printArea td.label{text-align:start;font-weight:bold;background:#f0f0f0}
+#printArea td.y{background:#fff3bf}
+#printArea h2{font-size:13px;margin:0 0 4px}
 @media print{
-  body>header,body>main,#toast{display:none!important}
+  body>header,body>main,#toast,#printBar{display:none!important}
   body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  body.printing #printArea{position:static;inset:auto;overflow:visible;padding:0}
   #printArea{display:block}
-  #printArea table{border-collapse:collapse;width:100%;font-size:10px}
-  #printArea th,#printArea td{border:1px solid #999;padding:3px 5px;text-align:center}
-  #printArea th{background:#ddd}
-  #printArea td.label{text-align:start;font-weight:bold;background:#f0f0f0}
-  #printArea td.y{background:#fff3bf}
 }
+/* the layout sketch in Settings */
+.plan-prev{display:grid;gap:4px;background:var(--bg);border:1px solid var(--border);
+  border-radius:8px;padding:8px;width:150px;aspect-ratio:1/1.414}
+.plan-prev span{border:1px dashed var(--muted);border-radius:4px;display:grid;
+  place-items:center;font-size:.7rem;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -270,6 +295,12 @@ details.guide-ch>summary{font-size:1rem;gap:10px}
   <span id="langBtns"></span>
 </header>
 <main id="app"></main>
+<div id="printBar">
+  <label><span id="printOrientLbl"></span> <select id="printOrient"></select></label>
+  <button class="btn primary" id="printGo"></button>
+  <span class="spacer"></span>
+  <button class="btn" id="printClose"></button>
+</div>
 <div id="printArea"></div>
 <div id="toast"></div>
 
@@ -293,6 +324,13 @@ log_export_week:"ייצוא הסידור לשבוע {w}",log_backup:"גיבוי 
 log_cfg_export:"ייצוא הגדרות",log_cfg_import:"ייבוא הגדרות",guide_lead:"מדריך קצר לכל מה שהמערכת יודעת לעשות. פתח פרק כדי לקרוא אותו.",
 week_start:"תחילת שבוע",generate:"צור סידור",auto_assign:"⚡ שיבוץ אוטומטי",save:"💾 שמור",export_excel:"📤 ייצוא Excel",print:"🖨️ הדפסה",
 warn_count:"מספר הערות על הסידור",close:"סגור",
+print_orient:"כיוון דף",print_portrait:"לאורך",print_landscape:"לרוחב",
+s_print:"🖨️ הגדרות הדפסה",print_mode:"מצב הדפסה",
+print_single:"סידור מלא — דף A4 שלם, עותק אחד",
+print_multi:"סידורים מרובים — כמה עותקים קטנים על דף אחד",
+print_copies:"מספר עותקים בדף",print_scale:"אחוז גודל",
+print_preview:"תצוגה מקדימה של הפריסה",
+print_hint:"הכיוון נבחר גם בתצוגת ההדפסה עצמה, ונשמר לכל מכשיר בנפרד.",
 warn_sec_cross_group:"{e} שובץ ל-{s} אף שאינו בקבוצה {g}",
 saved:"הסידור נשמר בארכיון",valid:"הסידור תקין ✓",replace_q:"קיים סידור שמור לשבוע זה — להחליף?",yes:"כן",no:"ביטול",
 row_dates:"תאריכים",row_days:"ימים",row_work_hours:"שעות עבודה",row_entry:"כניסה",row_exit:"יציאה",
@@ -305,6 +343,8 @@ row_taxi_arrival_noon:"מונית מיוחדת הגעה צהריים",row_vacati
 away_none:"אין",warn_vac_trip:"{e} מסומן גם בחופשה וגם בנסיעה",
 act_mark_trip:"נסיעה",log_trip_on:"{e} סומן בנסיעה ב-{d}",log_trip_off:"{e} הוסר מנסיעה ב-{d}",
 monday:"שני",tuesday:"שלישי",wednesday:"רביעי",thursday:"חמישי",friday:"שישי",saturday:"שבת",sunday:"ראשון",
+dow_sunday:"ראשון",dow_monday:"שני",dow_tuesday:"שלישי",dow_wednesday:"רביעי",
+dow_thursday:"חמישי",dow_friday:"שישי",dow_saturday:"שבת",
 warn_target:"אזהרה: {f} = {v} מופיע {n} פעמים, צריך {t}",warn_target_any:"אזהרה: {f} מולא {n} פעמים, צריך {t}",
 warn_extra_m:"אזהרה: {f} בוקר הוא {n}, צריך {t}",warn_extra_n:"אזהרה: {f} צהריים הוא {n}, צריך {t}",
 err_sec_vac:"{e} שובץ ל-{s} אך הוא בחופשה",
@@ -335,7 +375,7 @@ wp_priority:"סדר עדיפות",wp_sec_required:"חובה לשיבוץ",
 wp_prio_hint:"סדר העדיפות קובע את סדר ההתחלה של רשימת השיבוץ בלבד. הסדר בפועל נקבע ברשימה למטה.",
 asg_order:"סדר שיבוץ",
 asg_order_hint:"התפקידים משובצים בסדר הזה, אחד אחרי השני. גרור כדי לשנות — מה שלמעלה מקבל עובד ראשון.",
-warn_wp_skipped:"מקום {w} לא אויש — אין עובדים זמינים לתפקיד חובה {s}",
+warn_wp_skipped:"מקום {w}: תפקיד החובה {s} נשאר ריק — אין עובד זמין",
 warn_sec_min:"מקום {w}: תפקיד {s} זקוק לפחות {n} עובדים",
 warn_wp_min_sections:"מקום {w}: רק {c} תפקידים מאוישים, נדרשים לפחות {n}",
 warn_daily_absence:"יותר מ-{n} עובדים נעדרים (חופשה + נסיעה)",
@@ -401,6 +441,13 @@ log_export_week:"Exported the schedule for {w}",log_backup:"Full backup download
 log_cfg_export:"Settings exported",log_cfg_import:"Settings imported",guide_lead:"A short guide to everything the app can do. Open a chapter to read it.",
 week_start:"Week start",generate:"New Schedule",auto_assign:"⚡ Auto Assign",save:"💾 Save",export_excel:"📤 Export Excel",print:"🖨️ Print",
 warn_count:"Notes on this schedule",close:"Close",
+print_orient:"Page direction",print_portrait:"Portrait",print_landscape:"Landscape",
+s_print:"🖨️ Print settings",print_mode:"Print mode",
+print_single:"Full schedule — one whole A4 page, a single copy",
+print_multi:"Several copies — small copies laid out on one sheet",
+print_copies:"Copies per sheet",print_scale:"Size %",
+print_preview:"Layout preview",
+print_hint:"The direction can also be picked in the print view itself, and is remembered per device.",
 warn_sec_cross_group:"{e} was placed at {s} though they are not in group {g}",
 saved:"Schedule saved to archive",valid:"Schedule is valid ✓",replace_q:"A schedule exists for this week — replace?",yes:"Yes",no:"Cancel",
 row_dates:"Dates",row_days:"Days",row_work_hours:"Work Hours",row_entry:"Entry",row_exit:"Exit",
@@ -413,6 +460,8 @@ row_taxi_arrival_noon:"Special Taxi Arrival Noon",row_vacation:"Vacations",row_t
 away_none:"None",warn_vac_trip:"{e} is marked both on vacation and on a trip",
 act_mark_trip:"Trip",log_trip_on:"{e} marked on a trip on {d}",log_trip_off:"{e} taken off the trip on {d}",
 monday:"Mon",tuesday:"Tue",wednesday:"Wed",thursday:"Thu",friday:"Fri",saturday:"Sat",sunday:"Sun",
+dow_sunday:"Sunday",dow_monday:"Monday",dow_tuesday:"Tuesday",dow_wednesday:"Wednesday",
+dow_thursday:"Thursday",dow_friday:"Friday",dow_saturday:"Saturday",
 warn_target:"Warning: {f} = {v} appears {n} times, should be {t}",warn_target_any:"Warning: {f} is filled {n} times, should be {t}",
 warn_extra_m:"Warning: morning {f} is {n}, should be {t}",warn_extra_n:"Warning: noon {f} is {n}, should be {t}",
 err_sec_vac:"{e} assigned to {s} but is on vacation",
@@ -443,7 +492,7 @@ wp_priority:"Priority",wp_sec_required:"Required",
 wp_prio_hint:"Priority only seeds the staffing list below. The list itself decides the order.",
 asg_order:"Staffing order",
 asg_order_hint:"Roles are staffed in this order, one after another. Drag to change it — whatever sits higher is served first.",
-warn_wp_skipped:"{w} was not staffed — no employee available for the required role {s}",
+warn_wp_skipped:"{w}: the required role {s} is empty — nobody available",
 warn_sec_min:"{w}: role {s} needs at least {n} employees",
 warn_wp_min_sections:"{w}: only {c} roles staffed, at least {n} required",
 warn_daily_absence:"More than {n} employees are away (vacation + trip)",
@@ -509,6 +558,13 @@ log_export_week:"Se exportó el horario de {w}",log_backup:"Respaldo completo de
 log_cfg_export:"Configuración exportada",log_cfg_import:"Configuración importada",guide_lead:"Una guía breve de todo lo que hace la app. Abre un capítulo para leerlo.",
 week_start:"Inicio de semana",generate:"Nuevo Horario",auto_assign:"⚡ Asignación Automática",save:"💾 Guardar",export_excel:"📤 Exportar Excel",print:"🖨️ Imprimir",
 warn_count:"Observaciones del horario",close:"Cerrar",
+print_orient:"Orientación",print_portrait:"Vertical",print_landscape:"Horizontal",
+s_print:"🖨️ Ajustes de impresión",print_mode:"Modo de impresión",
+print_single:"Horario completo — una hoja A4 entera, una copia",
+print_multi:"Varias copias — copias pequeñas en una sola hoja",
+print_copies:"Copias por hoja",print_scale:"Tamaño %",
+print_preview:"Vista previa de la distribución",
+print_hint:"La orientación también se elige en la vista de impresión, y se recuerda por dispositivo.",
 warn_sec_cross_group:"{e} fue asignado a {s} aunque no pertenece al grupo {g}",
 saved:"Horario guardado en archivo",valid:"El horario es válido ✓",replace_q:"Existe un horario para esta semana — ¿reemplazar?",yes:"Sí",no:"Cancelar",
 row_dates:"Fechas",row_days:"Días",row_work_hours:"Horas de Trabajo",row_entry:"Ingreso",row_exit:"Salida",
@@ -521,6 +577,8 @@ row_taxi_arrival_noon:"Taxi Llegada Mediodía",row_vacation:"Vacaciones",row_tri
 away_none:"Ninguno",warn_vac_trip:"{e} está marcado de vacaciones y de viaje a la vez",
 act_mark_trip:"Viaje",log_trip_on:"{e} marcado de viaje el {d}",log_trip_off:"{e} quitado del viaje el {d}",
 monday:"Lun",tuesday:"Mar",wednesday:"Mié",thursday:"Jue",friday:"Vie",saturday:"Sáb",sunday:"Dom",
+dow_sunday:"Domingo",dow_monday:"Lunes",dow_tuesday:"Martes",dow_wednesday:"Miércoles",
+dow_thursday:"Jueves",dow_friday:"Viernes",dow_saturday:"Sábado",
 warn_target:"Advertencia: {f} = {v} aparece {n} veces, debe ser {t}",warn_target_any:"Advertencia: {f} se llenó {n} veces, debe ser {t}",
 warn_extra_m:"Advertencia: {f} mañana es {n}, debe ser {t}",warn_extra_n:"Advertencia: {f} mediodía es {n}, debe ser {t}",
 err_sec_vac:"{e} asignado a {s} pero está de vacaciones",
@@ -551,7 +609,7 @@ wp_priority:"Prioridad",wp_sec_required:"Obligatorio",
 wp_prio_hint:"La prioridad solo genera la lista de abajo. La lista es la que decide el orden.",
 asg_order:"Orden de asignación",
 asg_order_hint:"Los puestos se cubren en este orden, uno tras otro. Arrastra para cambiarlo — lo que está arriba se cubre primero.",
-warn_wp_skipped:"{w} no fue cubierto — no hay empleado disponible para el puesto obligatorio {s}",
+warn_wp_skipped:"{w}: el puesto obligatorio {s} quedó vacío — nadie disponible",
 warn_sec_min:"{w}: el puesto {s} necesita al menos {n} empleados",
 warn_wp_min_sections:"{w}: solo {c} puestos cubiertos, se requieren al menos {n}",
 warn_daily_absence:"Más de {n} empleados ausentes (vacaciones + viaje)",
@@ -610,7 +668,7 @@ warn_axis_rule:"{f} {a} no está permitido para {e} {v}"}
 const MAX_GROUPS = 5, MAX_WORKPLACES = 5, MAX_EXTRAS = 5;
 const DEFAULT_VAC_BUDGET = 14;
 const DEFAULT_CONFIG = {
-  schema_version: 2,
+  schema_version: 3,
   groups: [
     { id:"g1", name:"IL", color:"#D6E4F0", employees:["LEON","TORO"], active:true },
     { id:"g2", name:"PE", color:"#FAD7A0", employees:["HALCON","CHCHORRO","BUHO"], active:true },
@@ -639,7 +697,8 @@ const DEFAULT_CONFIG = {
               thursday:"חמישי", friday:"שישי 🕕", saturday:"שבת" },
     /* one shared work-hours list for every working day */
     hour_options: ["7:30-16:00","8:00-16:30","8:30-17:00",
-                   "7:30-13:30","8:00-14:00","8:30-14:30","7:30-13:00","8:00-13:30"]
+                   "7:30-13:30","8:00-14:00","8:30-14:30","7:30-13:00","8:00-13:30",
+                   "חג"]
   },
   /* up to MAX_EXTRAS independent extra-task rows; et1 keeps the row key
      "udex" so already-archived weeks stay readable */
@@ -697,6 +756,8 @@ const DEFAULT_CONFIG = {
     "SPLIT": { axes:["A","B","C","D"], pcts:{A:25, B:25, C:25, D:25} }
   },
   special_values: { holiday:"חג", vehicle_special:"YELLOW" },
+  /* How the week prints: one full page, or several small copies on one sheet. */
+  print_settings: { mode:"single", copies:4, scale:50, orientation:"portrait" },
   /* Weekly quotas, any number of them. `value:""` means "this row is filled",
      any other value means "this exact value". A field listed here is governed
      entirely by its quotas: remaining days take the other values, or stay
@@ -858,6 +919,13 @@ function migrateConfig(cfg, raw){
     if (merged.length) wd.hour_options=merged;
   }
   wd.hour_options=(wd.hour_options||[]).filter(Boolean);
+  /* The holiday value shipped as a special value long before it was offered
+     in the hours list, so a device set up early has every hour except that
+     one. Add it once — a station that deletes it afterwards keeps it gone,
+     because this only runs on the way from schema 2 to 3. */
+  const hol=(cfg.special_values||{}).holiday;
+  if((raw.schema_version||0)<3 && hol && !wd.hour_options.includes(hol))
+    wd.hour_options.push(hol);
   if (cfg.options){ delete cfg.options.work_hours_weekday; delete cfg.options.work_hours_friday; }
   delete cfg.work_day_labels;
   /* Axes: an older config held composite strings in options.axis
@@ -955,11 +1023,16 @@ function migrateConfig(cfg, raw){
   }
   cfg.removed_rows=(cfg.removed_rows||[]).filter(Boolean);
   cfg.assignment_order=(cfg.assignment_order||[]).filter(Boolean);
+  const ps=cfg.print_settings=cfg.print_settings||{};
+  ps.mode=ps.mode==="multi"?"multi":"single";
+  ps.orientation=ps.orientation==="landscape"?"landscape":"portrait";
+  ps.copies=Math.max(1,Math.min(6,parseInt(ps.copies,10)||4));
+  ps.scale=Math.max(20,Math.min(100,parseInt(ps.scale,10)||50));
   cfg.max_daily_absence=Math.max(0,Math.min(20,parseInt(cfg.max_daily_absence,10)||0));
   cfg.weekly_targets=(cfg.weekly_targets||[]).filter(x=>x&&x.field)
     .map(x=>({field:x.field, value:x.value||"", count:Math.max(0,parseInt(x.count,10)||0)}));
   if(cfg.targets){ delete cfg.targets.yellow_per_week; delete cfg.targets.theater_per_week; }
-  cfg.schema_version = 2;
+  cfg.schema_version = 3;
   return cfg;
 }
 function loadConfig(){
@@ -1051,9 +1124,17 @@ function workDays(){
   const sel=DOW_ORDER.filter(d=>picked.includes(d));
   return sel.length?sel:["monday"];          // never produce an empty week
 }
+/* Day names follow the interface language. A label the station actually
+   changed in Settings still wins — otherwise an English print would come out
+   carrying the Hebrew names the config ships with. Hebrew keeps the config
+   labels either way, since those are Hebrew to begin with (and carry the
+   short-Friday mark). */
 function dayLabel(isoStr){
   const n=dowName(isoStr);
-  return (((CFG.work_days||{}).labels)||{})[n] || t(n) || n;
+  const custom=(((CFG.work_days||{}).labels)||{})[n];
+  const shipped=(((DEFAULT_CONFIG.work_days||{}).labels)||{})[n];
+  if(custom && (S.lang==="he" || custom!==shipped)) return custom;
+  return t("dow_"+n) || custom || n;
 }
 /* one shared work-hours list, offered on every working day */
 function hourOptions(){ return (((CFG.work_days||{}).hour_options)||[]).filter(Boolean); }
@@ -1981,6 +2062,41 @@ function renderRow(rk,keys){
 }
 
 /* ═══════════════ screen 2: settings ═══════════════ */
+/* print settings: one full page, or a sheet of small copies */
+function printPanel(){
+  const ps=printSettings();
+  const multi=ps.mode==="multi";
+  let h=`<label>${t("print_mode")}<br>
+    <select id="pMode">
+      <option value="single" ${multi?"":"selected"}>${esc(t("print_single"))}</option>
+      <option value="multi" ${multi?"selected":""}>${esc(t("print_multi"))}</option>
+    </select></label>
+  <div class="grid2" style="margin-top:12px">
+    <label>${t("print_copies")}<br>
+      <input type="number" min="1" max="6" id="pCopies" value="${ps.copies}" ${multi?"":"disabled"}></label>
+    <label>${t("print_scale")}<br>
+      <input type="number" min="20" max="100" step="5" id="pScale" value="${ps.scale}" ${multi?"":"disabled"}></label>
+  </div>
+  <label style="display:block;margin-top:12px">${t("print_orient")}<br>
+    <select id="pOrient">
+      <option value="portrait" ${ps.orientation==="landscape"?"":"selected"}>${esc(t("print_portrait"))}</option>
+      <option value="landscape" ${ps.orientation==="landscape"?"selected":""}>${esc(t("print_landscape"))}</option>
+    </select></label>
+  <h3 style="font-size:.9rem">${t("print_preview")}</h3>
+  ${printPreview(ps)}
+  <div class="hint">${t("print_hint")}</div>
+  <p><button class="btn primary" id="savePrint">${t("save_settings")}</button></p>`;
+  return h;
+}
+/* a sketch of the sheet, at the same column count the printer will use */
+function printPreview(ps){
+  const n=ps.mode==="multi"?ps.copies:1;
+  const cols=n<=2?1:2;
+  const land=ps.orientation==="landscape";
+  return `<div class="plan-prev" style="grid-template-columns:repeat(${cols},1fr);
+    aspect-ratio:${land?"1.414/1":"1/1.414"};width:${land?"200px":"150px"}">`+
+    Array.from({length:n},(_,i)=>`<span>${i+1}</span>`).join("")+`</div>`;
+}
 function sect(key,title,body,open){
   return `<details class="sect" data-sect="${key}" ${open?"open":""}><summary>${title}</summary>
     <div class="inner">${body}</div></details>`;
@@ -2219,6 +2335,7 @@ function viewSettings(){
   const tgt=`${targetsPanel()}${pctTables()}`;
   h+=sect("targets",t("s_targets"),tgt);
   h+=sect("notes",t("s_notes"),notesPanel());
+  h+=sect("print",t("s_print"),printPanel());
   h+=sect("log",t("s_log"),logPanel());
   return h;
 }
@@ -2569,27 +2686,54 @@ const GUIDE = [
 { id:"screens", icon:"🧭",
   title:{he:"המסכים של המערכת", en:"The screens", es:"Las pantallas"},
   blocks:[
-  {p:{he:"למערכת חמישה מסכים. עוברים ביניהם בכפתורים שבסרגל העליון, בכל רגע.",
-      en:"The app has five screens. You move between them with the buttons in the top bar, at any time.",
-      es:"La app tiene cinco pantallas. Cambias entre ellas con los botones de la barra superior, cuando quieras."}},
-  {li:[
-    {he:"📋 סידור — כאן בונים את הסידור השבועי.",
-     en:"📋 Schedule — where you build the weekly schedule.",
-     es:"📋 Horario — donde armas el horario semanal."},
-    {he:"⚙️ הגדרות — כאן מגדירים את כל החוקים והעובדים.",
-     en:"⚙️ Settings — where you define the people and all the rules.",
-     es:"⚙️ Configuración — donde defines al personal y todas las reglas."},
-    {he:"📁 ארכיון — כאן שומרים וצופים בסידורים ישנים.",
-     en:"📁 Archive — where saved schedules are kept and reopened.",
-     es:"📁 Archivo — donde se guardan y se vuelven a abrir los horarios."},
-    {he:"📊 סטטיסטיקה — כאן רואים נתונים וממוצעים לאורך זמן.",
-     en:"📊 Statistics — where you see the numbers and averages over time.",
-     es:"📊 Estadísticas — donde ves los números y promedios en el tiempo."},
-    {he:"📖 מדריך — הדף הזה.",
-     en:"📖 Guide — this page.", es:"📖 Guía — esta página."}]},
-  {tip:{he:"אפשר לעבור מסך בכל שלב. שום דבר לא נאבד — הסידור הפתוח נשמר לבד.",
-        en:"Switch screens whenever you like. Nothing is lost — the open schedule saves itself.",
-        es:"Cambia de pantalla cuando quieras. No se pierde nada — el horario abierto se guarda solo."}}]},
+  {p:{he:"שישה מסכים, וכולם נגישים בכל רגע מהסרגל העליון. מעבר בין מסכים לא מאבד שום דבר — הסידור הפתוח נשמר כטיוטה מעצמו.",
+      en:"Six screens, all reachable at any moment from the top bar. Moving between them loses nothing — the open schedule keeps itself as a draft.",
+      es:"Seis pantallas, todas accesibles en cualquier momento desde la barra superior. Cambiar de pantalla no pierde nada — el horario abierto se guarda solo como borrador."}},
+
+  {h:{he:"🏠 בית", en:"🏠 Home", es:"🏠 Inicio"}},
+  {p:{he:"מסך הפתיחה. מציג את שם המערכת ושישה כפתורים גדולים למסכים האחרים. מגיעים אליו בלחיצה על 🏠 בית או על אייקון המונית 🚕 שבכותרת. שימושי בעיקר בטאבלט, כשרוצים כפתורים גדולים במקום סרגל צפוף.",
+      en:"The opening screen: the app's name and six large buttons to everything else. You reach it with 🏠 Home or by tapping the 🚕 taxi icon in the header. Most useful on a tablet, where large buttons beat a crowded bar.",
+      es:"La pantalla inicial: el nombre de la app y seis botones grandes hacia el resto. Se llega con 🏠 Inicio o tocando el icono del taxi 🚕 en el encabezado. Útil sobre todo en tableta, donde los botones grandes ganan a una barra apretada."}},
+
+  {h:{he:"📋 סידור", en:"📋 Schedule", es:"📋 Horario"}},
+  {p:{he:"המסך שבו עובדים בפועל. כאן פותחים שבוע, ממלאים תאים, מריצים שיבוץ אוטומטי, שומרים לארכיון, מייצאים ומדפיסים. זה המסך שתבלה בו את רוב הזמן.",
+      en:"The screen where the work happens. Here you open a week, fill cells, run the automatic assignment, save to the archive, export and print. This is where most of your time goes.",
+      es:"La pantalla donde se trabaja. Aquí abres una semana, llenas celdas, ejecutas la asignación automática, guardas en el archivo, exportas e imprimes. Aquí pasarás la mayor parte del tiempo."}},
+  {p:{he:"נכנסים אליו בתחילת כל שבוע, ובכל פעם שצריך לתקן משהו בסידור הנוכחי.",
+      en:"Go there at the start of each week, and any time the current schedule needs a fix.",
+      es:"Entra al comienzo de cada semana, y cada vez que haya que corregir el horario actual."}},
+
+  {h:{he:"⚙️ הגדרות", en:"⚙️ Settings", es:"⚙️ Ajustes"}},
+  {p:{he:"כאן מוגדר הכול: מי העובדים, אילו מקומות עבודה יש, אילו שורות מופיעות בסידור, אילו ערכים אפשר לבחור, ומה החוקים שהשיבוץ האוטומטי מציית להם.",
+      en:"Everything is defined here: who your people are, what workplaces exist, which rows appear in the schedule, which values can be picked, and the rules the automatic assignment obeys.",
+      es:"Aquí se define todo: quién es tu personal, qué lugares de trabajo hay, qué filas aparecen en el horario, qué valores se pueden elegir y las reglas que sigue la asignación automática."}},
+  {p:{he:"נכנסים אליו פעם אחת בהתחלה כדי להתאים את המערכת לתחנה, ואחר כך רק כשמשהו משתנה — עובד חדש, מקום עבודה חדש, או חוק שצריך תיקון.",
+      en:"Visit it once at the start to fit the app to your station, and after that only when something changes — a new person, a new workplace, a rule that needs adjusting.",
+      es:"Entra una vez al principio para ajustar la app a tu estación, y luego solo cuando algo cambie — alguien nuevo, un lugar nuevo, una regla que corregir."}},
+
+  {h:{he:"📁 ארכיון", en:"📁 Archive", es:"📁 Archivo"}},
+  {p:{he:"כל סידור ששמרת יושב כאן, מקובץ לפי חודשים. אפשר לפתוח סידור ישן ולהסתכל בו, למחוק סידור, וגם — וזה החשוב — לגבות את הכול לקובץ ולשחזר ממנו.",
+      en:"Every schedule you saved sits here, grouped by month. You can open an old one and look at it, delete one, and — this is the important part — back everything up to a file and restore from it.",
+      es:"Cada horario que guardaste está aquí, agrupado por mes. Puedes abrir uno antiguo y verlo, borrar uno y — esto es lo importante — respaldar todo en un archivo y restaurarlo."}},
+  {p:{he:"נכנסים אליו כדי להסתכל אחורה, ולפני כל החלפת מכשיר.",
+      en:"Go there to look back, and before every device change.",
+      es:"Entra para mirar atrás, y antes de cada cambio de dispositivo."}},
+
+  {h:{he:"📊 סטטיסטיקה", en:"📊 Statistics", es:"📊 Estadísticas"}},
+  {p:{he:"מראה כמה פעמים כל עובד מילא כל תפקיד, כמה ימי חופשה נוצלו מול התקציב, ואיך התחלקו הערכים בכל שורה — לשבוע, לחודש או לשנה שתבחר.",
+      en:"Shows how many times each person filled each role, how much of the vacation budget was used, and how the values in each row were shared out — for a week, a month or a year you pick.",
+      es:"Muestra cuántas veces cada persona cubrió cada puesto, cuántas vacaciones se usaron del presupuesto y cómo se repartieron los valores de cada fila — por semana, mes o año."}},
+  {p:{he:"כדאי להציץ פעם בחודש, כדי לוודא שהחלוקה הוגנת לאורך זמן.",
+      en:"Worth a look once a month, to confirm the split stays fair over time.",
+      es:"Vale la pena mirarlo una vez al mes, para confirmar que el reparto sigue siendo justo."}},
+
+  {h:{he:"📖 מדריך", en:"📖 Guide", es:"📖 Guía"}},
+  {p:{he:"הדף הזה. הוא נשאר זמין תמיד, גם בלי אינטרנט, וכל פרק נפתח ונסגר בלחיצה על הכותרת שלו.",
+      en:"This page. It is always available, internet or not, and every chapter opens and closes by clicking its title.",
+      es:"Esta página. Siempre está disponible, con o sin internet, y cada capítulo se abre y cierra al pulsar su título."}},
+  {tip:{he:"אפשר לעבור מסך בכל שלב. שום דבר לא נאבד — הסידור הפתוח נשמר לבד כטיוטה, אבל הוא מגיע לארכיון ולסטטיסטיקה רק כשלוחצים 💾 שמור.",
+        en:"Switch screens whenever you like. Nothing is lost — the open schedule keeps itself as a draft, but it only reaches the archive and the statistics when you press 💾 Save.",
+        es:"Cambia de pantalla cuando quieras. No se pierde nada — el horario abierto se guarda como borrador, pero solo llega al archivo y a las estadísticas cuando pulsas 💾 Guardar."}}]},
 
 { id:"setup", icon:"⚙️",
   title:{he:"לפני הכול — הגדרות ראשוניות", en:"First of all — initial setup",
@@ -2662,9 +2806,31 @@ const GUIDE = [
      es:"Marca Obligatorio en un puesto que no puede quedar vacío."},
     {he:"לחץ 💾 שמור הגדרות.",
      en:"Press 💾 Save settings.", es:"Pulsa 💾 Guardar configuración."}]},
-  {warn:{he:"אם תפקיד מסומן חובה ואי אפשר לאייש אותו — כל המקום לא יאויש באותו יום, וגם התפקידים שאינם חובה יישארו ריקים.",
-         en:"If a required role cannot be filled, the whole workplace is skipped that day — its non-required roles stay empty too.",
-         es:"Si un puesto obligatorio no se puede cubrir, se omite todo el lugar ese día — sus puestos no obligatorios también quedan vacíos."}},
+  {p:{he:"דוגמה: מקום עבודה בשם מחסן, ובתוכו שני תפקידים — אחד שלוקח עובדים מקבוצה א' ואחד מקבוצה ב'. מקום שני בשם משרד, עם תפקיד אחד. נותנים למחסן סדר עדיפות 1 ולמשרד 2, וכך המחסן מקבל עובדים ראשון: ביום שבו חסרים אנשים, המשרד הוא זה שיישאר ריק.",
+      en:"An example: a workplace called Warehouse with two roles — one drawing from group A, one from group B. A second called Office with a single role. Give Warehouse priority 1 and Office 2, and the Warehouse is served first: on a short-handed day the Office is the one left empty.",
+      es:"Un ejemplo: un lugar llamado Almacén con dos puestos — uno del grupo A y otro del grupo B. Otro llamado Oficina con un solo puesto. Dale al Almacén prioridad 1 y a la Oficina 2: el Almacén se cubre primero, y en un día con poca gente la Oficina es la que queda vacía."}},
+  {p:{he:"מה כל שדה עושה בפועל:",
+      en:"What each field actually does:",
+      es:"Qué hace cada campo en realidad:"}},
+  {li:[
+    {he:"מספר עובדים לשיבוץ (התקרה) — 1 שם עובד אחד, 2 שם שניים בתא אחד מופרדים ב-+, ו-0 מכבה את השורה כך שלא תופיע בסידור כלל.",
+     en:"Employees to assign (the ceiling) — 1 places one person, 2 places two in one cell joined by a +, and 0 switches the row off so it does not appear at all.",
+     es:"Empleados a asignar (el techo) — 1 coloca una persona, 2 coloca dos en una celda unidas por +, y 0 apaga la fila del todo."},
+    {he:"מינימום לשיבוץ יומי (הרצפה) — אם התפקיד לא הגיע למספר הזה ביום מסוים, תופיע הערה בסימן ⚠️. זו הערה בלבד; היא לא משנה את השיבוץ ולא חוסמת שמירה.",
+     en:"Daily minimum (the floor) — if the role did not reach that number on some day, a note appears under the ⚠️ badge. It is only a note; it changes no assignment and blocks no save.",
+     es:"Mínimo diario (el piso) — si el puesto no llegó a ese número algún día, aparece una nota en la insignia ⚠️. Es solo una nota; no cambia la asignación ni impide guardar."},
+    {he:"חובה לשיבוץ — מסמן תפקיד שאסור להשאיר ריק. אם אין עובד זמין מהקבוצה שלו הוא יישאר ריק בכל זאת, ותופיע הערה בסימן ⚠️ שמצביעה עליו. התפקידים האחרים באותו מקום מאוישים כרגיל.",
+     en:"Required — marks a role that should not be left empty. If nobody from its group is free it stays empty all the same, and a note under the ⚠️ badge points at it. The other roles in that workplace are staffed as usual.",
+     es:"Obligatorio — marca un puesto que no debería quedar vacío. Si nadie de su grupo está libre queda vacío igualmente, y una nota en la insignia ⚠️ lo señala. Los demás puestos del lugar se cubren normalmente."},
+    {he:"מינימום תפקידים מאוישים — כמה מתפקידי המקום חייבים להתאייש. שימושי כשמספיק שאחד מתוך שניים מאויש.",
+     en:"Roles that must be staffed — how many of the workplace's roles have to end up staffed. Useful when one of two is enough.",
+     es:"Puestos que deben cubrirse — cuántos puestos del lugar deben quedar cubiertos. Útil cuando basta con uno de dos."},
+    {he:"סדר עדיפות — 1 הוא הראשון, 2 השני וכן הלאה. הוא קובע את סדר ההתחלה של רשימת השיבוץ; הרשימה עצמה היא שמכריעה בסוף.",
+     en:"Priority — 1 is first, 2 second and so on. It seeds the staffing list; the list itself is what finally decides.",
+     es:"Prioridad — 1 es el primero, 2 el segundo y así. Genera la lista de asignación; la lista misma es la que decide al final."}]},
+  {warn:{he:"אף אחד מהשדות האלה אינו משנה את סדר השיבוץ — הרשימה בראש הקטע היא שקובעת אותו. הם מייצרים הערות בלבד, ותפקיד שלא אויש נשאר ריק בלי לגרור אחריו את שאר המקום.",
+         en:"None of these fields changes the staffing order — the list at the top of the section decides that. They raise notes only, and a role left unfilled stays empty without dragging the rest of its workplace down with it.",
+         es:"Ninguno de estos campos cambia el orden de asignación — eso lo decide la lista del inicio de la sección. Solo generan notas, y un puesto sin cubrir queda vacío sin arrastrar consigo al resto del lugar."}},
 
   {h:{he:"3א. סדר שיבוץ", en:"3a. The staffing order", es:"3a. El orden de asignación"}},
   {p:{he:"בראש הקטע 🏢 מקומות עבודה יש רשימה ממוספרת של כל התפקידים. הרשימה הזאת היא כל החוק: השיבוץ האוטומטי עובר עליה מלמעלה למטה, וכל תפקיד מקבל עובד פנוי מהקבוצה שלו.",
@@ -2706,6 +2872,36 @@ const GUIDE = [
       en:"None of the three changes the staffing order — the list above decides that. They only raise notes when something was not reached.",
       es:"Ninguno de los tres cambia el orden — eso lo decide la lista de arriba. Solo generan observaciones cuando algo no se cumple."}},
 
+  {h:{he:"📅 ימי עבודה", en:"📅 Working days", es:"📅 Días laborables"}},
+  {p:{he:"הקטע הזה קובע אילו ימים בכלל מופיעים בסידור, ואילו שעות עבודה אפשר לבחור בשורת השעות.",
+      en:"This section decides which days appear in the schedule at all, and which working hours can be picked in the hours row.",
+      es:"Esta sección decide qué días aparecen en el horario y qué horas se pueden elegir en la fila de horas."}},
+  {steps:[
+    {he:"סמן את הימים שבהם התחנה עובדת. לא סימנת יום — הוא לא יופיע כעמודה בסידור.",
+     en:"Tick the days the station works. A day you leave unticked never appears as a column.",
+     es:"Marca los días en que la estación trabaja. Un día sin marcar no aparece como columna."},
+    {he:"אפשר לשנות את שם כל יום — שימושי כדי לסמן יום קצר, למשל בהוספת שעון ליד השם.",
+     en:"You can rename any day — handy for marking a short day, say by adding a clock beside the name.",
+     es:"Puedes renombrar cualquier día — útil para marcar un día corto, por ejemplo añadiendo un reloj junto al nombre."},
+    {he:"בתיבת שעות העבודה כותבים ערך אחד בכל שורה. אלה בדיוק האפשרויות שיוצעו בשורת שעות עבודה בסידור.",
+     en:"In the working-hours box write one value per line. Those are exactly the options offered in the hours row.",
+     es:"En la caja de horas escribe un valor por línea. Esas son justo las opciones que se ofrecen en la fila de horas."},
+    {he:"לחץ 💾 שמור הגדרות.", en:"Press 💾 Save settings.", es:"Pulsa 💾 Guardar configuración."}]},
+  {tip:{he:"הרשימה מגיעה עם ערך חג. הוא נבחר ידנית ביום חג, והשיבוץ האוטומטי לא ישים אותו מעצמו אלא אם הגדרת לו יעד שבועי.",
+        en:"The list ships with a holiday value. You pick it by hand on a holiday; the automatic assignment never places it on its own unless you gave it a weekly quota.",
+        es:"La lista trae un valor de festivo. Se elige a mano en un día festivo; la asignación automática nunca lo coloca sola salvo que le des una meta semanal."}},
+
+  {h:{he:"🔄 משימות מחזוריות", en:"🔄 Recurring tasks", es:"🔄 Tareas recurrentes"}},
+  {p:{he:"משימה מחזורית היא שורה נוספת בסידור למשימה שחוזרת בכל שבוע, עם ערכי בוקר וערכי צהריים משלה ומספר פעמים שהיא צריכה להופיע.",
+      en:"A recurring task is an extra schedule row for work that comes back every week, with its own morning values, noon values, and how many times it should appear.",
+      es:"Una tarea recurrente es una fila extra para trabajo que vuelve cada semana, con sus valores de mañana, de tarde y cuántas veces debe aparecer."}},
+  {p:{he:"דוגמה: משימת ניקוי שצריכה להתבצע שלוש פעמים בשבוע. פותחים את הקטע, נותנים למשימה שם בשלוש שפות, כותבים את הערכים האפשריים, מסמנים אילו מהם נחשבים בוקר ואילו צהריים, ורושמים 3 ביעד הבוקר. מעכשיו השיבוץ האוטומטי ידאג שהשורה תתמלא שלוש פעמים בשבוע.",
+      en:"An example: a cleaning task that must happen three times a week. Open the section, name the task in three languages, write its possible values, mark which count as morning and which as noon, and put 3 in the morning target. From then on the automatic assignment sees to it that the row is filled three times a week.",
+      es:"Un ejemplo: una limpieza que debe hacerse tres veces por semana. Abre la sección, nombra la tarea en tres idiomas, escribe sus valores posibles, marca cuáles son de mañana y cuáles de tarde, y pon 3 en la meta de mañana. Desde entonces la asignación llena esa fila tres veces por semana."}},
+  {tip:{he:"אפשר להגדיר כמה משימות מחזוריות במקביל — כל אחת מקבלת שורה משלה בסידור.",
+        en:"You can define several recurring tasks side by side — each gets its own row in the schedule.",
+        es:"Puedes definir varias tareas recurrentes a la vez — cada una recibe su propia fila."}},
+
   {h:{he:"4. שורות הסידור", en:"4. The schedule rows", es:"4. Las filas del horario"}},
   {p:{he:"שורה היא סוג מידע שמופיע בסידור — למשל שעות עבודה, סוג רכב, או כל דבר אחר שחשוב לך.",
       en:"A row is one kind of information in the schedule — work hours, a vehicle type, or anything else you track.",
@@ -2741,6 +2937,28 @@ const GUIDE = [
     {he:"לחץ 💾 שמור הגדרות. הערכים האלה יופיעו כשתלחץ על תא בסידור.",
      en:"Press 💾 Save settings. These values appear when you click a cell in the schedule.",
      es:"Pulsa 💾 Guardar configuración. Esos valores aparecen al pulsar una celda del horario."}]},
+
+  {p:{he:"דוגמה: שורה בשם סוג רכב, שהערכים שלה הם גדול, קטן וואן. ברגע ששמרת, לחיצה על תא באותה שורה תציע בדיוק את שלושת הערכים האלה ותו לא.",
+      en:"An example: a row called Vehicle type whose values are Large, Small and Van. Once saved, clicking a cell in that row offers exactly those three and nothing else.",
+      es:"Un ejemplo: una fila llamada Tipo de vehículo con los valores Grande, Pequeño y Van. Una vez guardada, pulsar una celda de esa fila ofrece exactamente esos tres y nada más."}},
+
+  {h:{he:"↕️ סדר השורות", en:"↕️ Row order", es:"↕️ Orden de las filas"}},
+  {p:{he:"הקטע הזה קובע באיזה סדר השורות מופיעות בטבלת הסידור — וזה בדיוק הסדר שיופיע גם בהדפסה ובייצוא.",
+      en:"This section decides the order the rows appear in the schedule table — and that same order carries into the print and the export.",
+      es:"Esta sección decide el orden en que aparecen las filas — y ese mismo orden pasa a la impresión y a la exportación."}},
+  {steps:[
+    {he:"פתח את הקטע ↕️ סדר השורות. כל שורה מופיעה כפריט ברשימה.",
+     en:"Open the ↕️ Row order section. Each row appears as an item in a list.",
+     es:"Abre la sección ↕️ Orden de las filas. Cada fila aparece como un elemento."},
+    {he:"גרור פריט בידית ⠿ למקום שתרצה, או הזז אותו צעד אחד בחצים ↑↓.",
+     en:"Drag an item by its ⠿ handle, or move it one step with the ↑↓ arrows.",
+     es:"Arrastra un elemento por su asa ⠿, o muévelo un paso con las flechas ↑↓."},
+    {he:"השינוי נשמר מיד ונראה בסידור בלי צורך לשמור.",
+     en:"The change saves at once and shows in the schedule with no Save needed.",
+     es:"El cambio se guarda enseguida y se ve en el horario sin pulsar Guardar."}]},
+  {tip:{he:"סדר השורות אינו קשור לסדר השיבוץ. הראשון הוא מה שהעין רואה; השני קובע מי מקבל עובד ראשון.",
+        en:"Row order has nothing to do with staffing order. The first is what the eye sees; the second decides who gets a person first.",
+        es:"El orden de las filas no tiene que ver con el orden de asignación. El primero es lo que se ve; el segundo decide quién recibe gente primero."}},
 
   {h:{he:"6. יעדים שבועיים", en:"6. Weekly quotas", es:"6. Metas semanales"}},
   {p:{he:"יעד אומר למערכת: השורה הזאת צריכה לקבל את הערך הזה כך וכך פעמים בשבוע.",
@@ -2801,9 +3019,51 @@ const GUIDE = [
     {he:"שעה שלא סימנת לה שום ציר — מותרים לה כל הצירים.",
      en:"A time with no axis ticked may use any axis at all.",
      es:"Una hora sin ningún eje marcado puede usar cualquiera."}]},
+  {p:{he:"דוגמה מלאה: נניח שתי שעות כניסה ושני צירים. לשעה המוקדמת מסמנים רק את ציר א', ולמאוחרת את א' ואת ב' בחלוקה של חמישים-חמישים. בתוך ציר א' נקבע 70% לכיוון העולה ו-30% ליורד. התוצאה: ביום שנבחרה בו השעה המוקדמת תמיד יופיע ציר א', ובדרך כלל בכיוון העולה; ביום עם השעה המאוחרת הצירים יתחלפו לסירוגין לאורך זמן.",
+      en:"A full example: say two entry times and two axes. The early time is ticked for axis A only; the late one for A and B at fifty-fifty. Inside axis A you set 70% to the up direction and 30% to the down. The result: a day using the early time always shows axis A, usually up; a day on the late time alternates between the axes over time.",
+      es:"Un ejemplo completo: dos horas de entrada y dos ejes. La hora temprana se marca solo para el eje A; la tardía para A y B al cincuenta-cincuenta. Dentro del eje A fijas 70% al sentido ascendente y 30% al descendente. Resultado: un día con la hora temprana siempre muestra el eje A, casi siempre ascendente; un día con la hora tardía alterna entre ejes con el tiempo."}},
   {p:{he:"בשיבוץ האוטומטי המערכת בוחרת קודם את שעת הכניסה, ואז ציר מתוך אלה שמותרים לה. אם תזין ידנית צמד שאינו מותר — תופיע הערה בסימן האזהרה, אבל השמירה לא תיחסם.",
       en:"When it assigns, the app picks the entry time first and then an axis from the ones that time allows. Type a pair by hand that is not allowed and a note appears under the badge — saving is never blocked.",
-      es:"Al asignar, la app elige primero la hora de entrada y luego un eje entre los permitidos. Si escribes a mano un par no permitido aparece una observación en la insignia — guardar nunca se bloquea."}}]},
+      es:"Al asignar, la app elige primero la hora de entrada y luego un eje entre los permitidos. Si escribes a mano un par no permitido aparece una observación en la insignia — guardar nunca se bloquea."}},
+
+  {h:{he:"🖨️ הגדרות הדפסה", en:"🖨️ Print settings", es:"🖨️ Ajustes de impresión"}},
+  {p:{he:"שני מצבי הדפסה, ובוחרים ביניהם כאן:",
+      en:"Two print modes, chosen here:",
+      es:"Dos modos de impresión, se eligen aquí:"}},
+  {li:[
+    {he:"סידור מלא — עותק אחד שתופס דף A4 שלם. זו ברירת המחדל, והיא הנכונה כשתולים את הסידור על הקיר.",
+     en:"Full schedule — a single copy filling a whole A4 page. That is the default, and the right one when the schedule goes on a wall.",
+     es:"Horario completo — una copia que llena una hoja A4. Es el valor por defecto, y lo correcto si el horario va a la pared."},
+    {he:"סידורים מרובים — כמה עותקים קטנים על דף אחד, כדי לגזור ולחלק לעובדים.",
+     en:"Several copies — small copies on one sheet, to cut apart and hand out.",
+     es:"Varias copias — copias pequeñas en una hoja, para recortar y repartir."}]},
+  {p:{he:"במצב המרובה יש שני שדות: מספר עותקים בדף (1 עד 6) ואחוז גודל (20% עד 100%). התצוגה המקדימה שמתחתיהם מראה מיד איך הדף ייראה. כל עותק מוקף בקו מקווקו — זה קו החיתוך.",
+      en:"The multi mode has two fields: copies per sheet (1 to 6) and size percentage (20% to 100%). The preview below them shows the sheet at once. Each copy is framed by a dashed line — that is the cut line.",
+      es:"El modo múltiple tiene dos campos: copias por hoja (1 a 6) y porcentaje de tamaño (20% a 100%). La vista previa de abajo muestra la hoja al instante. Cada copia va enmarcada con línea discontinua — esa es la línea de corte."}},
+  {p:{he:"כיוון הדף — לאורך או לרוחב — נבחר כאן וגם בתצוגת ההדפסה עצמה. הבחירה בתצוגה נשמרת לכל מכשיר בנפרד, כי היא בדרך כלל עניין של המדפסת ולא של התחנה.",
+      en:"Page direction — portrait or landscape — is chosen here and also in the print view itself. The choice made in the view is remembered per device, since it usually follows the printer rather than the station.",
+      es:"La orientación — vertical u horizontal — se elige aquí y también en la vista de impresión. La elección hecha en la vista se recuerda por dispositivo, porque suele depender de la impresora."}},
+  {tip:{he:"ארבעה עותקים ב-50% נכנסים היטב בדף לרוחב. אם הטבלה יוצאת צפופה, הורד את האחוז לפני שתקטין את מספר העותקים.",
+        en:"Four copies at 50% sit comfortably on a landscape sheet. If the table comes out cramped, drop the percentage before dropping the number of copies.",
+        es:"Cuatro copias al 50% caben bien en una hoja horizontal. Si la tabla sale apretada, baja el porcentaje antes de reducir las copias."}},
+
+  {h:{he:"📋 לוג שינויים", en:"📋 Change log", es:"📋 Registro de cambios"}},
+  {p:{he:"המערכת רושמת לעצמה כל פעולה משמעותית: שמירת סידור, שיבוץ אוטומטי, שינוי הגדרות, ייצוא, מחיקה משמורת ושחזור מגיבוי. לכל רשומה יש תאריך, שעה ותיאור קצר.",
+      en:"The app keeps a log of every meaningful action: saving a schedule, running the automatic assignment, changing settings, exporting, deleting from the archive and restoring a backup. Each entry carries a date, a time and a short description.",
+      es:"La app registra cada acción significativa: guardar un horario, ejecutar la asignación, cambiar ajustes, exportar, borrar del archivo y restaurar un respaldo. Cada entrada lleva fecha, hora y una descripción breve."}},
+  {li:[
+    {he:"הלוג נשמר על המכשיר בלבד, ומחזיק את מאתיים הרשומות האחרונות.",
+     en:"The log lives on the device only, and keeps the last two hundred entries.",
+     es:"El registro vive solo en el dispositivo y guarda las últimas doscientas entradas."},
+    {he:"אפשר לייצא אותו לקובץ CSV ולפתוח בגיליון.",
+     en:"You can export it to a CSV file and open it in a spreadsheet.",
+     es:"Puedes exportarlo a CSV y abrirlo en una hoja de cálculo."},
+    {he:"אפשר לנקות אותו — פעולה שאינה נוגעת בסידורים עצמם.",
+     en:"You can clear it — which touches none of the schedules themselves.",
+     es:"Puedes limpiarlo — eso no toca los horarios."}]},
+  {p:{he:"מתי כדאי לפתוח אותו: כשמשהו בסידור נראה לא נכון ואינך זוכר מה שינית, או כשעובדים כמה אנשים על אותו מכשיר וצריך לדעת מי עשה מה ומתי.",
+      en:"When to look at it: when something in the schedule looks wrong and you cannot remember what you changed, or when several people share one device and you need to know who did what, and when.",
+      es:"Cuándo mirarlo: cuando algo en el horario se ve mal y no recuerdas qué cambiaste, o cuando varias personas comparten el dispositivo y hay que saber quién hizo qué y cuándo."}}]},
 
 { id:"build", icon:"📋",
   title:{he:"בניית סידור שבועי", en:"Building a weekly schedule", es:"Armar el horario semanal"},
@@ -2917,35 +3177,64 @@ const GUIDE = [
 
   {h:{he:"6. ייצוא והדפסה", en:"6. Export and print", es:"6. Exportar e imprimir"}},
   {li:[
-    {he:"📤 ייצוא Excel — מוריד קובץ שאפשר לפתוח באקסל או בגיליון אחר.",
-     en:"📤 Export Excel — downloads a file you can open in Excel or another spreadsheet.",
-     es:"📤 Exportar Excel — descarga un archivo para abrir en Excel u otra hoja de cálculo."},
-    {he:"🖨️ הדפסה — פותח תצוגת הדפסה מוכנה. אפשר גם לשמור ממנה כ-PDF.",
-     en:"🖨️ Print — opens a print-ready view. You can save it as a PDF from there.",
-     es:"🖨️ Imprimir — abre una vista lista para imprimir. Desde ahí puedes guardar en PDF."},
+    {he:"📤 ייצוא Excel — מוריד קובץ שאפשר לפתוח באקסל או בגיליון אחר. שמות הימים בקובץ יוצאים בשפה שבחרת בסרגל העליון.",
+     en:"📤 Export Excel — downloads a file you can open in Excel or another spreadsheet. The day names in it come out in the language you picked in the top bar.",
+     es:"📤 Exportar Excel — descarga un archivo para abrir en Excel u otra hoja. Los nombres de los días salen en el idioma que elegiste arriba."},
+    {he:"🖨️ הדפסה — פותח תצוגת הדפסה: בורר כיוון דף, כפתור הדפסה, וכפתור ✕ סגור באדום שמחזיר אותך לסידור. הכפתורים האלה אינם מודפסים. אפשר גם לשמור מכאן כ-PDF.",
+     en:"🖨️ Print — opens the print view: a page-direction picker, a print button, and a red ✕ Close that takes you back to the schedule. None of those buttons are printed. You can save as a PDF from here too.",
+     es:"🖨️ Imprimir — abre la vista de impresión: un selector de orientación, un botón de imprimir y un ✕ Cerrar rojo que te devuelve al horario. Esos botones no se imprimen. También puedes guardar en PDF desde aquí."},
+    {he:"הדף יוצא A4 עם שוליים של 5 מ״מ, והטבלה נמתחת על כל רוחב הדף. כמה עותקים יש בדף ובאיזה גודל — נקבע בהגדרות → 🖨️ הגדרות הדפסה.",
+     en:"The sheet comes out A4 with 5mm margins and the table stretches across its full width. How many copies fit on a sheet, and at what size, is set in Settings → 🖨️ Print settings.",
+     es:"La hoja sale A4 con márgenes de 5 mm y la tabla ocupa todo el ancho. Cuántas copias caben y a qué tamaño se define en Ajustes → 🖨️ Ajustes de impresión."},
     {he:"נקה — מרוקן את השבוע הנוכחי ומשאיר טבלה ריקה.",
      en:"Clear — empties the current week and leaves a blank table.",
      es:"Limpiar — vacía la semana actual y deja una tabla en blanco."}]}]},
 
 { id:"vacation", icon:"🏖",
-  title:{he:"ניהול חופשות", en:"Managing time off", es:"Gestionar las ausencias"},
+  title:{he:"חופשות ונסיעות", en:"Time off and trips", es:"Ausencias y viajes"},
   blocks:[
+  {p:{he:"בתחתית הסידור יש שתי שורות שבהן מסמנים מי לא זמין: נסיעה וחופשות. שתיהן מוציאות עובד מהשיבוץ של אותו יום — ההבדל הוא במשמעות, ולכן גם בדוחות.",
+      en:"Two rows at the bottom of the schedule say who is not available: Trip and Vacation. Both take a person out of that day's assignment — the difference is what they mean, and so how they are reported.",
+      es:"Dos filas al final del horario dicen quién no está disponible: Viaje y Vacaciones. Ambas sacan a la persona de la asignación de ese día — la diferencia es el significado, y por tanto el informe."}},
+  {li:[
+    {he:"חופשה — העובד אינו זמין כלל. יום החופשה יורד מתקציב החופשה השנתי שלו, ונספר בדף הסטטיסטיקה.",
+     en:"Vacation — the person is not available at all. The day comes off their annual vacation budget and is counted in the statistics.",
+     es:"Vacaciones — la persona no está disponible en absoluto. El día se descuenta de su presupuesto anual y se cuenta en las estadísticas."},
+    {he:"נסיעה — העובד תפוס במשימה אחרת. הוא אינו זמין לשיבוץ, אבל היום אינו יורד מתקציב החופשה.",
+     en:"Trip — the person is busy with something else. They are unavailable, but the day does not come off the vacation budget.",
+     es:"Viaje — la persona está ocupada en otra cosa. No está disponible, pero el día no se descuenta de las vacaciones."}]},
+
+  {h:{he:"איך מסמנים", en:"How to mark someone", es:"Cómo marcar a alguien"}},
   {steps:[
-    {he:"בדף הסידור, גלול לשורה חופשות בתחתית הטבלה.",
-     en:"On the Schedule page, scroll to the Vacations row at the bottom of the table.",
-     es:"En la página Horario, baja a la fila Vacaciones al final de la tabla."},
-    {he:"בכל יום תראה רשימה אחת לכל קבוצה. בחר את שם העובד שנמצא בחופשה.",
-     en:"Each day shows one list per group. Choose the name of whoever is away.",
-     es:"Cada día muestra una lista por grupo. Elige a quien esté ausente."},
-    {he:"עשה זאת לפני שאתה לוחץ על שיבוץ אוטומטי.",
-     en:"Do this before you press Auto Assign.",
-     es:"Hazlo antes de pulsar Asignación Automática."}]},
-  {p:{he:"עובד שסומן בחופשה לא ישובץ לאף משימה באותו יום, והשיבוץ האוטומטי ידלג עליו לגמרי.",
-      en:"Someone marked as away is not placed in any job that day, and the automatic assignment skips them entirely.",
-      es:"Quien está marcado como ausente no se asigna a ningún trabajo ese día, y la asignación automática lo omite."}},
-  {warn:{he:"חופשות מוזנות ידנית בלבד. המערכת לא יודעת עליהן עד שתזין אותן — אם תשבץ קודם ותסמן אחר כך, השיבוץ לא יתעדכן לבד.",
-         en:"Time off is entered by hand only. The app knows nothing about it until you enter it — if you assign first and mark afterwards, the assignment does not update itself.",
-         es:"Las ausencias se ingresan solo a mano. La app no las conoce hasta que las ingreses — si asignas primero y marcas después, la asignación no se actualiza sola."}}]},
+    {he:"בדף הסידור, גלול לשתי השורות האחרונות בטבלה.",
+     en:"On the Schedule screen, scroll to the last two rows of the table.",
+     es:"En la pantalla de Horario, baja a las dos últimas filas de la tabla."},
+    {he:"לחץ על התא של היום הנכון. תיפתח רשימת כל העובדים עם תיבות סימון, צבועה לפי קבוצות.",
+     en:"Click the cell for the right day. A list of everyone opens with checkboxes, coloured by group.",
+     es:"Pulsa la celda del día correcto. Se abre la lista de todos con casillas, coloreada por grupo."},
+    {he:"סמן את מי שנעדר. כל אחד מופיע כתגית בתא, ולחיצה על ה-✕ שעליה מסירה אותו.",
+     en:"Tick whoever is away. Each appears as a tag in the cell, and the ✕ on it removes them.",
+     es:"Marca a quien falte. Cada uno aparece como etiqueta, y la ✕ lo quita."},
+    {he:"עשה זאת לפני שאתה לוחץ ⚡ שיבוץ אוטומטי.",
+     en:"Do this before you press ⚡ Auto Assign.",
+     es:"Haz esto antes de pulsar ⚡ Asignación Automática."}]},
+
+  {h:{he:"דוגמה", en:"An example", es:"Un ejemplo"}},
+  {p:{he:"נניח שעובד יוצא לחופשה בשני ובשלישי. מסמנים אותו בשורת חופשות באותם שני ימים בלבד. מרגע זה השיבוץ האוטומטי לא ישבץ אותו לשום תפקיד בימים האלה — הוא פשוט אינו חלק מהבריכה — ובשאר ימי השבוע הוא משובץ כרגיל. בסוף השנה יופיעו אצלו שני ימי חופשה מנוצלים בדף הסטטיסטיקה.",
+      en:"Say someone takes Monday and Tuesday off. You tick them in the Vacation row on those two days only. From then on the automatic assignment places them in no role on those days — they are simply not in the pool — and they are scheduled normally the rest of the week. At year's end the statistics show two vacation days used.",
+      es:"Supongamos que alguien se ausenta lunes y martes. Lo marcas en la fila Vacaciones solo esos dos días. Desde entonces la asignación automática no lo coloca en ningún puesto esos días — sencillamente no está en el grupo — y el resto de la semana se le asigna normal. A fin de año las estadísticas muestran dos días usados."}},
+
+  {h:{he:"כמה עובדים אפשר לסמן ביום אחד", en:"How many people on one day",
+      es:"Cuántas personas en un mismo día"}},
+  {p:{he:"אין מגבלה קשיחה — אפשר לסמן כמה שצריך. אבל בהגדרות יש שדה מגבלת היעדרות יומית (ברירת מחדל 2), וכשחורגים ממנו מופיעה הערה בסימן ⚠️ שלמעלה. זו אזהרה בלבד: היא לא מונעת שמירה ולא מוחקת כלום.",
+      en:"There is no hard limit — mark as many as you need. But Settings has a daily absence limit (2 by default), and going past it puts a note under the ⚠️ badge. It is only a note: it never blocks saving and erases nothing.",
+      es:"No hay límite estricto — marca a cuantos necesites. Pero en Ajustes hay un límite de ausencias diarias (2 por defecto), y superarlo pone una observación en la insignia ⚠️. Es solo una nota: nunca impide guardar ni borra nada."}},
+  {warn:{he:"חופשות ונסיעות מוזנות ידנית בלבד. המערכת לא יודעת עליהן עד שתזין אותן — ואם שיבצת קודם וסימנת אחר כך, השיבוץ לא יתעדכן לבד. סמן קודם, שבץ אחר כך.",
+         en:"Time off and trips are entered by hand only. The app knows nothing about them until you enter them — and if you assigned first and marked afterwards, the schedule does not update itself. Mark first, assign second.",
+         es:"Las ausencias y viajes se ingresan solo a mano. La app no sabe nada hasta que los ingreses — y si asignaste primero y marcaste después, el horario no se actualiza solo. Marca primero, asigna después."}},
+  {tip:{he:"עובד שמסומן בשתי השורות באותו יום יקבל הערה — זו כנראה טעות הקלדה, כי די באחת מהן.",
+        en:"Someone ticked in both rows on the same day raises a note — that is usually a slip, since either one is enough.",
+        es:"Alguien marcado en ambas filas el mismo día genera una nota — suele ser un descuido, porque basta con una."}}]},
 
 { id:"archive", icon:"📁",
   title:{he:"הארכיון והגיבוי", en:"Archive and backups", es:"Archivo y respaldos"},
@@ -3278,8 +3567,20 @@ function downloadCsv(days,weekStart){
   document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(a.href),3000);
 }
-function doPrint(){
-  if(!S.days) return;
+/* ── print preview ────────────────────────────────────────────────────────
+   A screen, not a straight window.print(): the page size and orientation are
+   settled before the browser dialog opens, because a browser cannot be talked
+   out of its own default once it is up. */
+function printSettings(){
+  const p=CFG.print_settings||{};
+  return { mode:p.mode==="multi"?"multi":"single",
+           orientation:localStorage.getItem("agenda_print_orient")
+             ||(p.orientation==="landscape"?"landscape":"portrait"),
+           copies:Math.max(1,Math.min(6,parseInt(p.copies,10)||4)),
+           scale:Math.max(20,Math.min(100,parseInt(p.scale,10)||50)) };
+}
+/* one copy of the week as a table */
+function printTable(){
   const keys=Object.keys(S.days).sort();
   const VS=CFG.special_values.vehicle_special;
   let h=`<h2>📅 ${esc(t("app_title"))} — ${keys[0]} → ${keys[keys.length-1]}</h2><table><tr><th></th>`;
@@ -3295,8 +3596,53 @@ function doPrint(){
         return `<td class="${y?"y":""}">${esc(v)}</td>`; }).join("")}</tr>`;
     }
   }
-  document.getElementById("printArea").innerHTML=h+"</table>";
-  window.print();
+  return h+"</table>";
+}
+/* @page cannot be set from a style property, so the rule is rewritten whole */
+function applyPageRule(orient){
+  let st=document.getElementById("pageStyle");
+  if(!st){ st=document.createElement("style"); st.id="pageStyle"; document.head.appendChild(st); }
+  st.textContent=`@page{size:A4 ${orient};margin:5mm}`;
+}
+function paintPrintArea(){
+  const ps=printSettings(), one=printTable();
+  const area=document.getElementById("printArea");
+  if(ps.mode==="multi"){
+    /* up to two columns: a third would leave a week's worth of day columns
+       too narrow to read at any scale */
+    const cols=ps.copies<=2?1:2;
+    const rows=Math.ceil(ps.copies/cols);
+    area.innerHTML=`<div class="sheet multi" style="grid-template-columns:repeat(${cols},1fr);
+      grid-template-rows:repeat(${rows},1fr)">`+
+      Array.from({length:ps.copies},()=>
+        `<div class="pcopy" style="zoom:${ps.scale}%">${one}</div>`).join("")+`</div>`;
+  } else {
+    area.innerHTML=`<div class="sheet">${one}</div>`;
+  }
+}
+function closePrint(){
+  document.body.classList.remove("printing");
+  document.getElementById("printArea").innerHTML="";
+}
+function doPrint(){
+  if(!S.days) return;
+  const ps=printSettings();
+  applyPageRule(ps.orientation);
+  paintPrintArea();
+  const sel=document.getElementById("printOrient");
+  sel.innerHTML=[["portrait","print_portrait"],["landscape","print_landscape"]]
+    .map(([v,k])=>`<option value="${v}" ${v===ps.orientation?"selected":""}>${esc(t(k))}</option>`).join("");
+  document.getElementById("printOrientLbl").textContent=t("print_orient");
+  sel.onchange=()=>{
+    /* the choice is per device, not per station — it follows the printer */
+    localStorage.setItem("agenda_print_orient", sel.value);
+    applyPageRule(sel.value); paintPrintArea();
+  };
+  document.getElementById("printGo").textContent="🖨️ "+t("print");
+  document.getElementById("printGo").onclick=()=>window.print();
+  document.getElementById("printClose").textContent="✕ "+t("close");
+  document.getElementById("printClose").onclick=closePrint;
+  document.body.classList.add("printing");
 }
 
 /* ═══════════════ wiring ═══════════════ */
@@ -3609,6 +3955,38 @@ function wireSettings(){
     et.active=false;                     // switched off; its values are kept
     saveConfig(); resyncDays(); render(); reopen("extra");
   });
+  /* ── print settings ── */
+  const pRepaint=()=>{
+    const el=document.querySelector('[data-sect="print"] .plan-prev');
+    if(!el) return;
+    const box=el.parentElement;
+    box.innerHTML=box.innerHTML.replace(/<div class="plan-prev"[\s\S]*?<\/div>/,
+      printPreview(readPrint(true)));
+  };
+  const readPrint=(peek)=>{
+    const mode=$("pMode")?$("pMode").value:"single";
+    const ps={ mode:mode==="multi"?"multi":"single",
+      copies:Math.max(1,Math.min(6,parseInt($("pCopies")&&$("pCopies").value,10)||4)),
+      scale:Math.max(20,Math.min(100,parseInt($("pScale")&&$("pScale").value,10)||50)),
+      orientation:$("pOrient")&&$("pOrient").value==="landscape"?"landscape":"portrait" };
+    if(!peek) CFG.print_settings=ps;
+    return ps;
+  };
+  ["pMode","pCopies","pScale","pOrient"].forEach(id=>{
+    const el=$(id); if(!el) return;
+    el.oninput=el.onchange=()=>{
+      if(id==="pMode"){ readPrint(); saveConfig(); render(); reopen("print"); return; }
+      pRepaint();
+    };
+  });
+  if($("savePrint")) $("savePrint").onclick=()=>{
+    readPrint();
+    /* the print view reads its orientation from here on a device that has not
+       chosen one of its own */
+    localStorage.setItem("agenda_print_orient", CFG.print_settings.orientation);
+    saveConfig(); render(); reopen("print");
+    toast("✅ "+t("settings_saved"));
+  };
   /* ── free-text assignment notes ── */
   if($("saveNotes")) $("saveNotes").onclick=()=>{
     CFG.assign_notes=$("assignNotes").value;
