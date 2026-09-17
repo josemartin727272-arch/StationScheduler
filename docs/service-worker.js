@@ -2,7 +2,7 @@
    request goes to the network first and the cache is the fallback for when
    there is no network. A version that is live is therefore the version you
    get on the next load, with no tabs to close first. */
-const CACHE = "agenda-pwa-v41";
+const CACHE = "agenda-pwa-v42";
 const ASSETS = [
   "./",
   "./index.html",
@@ -38,8 +38,16 @@ self.addEventListener("fetch", (e) => {
   /* extensions and other schemes cannot be cached, and asking would throw */
   if (!req.url.startsWith("http")) return;
 
+  /* The document itself is fetched with the HTTP cache bypassed. Going to the
+     network is not enough on its own: the host serves the app with
+     max-age=600, so a plain fetch() can be answered out of the browser's own
+     cache and the worker would faithfully hand back a ten-minute-old page. */
+  const hit = req.mode === "navigate" || req.destination === "document"
+    ? fetch(req, { cache: "reload" })
+    : fetch(req);
+
   e.respondWith(
-    fetch(req).then((res) => {
+    hit.then((res) => {
       /* Keep a copy for the next time there is no network. Only a complete
          same-origin response is worth storing: a redirect, a partial or a
          cross-origin opaque response either throws on put() or would be
