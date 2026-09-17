@@ -4392,11 +4392,27 @@ function wireSettings(){
 /* ═══════════════ boot ═══════════════ */
 render();
 if("serviceWorker" in navigator && location.protocol.startsWith("http")){
-  navigator.serviceWorker.register("service-worker.js").then(()=>{
-    if(!localStorage.getItem("agenda_sw_toasted")){
-      localStorage.setItem("agenda_sw_toasted","1"); toast("✅ "+t("offline_ready"));
-    }
-  }).catch(()=>{});
+  /* updateViaCache:"none" is the half of this that is easy to miss: the host
+     serves service-worker.js with max-age=600, so without it the browser can
+     answer its own update check out of the HTTP cache and never learn that a
+     new version exists. */
+  navigator.serviceWorker.register("service-worker.js",{updateViaCache:"none"})
+    .then(reg=>{
+      reg.update().catch(()=>{});     // ask on every load, not only on install
+      if(!localStorage.getItem("agenda_sw_toasted")){
+        localStorage.setItem("agenda_sw_toasted","1"); toast("✅ "+t("offline_ready"));
+      }
+    }).catch(()=>{});
+  /* A new worker claims this tab the moment it activates, but the page in
+     front of the user is still the old one. Reload once, and only when a
+     worker was already in charge — on a first install there is nothing to
+     replace and reloading would just blink at them. */
+  let reloading=false;
+  navigator.serviceWorker.addEventListener("controllerchange",()=>{
+    if(reloading||!sessionStorage.getItem("agenda_sw_seen")) return;
+    reloading=true; location.reload();
+  });
+  if(navigator.serviceWorker.controller) sessionStorage.setItem("agenda_sw_seen","1");
 }
 </script>
 </body>

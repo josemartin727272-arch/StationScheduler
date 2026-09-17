@@ -1,6 +1,8 @@
-/* Offline-first shell. The page itself is fetched network-first so a shipped
-   change shows up on the next visit; everything else is served from cache. */
-const CACHE = "agenda-pwa-v39";
+/* Offline-first shell, but never at the cost of being out of date: every
+   request goes to the network first and the cache is the fallback for when
+   there is no network. A version that is live is therefore the version you
+   get on the next load, with no tabs to close first. */
+const CACHE = "agenda-pwa-v40";
 const ASSETS = [
   "./",
   "./index.html",
@@ -19,48 +21,42 @@ self.addEventListener("install", (e) => {
       c.addAll(ASSETS.map((u) => new Request(u, { cache: "reload" })))
     )
   );
-  self.skipWaiting();
+  self.skipWaiting();                 // do not wait for the old one to be let go
 });
 
 self.addEventListener("activate", (e) => {
   e.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k)))
-    ).then(() => self.clients.claim())
+    ).then(() => self.clients.claim())  // take over every open tab at once
   );
 });
 
 self.addEventListener("fetch", (e) => {
-  if (e.request.method !== "GET") return;
+  const req = e.request;
+  if (req.method !== "GET") return;
+  /* extensions and other schemes cannot be cached, and asking would throw */
+  if (!req.url.startsWith("http")) return;
 
-  /* Navigations: network first, cache only as the offline fallback. Serving
-     the document cache-first meant a deployed change stayed invisible until
-     the cache name happened to change. */
-  if (e.request.mode === "navigate") {
-    e.respondWith(
-      fetch(e.request).then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put(e.request, copy));
-        return res;
-      }).catch(() =>
-        caches.match(e.request, { ignoreSearch: true }).then(
-          (hit) => hit || caches.match("./index.html", { ignoreSearch: true })
-        )
-      )
-    );
-    return;
-  }
-
-  /* Everything else (icons, manifest): cache first, it rarely changes. */
   e.respondWith(
-    caches.match(e.request, { ignoreSearch: true }).then(
-      (hit) =>
-        hit ||
-        fetch(e.request).then((res) => {
-          const copy = res.clone();
-          caches.open(CACHE).then((c) => c.put(e.request, copy));
-          return res;
-        }).catch(() => caches.match("./index.html", { ignoreSearch: true }))
+    fetch(req).then((res) => {
+      /* Keep a copy for the next time there is no network. Only a complete
+         same-origin response is worth storing: a redirect, a partial or a
+         cross-origin opaque response either throws on put() or would be
+         served back later as something the page cannot use. */
+      if (res && res.ok && res.type === "basic") {
+        const copy = res.clone();
+        caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+      }
+      return res;
+    }).catch(() =>
+      caches.match(req, { ignoreSearch: true }).then((hit) =>
+        /* Offline and never cached: a navigation still has somewhere to go —
+           the app shell — while anything else is genuinely missing. */
+        hit || (req.mode === "navigate"
+          ? caches.match("./index.html", { ignoreSearch: true })
+          : Response.error())
+      )
     )
   );
 });
