@@ -279,7 +279,10 @@ body.printing>header,body.printing>main{visibility:hidden}
 /* the table keeps its natural size and is scaled to fit the box, because
    squeezing a table by width alone turns the day columns into slivers */
 #printArea .pcopy .fit{position:absolute;inset-block-start:0;inset-inline-start:0;
-  transform-origin:top var(--org,right)}
+  transform-origin:top var(--org,right);display:flex;flex-direction:column}
+/* the rows share out whatever height is left, so the box fills edge to edge */
+#printArea .pcopy .fit table{flex:1}
+#printArea .pcopy .fit h2{flex:none}
 #printArea table{border-collapse:collapse;width:100%;font-size:10px;table-layout:fixed}
 #printArea th,#printArea td{border:1px solid #999;padding:3px 5px;text-align:center;
   word-break:break-word}
@@ -3603,21 +3606,32 @@ function paintPrintArea(){
     Array.from({length:ps.copies},()=>
       `<div class="pcopy" style="width:${ps.w}cm;height:${ps.h}cm">
          <div class="fit">${one}</div></div>`).join("")+`</div>`;
-  /* Each copy is a miniature of the full sheet, so the table is laid out at
-     the width a whole page would give it and only then scaled down. Measuring
-     it inside the small box instead would let the box's width wrap the table,
-     which turns it tall and narrow and wastes most of the paper. */
+  /* Filling the box exactly and keeping the type undistorted pull against
+     each other: a uniform min() scale leaves white space whenever the box and
+     the table disagree on proportions, and max() would crop away rows. The
+     way out is to stop treating the table as a fixed picture — the scale is
+     uniform, so nothing is stretched, and the table's own rows grow to take
+     up whatever height is left. */
   const rtl=document.documentElement.dir==="rtl";
-  const pageW=((ps.orientation==="landscape"?29.7:21)-1)*CM;
+  const pageW=((ps.orientation==="landscape"?29.7:21)-1)*CM;   // a full sheet
+  const targetW=ps.w*CM, targetH=ps.h*CM;
   area.querySelectorAll(".pcopy").forEach(box=>{
     const fit=box.querySelector(".fit");
     fit.style.setProperty("--org", rtl?"right":"left");
     fit.style.transform="none";
+    fit.style.height="auto";
+    /* start from the type size a whole page would give, then measure how tall
+       the table insists on being at that width */
     fit.style.width=pageW+"px";
-    const h=fit.scrollHeight;
-    if(!h) return;
-    const scale=Math.min((ps.w*CM)/pageW, (ps.h*CM)/h);
-    fit.style.transform=`scale(${scale.toFixed(4)})`;
+    let scale=targetW/pageW;
+    const natural=fit.scrollHeight;
+    if(!natural) return;
+    /* too tall to fit even after scaling? then height decides the scale, and
+       the layout widens to match so the width still comes out exact */
+    if(natural>targetH/scale) scale=targetH/natural;
+    fit.style.width=(targetW/scale)+"px";
+    fit.style.height=(targetH/scale)+"px";
+    fit.style.transform=`scale(${scale.toFixed(5)})`;
   });
 }
 function closePrint(){
