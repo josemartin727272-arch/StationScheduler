@@ -756,6 +756,74 @@ await test("values: older settings get the shipped translations", async()=>{
   eq(((c.value_labels||{})["רדיו"]||{}).es,"Radio","Spanish radio");
 });
 
+/* ── v56 · printing fills the page ─────────────────────────────────────── */
+const inside=(c,b)=>c.x>=-0.01&&c.y>=-0.01&&c.x+c.w<=b.w+0.01&&c.y+c.h<=b.h+0.01;
+const area=cs=>cs.reduce((a,c)=>a+c.w*c.h,0);
+await test("layout: 4 copies use most of the page, all inside it", async()=>{
+  freshWeek(); S.screen="sched"; render();
+  const L=pageLayout({mode:"multi",by:"count",copies:4,orientation:"portrait",w:9,h:6});
+  eq(L.cells.length,4,"cells"); L.cells.forEach(c=>ok(inside(c,L.box),"cell off the page"));
+  ok(area(L.cells)/(L.box.w*L.box.h)>=0.9,"copies cover "+Math.round(area(L.cells)/(L.box.w*L.box.h)*100)+"%");
+});
+await test("layout: 5 copies stay on one page", async()=>{
+  const L=pageLayout({mode:"multi",by:"count",copies:5,orientation:"portrait",w:9,h:6});
+  eq(L.cells.length,5,"cells"); L.cells.forEach(c=>ok(inside(c,L.box),"cell off the page"));
+});
+await test("layout: by size, the page is tiled with as many copies as fit", async()=>{
+  const L=pageLayout({mode:"multi",by:"size",copies:4,orientation:"portrait",w:9,h:6});
+  eq(L.cols+"x"+L.rows,"2x4","grid for 9x6 cm on portrait A4");
+  eq(L.cells.length,8,"copies");
+  L.cells.forEach(c=>{ ok(inside(c,L.box),"cell off the page"); ok(Math.abs(c.w-90)<0.01&&Math.abs(c.h-60)<0.01,"cell size "+c.w+"x"+c.h); });
+  const big=pageLayout({mode:"multi",by:"size",copies:4,orientation:"portrait",w:30,h:40});
+  eq(big.cells.length,1,"oversize copy"); ok(inside(big.cells[0],big.box),"oversize copy off the page");
+});
+async function printWith(ps){
+  freshWeek(); S.screen="sched"; render(); autoAssign();
+  savePrintSettings({...printSettings(),...ps}); doPrint(); await pdfPrepared();
+}
+const MMPX=96/25.4;
+await test("fill: each copy's table fills its frame, top to bottom", async()=>{
+  await printWith({mode:"multi",by:"count",copies:4,orientation:"portrait"});
+  const copies=[...document.querySelectorAll("#printArea .pcopy")]; eq(copies.length,4,"copies drawn");
+  copies.forEach(c=>{ const cb=c.getBoundingClientRect(), tb=c.querySelector(".print-table").getBoundingClientRect();
+    const hd=c.querySelector(".print-head").getBoundingClientRect();
+    ok((tb.bottom-hd.top)/cb.height>=0.9,"copy filled "+Math.round((tb.bottom-hd.top)/cb.height*100)+"%");
+    ok(tb.bottom<=cb.bottom+1,"table spills out of its frame");
+    const cut=[...c.querySelectorAll(".print-table td:not(.label)")].filter(td=>td.scrollWidth>td.clientWidth+1).map(td=>td.textContent);
+    eq(cut.join(","),"","values cut short in a copy"); });
+  closePrint();
+});
+await test("fill: a full sheet fills the page height", async()=>{
+  await printWith({mode:"single",orientation:"portrait"});
+  /* against the page itself, not the sheet: an unsized sheet is only as tall as its table */
+  const pageH=sheetBox(printSettings()).h*MMPX;
+  const sh=document.querySelector("#printArea .sheet").getBoundingClientRect(), tb=document.querySelector("#printArea .print-table").getBoundingClientRect();
+  ok((tb.bottom-sh.top)/pageH>=0.9,"page filled "+Math.round((tb.bottom-sh.top)/pageH*100)+"%");
+  closePrint();
+});
+await test("print: one image of the page, sized to fit any printer's page", async()=>{
+  await printWith({mode:"multi",by:"count",copies:5,orientation:"portrait"});
+  const img=document.getElementById("printImg"); ok(img&&img.src,"no page image");
+  /* decode() never settles for an image that is display:none; wait for it to load instead */
+  for(let i=0;i<50&&!(img.complete&&img.naturalWidth);i++) await new Promise(r=>setTimeout(r,50));
+  const L=pageLayout(printSettings());
+  ok(Math.abs(img.naturalWidth/img.naturalHeight-L.box.w/L.box.h)<0.01,"image is not the page's shape");
+  const css=[...document.styleSheets].flatMap(s=>[...s.cssRules]).filter(r=>r.media&&/print/.test(r.media.mediaText)).map(r=>r.cssText).join(" ");
+  ok(/#printImg[^}]*max-height:\s*100%/.test(css),"print rule does not cap the image at one page");
+  const pdf=await pdfPrepared(); const txt=await pdf.text();
+  eq((txt.match(/\/Type \/Page\b(?!s)/g)||[]).length,1,"PDF pages");
+  closePrint();
+});
+await test("print bar: choosing by size shows the cm fields and how many fit", async()=>{
+  await printWith({mode:"multi",by:"count",copies:4,orientation:"portrait"});
+  document.querySelector('input[name="pvBy"][value="size"]').click(); await tick();
+  const w=document.getElementById("pvW"), h=document.getElementById("pvH"); ok(w&&h,"no cm fields");
+  w.value="9"; h.value="6"; w.dispatchEvent(new Event("input")); h.dispatchEvent(new Event("input")); await new Promise(r=>setTimeout(r,400));
+  ok(/2\s*×\s*4/.test(document.getElementById("printBar").textContent)&&/8/.test(document.getElementById("printBar").textContent),"no '2 × 4 = 8' summary");
+  eq(document.querySelectorAll("#printArea .pcopy").length,8,"copies drawn");
+  closePrint(); localStorage.removeItem("agenda_print");
+});
+
 CFG=JSON.parse(__origCfg);
 window.__results=results;
 return results;

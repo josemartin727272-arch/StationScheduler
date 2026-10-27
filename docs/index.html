@@ -284,15 +284,17 @@ body.printing>header,body.printing>main{visibility:hidden}
    everything else and the paper comes out unreadable. */
 /* an explicit gap rather than per-copy margins: the column arithmetic has to
    match the paper exactly, and a margin on every copy adds one gap too many */
-#printArea .sheet.multi{display:flex;flex-wrap:wrap;gap:2mm;align-content:flex-start}
-#printArea .pcopy{overflow:hidden;flex:none;
-  border:1pt dashed #999;box-sizing:border-box;padding:1mm}
+#printArea .sheet{position:relative;background:#fff;box-shadow:0 0 0 1px #d0d7de}
+#printArea .pcopy{position:absolute;overflow:hidden;box-sizing:border-box;
+  border:1pt dashed #999;padding:1mm}
+#printArea .pcopy.solo{border:none;padding:0}
+#printImg{display:none}
 /* the print table: points, not pixels, so the printer gets real sizes */
 .print-table{width:100%!important;border-collapse:collapse;table-layout:fixed;
-  font-family:Arial,Helvetica,sans-serif;font-size:8pt}
+  font-family:Arial,Helvetica,sans-serif;font-size:var(--pt,8pt)}
 /* landscape gives the day columns more width but less height, so the type
    comes down a point to keep all the rows on one sheet */
-#printArea.land .sheet:not(.multi) .print-table{font-size:7pt}
+
 .print-table th,.print-table td{border:.5pt solid #000;padding:2pt 3pt;
   text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .print-table th{font-weight:700;background:#f0f0f0;
@@ -316,31 +318,34 @@ table.sched td .why{font-size:.68rem;line-height:1.25;color:#5b6b7b;margin-top:2
   white-space:normal;max-width:12em}
 .bal-sum .bal-line b{display:inline-block;min-width:7.5em}
 .bal-sum .bal-off{color:#b45309;font-weight:600}
-/* a pair of names breaks after its "+" onto a second line instead of being
-   cut off — portrait A4 is too narrow for two long names side by side */
-.print-table td:not(.label){white-space:normal;overflow-wrap:anywhere}
+/* a pair of names breaks after its "+" onto a second line; a single value
+   (13-D, a name) never breaks — the type shrinks until it fits instead */
+.print-table td:not(.label){white-space:normal;overflow-wrap:normal}
 .print-table td.label{text-align:start;font-weight:600;background:#f7f7f7;
-  font-size:6.5pt;white-space:normal;
+  font-size:calc(var(--pt,8pt) * .85);white-space:normal;
   -webkit-print-color-adjust:exact;print-color-adjust:exact}
 /* a workplace row wears its group's colour, whatever the station chose */
 .print-table tr.grp td{background:var(--bg);
   -webkit-print-color-adjust:exact;print-color-adjust:exact}
 .print-table td.y{background:#fff3bf;
   -webkit-print-color-adjust:exact;print-color-adjust:exact}
-.print-head{font-size:8pt;font-weight:700;margin:0 0 2pt;font-family:Arial,sans-serif}
+.print-head{font-size:var(--pt,8pt);font-weight:700;margin:0 0 2pt;font-family:Arial,sans-serif}
 /* a small copy gets smaller type and tighter rows — still points, still real */
-.pcopy .print-table{font-size:var(--pt,5.5pt);line-height:1.05}
-.pcopy .print-table td.label{font-size:calc(var(--pt,5.5pt) - .5pt)}
+.pcopy .print-table{line-height:1.1}
 .pcopy .print-table th,.pcopy .print-table td{padding:.5pt 1pt;white-space:normal}
 .pcopy .print-table td.label{width:14mm}
-.pcopy .print-head{font-size:6pt;margin:0 0 1pt}
+.pcopy .print-head{margin:0 0 1pt}
 @media print{
   body>*:not(#printArea){display:none!important}
   body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  /* One picture of the whole sheet, capped at the page in both directions:
+     whatever margins a printer or the iPad adds, it can only shrink, never
+     spill onto a second page. */
+  html,body{height:100%;margin:0}
   body.printing #printArea{position:static;inset:auto;overflow:visible;padding:0;
-    display:block!important;width:100%}
-  #printArea{display:block}
-  #printArea .pcopy{page-break-inside:avoid;break-inside:avoid}
+    display:block!important;width:100%;height:100%}
+  #printArea .sheet{display:none!important}
+  #printImg{display:block!important;max-width:100%;max-height:100%;width:auto;height:auto;margin:0 auto}
 }
 /* the layout sketch in Settings */
 .radio-col{display:flex;flex-direction:column;gap:6px;margin-block-end:4px}
@@ -387,7 +392,7 @@ print_orient:"כיוון דף",print_portrait:"לאורך",print_landscape:"לר
 s_print:"🖨️ הגדרות הדפסה",print_mode:"מצב הדפסה",
 print_single:"סידור מלא — דף A4 שלם, עותק אחד",
 print_multi:"סידורים מרובים — כמה עותקים קטנים על דף אחד",
-print_copies:"מספר עותקים",print_w:"רוחב כל עותק (ס״מ)",print_h:"גובה כל עותק (ס״מ)",
+print_copies:"מספר עותקים",print_by:"איך לחלק",print_by_count:"לפי מספר עותקים",print_by_size:"לפי גודל (ס״מ)",print_layout:"{c} × {r} = {n} עותקים · כל עותק {w}×{h} ס״מ",print_w:"רוחב כל עותק (ס״מ)",print_h:"גובה כל עותק (ס״מ)",
 print_preview:"תצוגה מקדימה של הפריסה",
 print_auto:"מלא את כל הדף אוטומטית",print_auto_size:"{c}×{r} על הדף · כל עותק {w}×{h} ס״מ",
 print_clipped:"⚠️ העותק נמוך מדי — {n} שורות נחתכות. דרוש גובה של כ-{h} ס״מ לשבוע מלא.",
@@ -509,7 +514,7 @@ print_orient:"Page direction",print_portrait:"Portrait",print_landscape:"Landsca
 s_print:"🖨️ Print settings",print_mode:"Print mode",
 print_single:"Full schedule — one whole A4 page, a single copy",
 print_multi:"Several copies — small copies laid out on one sheet",
-print_copies:"Copies",print_w:"Width of each copy (cm)",print_h:"Height of each copy (cm)",
+print_copies:"Copies",print_by:"How to divide",print_by_count:"By number of copies",print_by_size:"By size (cm)",print_layout:"{c} × {r} = {n} copies · each {w}×{h} cm",print_w:"Width of each copy (cm)",print_h:"Height of each copy (cm)",
 print_preview:"Layout preview",
 print_auto:"Fill the whole sheet automatically",print_auto_size:"{c}×{r} on the sheet · each copy {w}×{h}cm",
 print_clipped:"⚠️ The copy is too short — {n} rows are cut off. A full week needs about {h}cm.",
@@ -631,7 +636,7 @@ print_orient:"Orientación",print_portrait:"Vertical",print_landscape:"Horizonta
 s_print:"🖨️ Ajustes de impresión",print_mode:"Modo de impresión",
 print_single:"Horario completo — una hoja A4 entera, una copia",
 print_multi:"Varias copias — copias pequeñas en una sola hoja",
-print_copies:"Copias",print_w:"Ancho de cada copia (cm)",print_h:"Alto de cada copia (cm)",
+print_copies:"Copias",print_by:"Cómo dividir",print_by_count:"Por número de copias",print_by_size:"Por tamaño (cm)",print_layout:"{c} × {r} = {n} copias · cada una {w}×{h} cm",print_w:"Ancho de cada copia (cm)",print_h:"Alto de cada copia (cm)",
 print_preview:"Vista previa de la distribución",
 print_auto:"Llenar toda la hoja automáticamente",print_auto_size:"{c}×{r} en la hoja · cada copia {w}×{h} cm",
 print_clipped:"⚠️ La copia es muy baja — se cortan {n} filas. Una semana completa necesita unos {h} cm.",
@@ -3298,9 +3303,17 @@ const GUIDE = [
 {id:"print", icon:"🖨️", title:{he:"הדפסה, PDF, אקסל ושליחה לעובדים", en:"Print, PDF, Excel and sending to workers", es:"Imprimir, PDF, Excel y enviar a trabajadores"},
  blocks:[
   {h:{he:"🖨️ תצוגת ההדפסה", en:"🖨️ The print view", es:"🖨️ La vista de impresión"}},
-  {p:{he:"🖨️ הדפסה פותחת תצוגה עם הגדרות למעלה: סידור מלא (עותק אחד על A4) או סידורים מרובים (1–6 עותקים קטנים לגזירה, עם „מלא את כל הדף אוטומטית” או גודל בס״מ), ולאורך/לרוחב. השרטוט מראה את הדף. 🖨️ הדפסה מדפיס; ✕ סגור חוזר לסידור. ההגדרות נשמרות במכשיר.",
-      en:"🖨️ Print opens a view with settings on top: full schedule (one copy on A4) or several copies (1–6 small copies to cut, with “fill the whole page automatically” or a size in cm), and portrait/landscape. The sketch shows the sheet. 🖨️ Print prints; ✕ Close returns to the schedule. The settings are kept on the device.",
-      es:"🖨️ Imprimir abre una vista con ajustes arriba: horario completo (una copia en A4) o varias copias (1–6 pequeñas para recortar, con “llenar la hoja automáticamente” o un tamaño en cm), y vertical/horizontal. El esquema muestra la hoja. ✕ Cerrar vuelve al horario. Los ajustes quedan en el dispositivo."}},
+  {p:{he:"🖨️ הדפסה פותחת תצוגה עם הגדרות למעלה, ומתחתיהן הדף עצמו בגודל אמיתי. בכל מצב הטבלה נמתחת — גודל האותיות וגובה השורות — כך שתמלא את כל הדף, והכול נשאר תמיד על דף אחד.",
+      en:"🖨️ Print opens a view with settings on top and the sheet itself, at real size, below. In every mode the table stretches — type size and row height — to fill the whole page, and everything always stays on one page.",
+      es:"🖨️ Imprimir abre una vista con ajustes arriba y la hoja misma, a tamaño real, debajo. En todos los modos la tabla se estira — tamaño de letra y alto de filas — para llenar toda la hoja, y todo queda siempre en una sola página."}},
+  {li:[
+    {he:"סידור מלא — עותק אחד שתופס את כל דף ה-A4.", en:"Full schedule — one copy filling the whole A4 page.", es:"Horario completo — una copia que llena toda la hoja A4."},
+    {he:"סידורים מרובים ← לפי מספר עותקים (1–8): המערכת בוחרת את החלוקה (למשל 2×2, 2×3) שנותנת את האותיות הגדולות ביותר.", en:"Several copies → by number of copies (1–8): the app picks the grid (e.g. 2×2, 2×3) that gives the largest type.", es:"Varias copias → por número de copias (1–8): la app elige la cuadrícula (p. ej. 2×2, 2×3) que da la letra más grande."},
+    {he:"סידורים מרובים ← לפי גודל (ס״מ): כותבים רוחב וגובה לכל עותק, והמערכת מרצפת את הדף בכמה שנכנסים — למשל 9×6 ס״מ לאורך = 2 × 4 = 8 עותקים. השורה שליד השדות אומרת כמה יצא.", en:"Several copies → by size (cm): type a width and height per copy, and the app tiles the page with as many as fit — e.g. 9×6 cm portrait = 2 × 4 = 8 copies. The line next to the fields says how many.", es:"Varias copias → por tamaño (cm): escribe ancho y alto por copia, y la app llena la hoja con todas las que entren — p. ej. 9×6 cm vertical = 2 × 4 = 8 copias. La línea junto a los campos dice cuántas."},
+    {he:"לאורך / לרוחב — כיוון הדף. קו מקווקו בין העותקים הוא קו החיתוך.", en:"Portrait / landscape — the page direction. A dashed line between copies is the cutting line.", es:"Vertical / horizontal — la orientación. La línea discontinua entre copias es la línea de corte."}]},
+  {p:{he:"🖨️ הדפסה מדפיס תמונה מדויקת של הדף, שמוקטנת לבד אם המדפסת או האייפד מוסיפים שוליים — כך שום חלק לא נדחף לדף שני. הכפתור פעיל אחרי שנייה-שתיים, כשהדף מוכן. ✕ סגור חוזר לסידור. ההגדרות נשמרות במכשיר.",
+      en:"🖨️ Print prints an exact picture of the sheet, which shrinks by itself if the printer or iPad adds margins — so nothing is pushed onto a second page. The button is active after a second or two, when the sheet is ready. ✕ Close returns to the schedule. Settings are kept on the device.",
+      es:"🖨️ Imprimir imprime una imagen exacta de la hoja, que se achica sola si la impresora o el iPad agregan márgenes — así nada pasa a una segunda página. El botón se activa tras uno o dos segundos, cuando la hoja está lista. ✕ Cerrar vuelve al horario. Los ajustes quedan en el dispositivo."}},
   {h:{he:"📄 שמור PDF", en:"📄 Save PDF", es:"📄 Guardar PDF"}},
   {p:{he:"באותה תצוגה. הקובץ מוכן שנייה-שתיים אחרי פתיחת התצוגה (עד אז הכפתור כתוב „מכין PDF…”). באייפד נפתח תפריט שיתוף — „שמור בקבצים”, הדפסה או וואטסאפ; במחשב/אנדרואיד הקובץ יורד. שינית כיוון או עותקים — קובץ חדש מוכן לבד.",
       en:"In the same view. The file is ready a second or two after the view opens (until then the button reads “Preparing PDF…”). On an iPad the share menu opens — “Save to Files”, print or WhatsApp; on a computer/Android the file downloads. Changed direction or copies — a new file is prepared by itself.",
@@ -3413,9 +3426,9 @@ const GUIDE = [
 /* ─────────────────────────────────────────────────────────────────── */
 {id:"news", icon:"🆕", title:{he:"מה חדש — עדכוני 27/10/2026", en:"What's new — updates of 27/10/2026", es:"Novedades — actualizaciones del 27/10/2026"},
  blocks:[
-  {p:{he:"כל מה שהשתנה במערכת ביום אחד, מגרסה 44 עד גרסה 54, לפי סדר העלייה לאוויר.",
-      en:"Everything that changed in one day, from version 44 to version 54, in the order it went live.",
-      es:"Todo lo que cambió en un día, de la versión 44 a la 54, en el orden en que se publicó."}},
+  {p:{he:"כל מה שהשתנה במערכת ביום אחד, מגרסה 44 עד גרסה 56, לפי סדר העלייה לאוויר.",
+      en:"Everything that changed in one day, from version 44 to version 56, in the order it went live.",
+      es:"Todo lo que cambió en un día, de la versión 44 a la 56, en el orden en que se publicó."}},
   {h:{he:"גרסה 44 — נוחות ותיקונים", en:"Version 44 — comfort and fixes", es:"Versión 44 — comodidad y arreglos"}},
   {li:[
     {he:"הדף לא קופץ יותר למעלה אחרי הזנה או מחיקה; קטעים פתוחים נשארים פתוחים.", en:"The page no longer jumps to the top after typing or deleting; open sections stay open.", es:"La página ya no salta arriba al escribir o borrar; las secciones abiertas quedan abiertas."},
@@ -3450,7 +3463,15 @@ const GUIDE = [
     {he:"אין יותר שמות אמיתיים בקוד הציבורי.", en:"No more real names in the public code.", es:"Ya no hay nombres reales en el código público."},
     {he:"חסימה של כל שליחת מידע לאתר אחר.", en:"Any sending of data to another site is blocked.", es:"Se bloquea todo envío de datos a otro sitio."},
     {he:"🔒 סיסמה לכניסה לאתר, עם „זכור במכשיר הזה”.", en:"🔒 A password to enter the site, with “Remember on this device”.", es:"🔒 Contraseña para entrar al sitio, con “Recordar en este dispositivo”."},
-    {he:"המדריך נכתב מחדש מקצה לקצה.", en:"The guide was rewritten end to end.", es:"La guía se reescribió de principio a fin."}]}
+    {he:"המדריך נכתב מחדש מקצה לקצה.", en:"The guide was rewritten end to end.", es:"La guía se reescribió de principio a fin."}]},
+  {h:{he:"גרסה 55 — ערכים בשפת התצוגה", en:"Version 55 — values in the display language", es:"Versión 55 — valores en el idioma elegido"}},
+  {li:[
+    {he:"משקפת / רדיו / תמונות / חג מוצגים באנגלית ובספרדית כשבוחרים שפה; הערך השמור לא משתנה. עריכה: ⚙️ הגדרות ← 🌐 תרגום ערכים.", en:"Binoculars / radio / photos / holiday show in English and Spanish when chosen; the stored value does not change. Edit: ⚙️ Settings → 🌐 Value translations.", es:"Prismáticos / radio / fotos / feriado se muestran en inglés y español; el valor guardado no cambia. Editar: ⚙️ Ajustes → 🌐 Traducción de valores."}]},
+  {h:{he:"גרסה 56 — הדפסה שממלאת את הדף", en:"Version 56 — printing that fills the page", es:"Versión 56 — impresión que llena la hoja"}},
+  {li:[
+    {he:"הטבלה נמתחת למלא את כל הדף ואת כל עותק (במקום כ-50–60%).", en:"The table stretches to fill the whole page and every copy (instead of about 50–60%).", es:"La tabla se estira para llenar toda la hoja y cada copia (en vez de un 50–60%)."},
+    {he:"חלוקה לפי מספר עותקים (עד 8) או לפי גודל בס״מ, שמרצף את הדף.", en:"Divide by number of copies (up to 8) or by size in cm, which tiles the page.", es:"Dividir por número de copias (hasta 8) o por tamaño en cm, que llena la hoja."},
+    {he:"ההדפסה תמיד על דף אחד — לא עוד עותק חמישי שקופץ לדף הבא.", en:"Printing always fits one page — no more fifth copy jumping to the next page.", es:"La impresión siempre cabe en una página — se acabó la quinta copia que salta a otra hoja."}]}
  ]}
 ];
 
@@ -3580,7 +3601,7 @@ function downloadCsv(days,weekStart){
 /* The print settings belong to the print view: they are decisions about one
    sheet of paper, not about the station, so they live on the device and not
    in the config. */
-const PRINT_DEFAULTS={ mode:"single", copies:4, w:8, h:6, orientation:"portrait", auto:true };
+const PRINT_DEFAULTS={ mode:"single", by:"count", copies:4, w:9, h:6, orientation:"portrait" };
 /* A4 in millimetres, and the margin each mode prints with */
 const A4={ portrait:[210,297], landscape:[297,210] };
 /* 8mm is a comfortable margin for a portrait sheet; landscape and a sheet of
@@ -3591,33 +3612,82 @@ function sheetBox(ps){
   const [w,h]=A4[ps.orientation], m=pageMargin(ps.mode,ps.orientation);
   return { w:w-2*m, h:h-2*m };
 }
-/* Copies laid out as squarely as the count allows, filling the sheet. */
-function autoCopySize(ps){
-  const cols=Math.max(1,Math.ceil(Math.sqrt(ps.copies)));
-  const rows=Math.ceil(ps.copies/cols), gap=2, box=sheetBox(ps);
-  return { cols, rows,
-           w:+(((box.w-gap*(cols-1))/cols)/10).toFixed(2),   // mm → cm
-           h:+(((box.h-gap*(rows-1))/rows)/10).toFixed(2) };
+/* ── laying out the sheet ──────────────────────────────────────────────
+   A sheet is the page less its margins. Copies sit in a grid with a 3 mm
+   gap (the cut line runs through it). "By count": the grid that gives each
+   copy the largest type wins — the copies then fill the sheet. "By size":
+   every copy is exactly the size asked for, and the sheet is tiled with as
+   many as fit. Either way the whole layout stays on one page. */
+const PRINT_GAP=3;
+function gridCells(box,cols,rows,cw,ch){
+  const cells=[];
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++)
+    cells.push({x:c*(cw+PRINT_GAP), y:r*(ch+PRINT_GAP), w:cw, h:ch});
+  return cells;
 }
-/* what a copy actually measures, auto or by hand */
-function copySize(ps){
-  if(ps.mode!=="multi") return null;
-  if(ps.auto) return autoCopySize(ps);
-  const cols=Math.max(1,Math.ceil(Math.sqrt(ps.copies)));
-  return { cols, rows:Math.ceil(ps.copies/cols), w:ps.w, h:ps.h };
+function pageLayout(ps){
+  const box=sheetBox(ps);
+  if(ps.mode!=="multi") return {box, cols:1, rows:1, cells:[{x:0,y:0,w:box.w,h:box.h}]};
+  if(ps.by==="size"){
+    const cw=Math.min(ps.w*10, box.w), ch=Math.min(ps.h*10, box.h);
+    const cols=Math.max(1,Math.floor((box.w+PRINT_GAP)/(cw+PRINT_GAP)));
+    const rows=Math.max(1,Math.floor((box.h+PRINT_GAP)/(ch+PRINT_GAP)));
+    return {box, cols, rows, cells:gridCells(box,cols,rows,cw,ch)};
+  }
+  const n=ps.copies; let best=null;
+  for(let cols=1; cols<=n; cols++){
+    const rows=Math.ceil(n/cols);
+    const cw=(box.w-PRINT_GAP*(cols-1))/cols, ch=(box.h-PRINT_GAP*(rows-1))/rows;
+    const f=fitFont(cw,ch,false), empty=cols*rows-n;
+    if(!best||f>best.f+0.05||(Math.abs(f-best.f)<=0.05&&empty<best.empty))
+      best={f, empty, cols, rows, cw, ch};
+  }
+  return {box, cols:best.cols, rows:best.rows,
+          cells:gridCells(box,best.cols,best.rows,best.cw,best.ch).slice(0,n)};
 }
-/* smaller type the more copies share a row — measured to still fit */
-function copyFontPt(cols){ return cols<=1?7:cols===2?6:cols===3?5.5:5; }
+/* The largest type (pt) at which one copy of the week fits a w×h mm frame,
+   found by measuring a hidden copy. Without a week open there is nothing to
+   measure, so the frame's own size stands in for it. */
+const _fitMemo=new Map();
+function fitFont(wmm,hmm,solo){
+  if(!S.days) return Math.min(wmm/8,hmm/12);
+  const key=(solo?"s":"")+wmm.toFixed(1)+"x"+hmm.toFixed(1)+"|"+JSON.stringify(S.days)+S.lang;
+  if(_fitMemo.has(key)) return _fitMemo.get(key);
+  const MM=96/25.4, probe=document.createElement("div");
+  probe.className="pcopy";
+  /* the frame a real copy has — its rule lives under #printArea, which may
+     be hidden right now, so the probe carries it inline */
+  probe.style.cssText=`position:absolute;left:-10000px;top:0;visibility:hidden;width:${wmm}mm;height:auto;
+    box-sizing:border-box;overflow:hidden;${solo?"border:none;padding:0":"border:1pt dashed #999;padding:1mm"}`;
+  probe.innerHTML=printTable();
+  document.body.appendChild(probe);
+  /* it fits when the copy is tall enough AND no value is cut short inside
+     its cell — the cells clip with "…", so a too-large type would otherwise
+     look like it fits while names lose their ends */
+  const cells=[...probe.querySelectorAll(".print-table td:not(.label),.print-table th")];
+  const fits=f=>{ probe.style.setProperty("--pt",f+"pt");
+    if(probe.scrollHeight>hmm*MM) return false;
+    return cells.every(td=>td.scrollWidth<=td.clientWidth+1); };
+  let lo=3, hi=24;
+  if(!fits(lo)) hi=lo;
+  for(let i=0;i<12&&hi-lo>0.05;i++){ const mid=(lo+hi)/2; if(fits(mid)) lo=mid; else hi=mid; }
+  probe.remove();
+  const f=Math.floor(lo*10)/10;
+  if(_fitMemo.size>200) _fitMemo.clear();
+  _fitMemo.set(key,f);
+  return f;
+}
 function printSettings(){
   let saved={};
   try{ saved=JSON.parse(localStorage.getItem("agenda_print")||"{}"); }catch(e){}
   const p={...PRINT_DEFAULTS, ...saved};
   return { mode:p.mode==="multi"?"multi":"single",
            orientation:p.orientation==="landscape"?"landscape":"portrait",
-           copies:Math.max(1,Math.min(6,parseInt(p.copies,10)||4)),
-           w:Math.max(2,Math.min(30,parseFloat(p.w)||8)),
-           h:Math.max(2,Math.min(30,parseFloat(p.h)||6)),
-           auto:p.auto!==false };
+           /* older settings said auto:true/false for count/size */
+           by:p.by==="size"||(p.by==null&&p.auto===false)?"size":"count",
+           copies:Math.max(1,Math.min(8,parseInt(p.copies,10)||4)),
+           w:Math.max(2,Math.min(30,parseFloat(p.w)||9)),
+           h:Math.max(2,Math.min(30,parseFloat(p.h)||6)) };
 }
 function savePrintSettings(ps){
   try{ localStorage.setItem("agenda_print", JSON.stringify(ps)); }catch(e){}
@@ -3665,45 +3735,25 @@ function applyPageRule(orient,mode){
   st.textContent=`@page{size:A4 ${orient};margin:${pageMargin(mode,orient)}mm}`;
 }
 const CM=96/2.54;                          // one centimetre in CSS pixels
-/* How many copies fit across the sheet. auto-fill alone would pack a row as
-   tight as the paper allows — four copies would come out three and one — so
-   the track list stays auto-fill and the container is given the width of the
-   column count we actually want: as square a block as the page can hold. */
-function printCols(ps){
-  const usable=(ps.orientation==="landscape"?29.7:21)-1;   // A4 less 5mm margins
-  const fit=Math.max(1,Math.floor(usable/(ps.w+0.4)));
-  return Math.max(1, Math.min(fit, Math.ceil(Math.sqrt(ps.copies))));
-}
 function paintPrintArea(){
-  const ps=printSettings(), one=printTable();
+  const ps=printSettings(), one=printTable(), L=pageLayout(ps);
   const area=document.getElementById("printArea");
   area.classList.toggle("land", ps.orientation==="landscape");
-  if(ps.mode!=="multi"){ area.innerHTML=`<div class="sheet">${one}</div>`; return; }
-  const cp=copySize(ps);
-  /* Each copy is exactly the box the user asked for, at its real size — the
-     type inside is 5.5pt whatever the box measures. A box too short for the
-     whole week clips, and the panel says so rather than shrinking the letters
-     until nobody can read them. */
-  area.innerHTML=`<div class="sheet multi" style="width:${sheetBox(ps).w}mm">`+
-    Array.from({length:ps.copies},()=>
-      `<div class="pcopy" style="width:${cp.w}cm;height:${cp.h}cm;
-         --pt:${copyFontPt(cp.cols)}pt">${one}</div>`).join("")+
-    `</div>`;
-}
-/* how much of a copy actually fits inside its box */
-function printOverflow(){
-  const box=document.querySelector("#printArea .pcopy");
-  if(!box) return null;
-  const need=box.scrollHeight, have=box.clientHeight;
-  const rows=box.querySelectorAll(".print-table tbody tr").length;
-  const lost=Math.round(rows*(1-have/need));
-  /* a row or less of slack is the box's own border rounding, not a loss */
-  if(need<=have+1||lost<1) return null;
-  const CMpx=96/2.54;
-  return { need:need, have:have, rows:lost,
-           /* round the suggestion up: a height that only just fits is a
-              height that clips on the next printer */
-           cm:Math.ceil(((need/have)*box.getBoundingClientRect().height)/CMpx*10)/10+0.2 };
+  const multi=ps.mode==="multi";
+  /* the sheet at its real size; each copy at its cell, type fitted to it */
+  area.innerHTML=`<div class="sheet${multi?" multi":""}" style="width:${L.box.w}mm;height:${L.box.h}mm">`+
+    L.cells.map(c=>`<div class="pcopy${multi?"":" solo"}" style="left:${c.x}mm;top:${c.y}mm;width:${c.w}mm;height:${c.h}mm;
+       --pt:${fitFont(c.w,c.h,!multi)}pt">${one}</div>`).join("")+
+    `</div><img id="printImg" alt="">`;
+  /* stretch each table down to the foot of its copy: rows share the slack */
+  const MM=96/25.4;
+  area.querySelectorAll(".pcopy").forEach(cp=>{
+    const tb=cp.querySelector(".print-table"), cs=getComputedStyle(cp);
+    /* from where the table really starts to the copy's inner foot */
+    const foot=cp.getBoundingClientRect().bottom-parseFloat(cs.paddingBottom)-parseFloat(cs.borderBottomWidth);
+    const room=Math.floor(foot-tb.getBoundingClientRect().top)-1;
+    if(room>tb.getBoundingClientRect().height) tb.style.height=room+"px";
+  });
 }
 function closePrint(){
   _pdf.gen++; _pdf.blob=null;               // a preparation still running is dropped
@@ -3711,20 +3761,18 @@ function closePrint(){
   document.getElementById("printArea").innerHTML="";
   document.getElementById("printBar").innerHTML="";
 }
-/* the sketch of the sheet, at the column count the printer will use */
-function printPreview(ps){
-  const n=ps.mode==="multi"?ps.copies:1;
-  const cols=ps.mode==="multi"?printCols(ps):1;
-  const land=ps.orientation==="landscape";
-  return `<div class="plan-prev" style="grid-template-columns:repeat(${cols},1fr);
-    aspect-ratio:${land?"1.414/1":"1/1.414"};width:${land?"190px":"135px"}">`+
-    Array.from({length:n},(_,i)=>`<span>${i+1}</span>`).join("")+`</div>`;
+function printInfo(ps){
+  if(ps.mode!=="multi") return "";
+  const L=pageLayout(ps), c=L.cells[0];
+  return t("print_layout",{c:L.cols, r:L.rows, n:L.cells.length,
+    w:+(c.w/10).toFixed(1), h:+(c.h/10).toFixed(1)});
 }
 function paintPrintBar(){
   const ps=printSettings();
   const radio=(name,val,cur,label)=>
     `<label class="chk"><input type="radio" name="${name}" value="${val}"
       ${val===cur?"checked":""}> ${esc(label)}</label>`;
+  const multi=ps.mode==="multi";
   document.getElementById("printBar").innerHTML=`
     <div class="pb-head">
       <h3>${esc(t("s_print"))}</h3>
@@ -3734,34 +3782,27 @@ function paintPrintBar(){
       ${radio("pvMode","single",ps.mode,t("print_single"))}
       ${radio("pvMode","multi",ps.mode,t("print_multi"))}
     </div>
-    ${ps.mode==="multi"?`<div class="pb-row">
-      <label>${esc(t("print_copies"))}<br>
-        <input type="number" min="1" max="6" id="pvCopies" value="${ps.copies}"></label>
-      <label class="chk"><input type="checkbox" id="pvAuto" ${ps.auto?"checked":""}>
-        ${esc(t("print_auto"))}</label>
-      ${ps.auto?`<span class="hint">${esc(t("print_auto_size",
-          {w:copySize(ps).w, h:copySize(ps).h, c:copySize(ps).cols, r:copySize(ps).rows}))}</span>`
-        :`<label>${esc(t("print_w"))}<br>
-            <input type="number" min="2" max="30" step="0.5" id="pvW" value="${ps.w}"></label>
-          <label>${esc(t("print_h"))}<br>
-            <input type="number" min="2" max="30" step="0.5" id="pvH" value="${ps.h}"></label>`}
+    ${multi?`<div class="radio-row"><b>${esc(t("print_by"))}</b>
+      ${radio("pvBy","count",ps.by,t("print_by_count"))}
+      ${radio("pvBy","size",ps.by,t("print_by_size"))}
+    </div>
+    <div class="pb-row">${ps.by==="size"
+      ?`<label>${esc(t("print_w"))}<br>
+          <input type="number" min="2" max="30" step="0.5" id="pvW" value="${ps.w}"></label>
+        <label>${esc(t("print_h"))}<br>
+          <input type="number" min="2" max="30" step="0.5" id="pvH" value="${ps.h}"></label>`
+      :`<label>${esc(t("print_copies"))}<br>
+          <input type="number" min="1" max="8" id="pvCopies" value="${ps.copies}"></label>`}
+      <span class="hint" id="pvInfo">${esc(printInfo(ps))}</span>
     </div>`:""}
     <div class="radio-row"><b>${esc(t("print_orient"))}</b>
       ${radio("pvOrient","portrait",ps.orientation,t("print_portrait"))}
       ${radio("pvOrient","landscape",ps.orientation,t("print_landscape"))}
     </div>
-    <div class="pb-row">${printPreview(ps)}
-      <button class="btn primary" id="printGo">${esc(t("print"))}</button>
-      <button class="btn" id="printPdf" ${_pdf.blob?"":"disabled"}>${esc(t(_pdf.blob?"pdf_save":"pdf_busy"))}</button></div>
-    <div class="hint" id="printClip"></div>`;
+    <div class="pb-row">
+      <button class="btn primary" id="printGo" ${_pdf.blob?"":"disabled"}>${esc(t("print"))}</button>
+      <button class="btn" id="printPdf" ${_pdf.blob?"":"disabled"}>${esc(t(_pdf.blob?"pdf_save":"pdf_busy"))}</button></div>`;
   wirePrintBar();
-  /* measured after the copies exist, so it reports what really happened */
-  setTimeout(()=>{
-    const el=document.getElementById("printClip"); if(!el) return;
-    const o=ps.mode==="multi"?printOverflow():null;
-    el.textContent=o?t("print_clipped",{n:o.rows, h:o.cm}):"";
-    el.style.color=o?"var(--danger)":"";
-  },0);
 }
 function wirePrintBar(){
   const bar=document.getElementById("printBar");
@@ -3771,31 +3812,26 @@ function wirePrintBar(){
     const num=(id,d)=>{ const el=bar.querySelector("#"+id);
                         return el?parseFloat(el.value)||d:d; };
     const cur=printSettings();
-    const auto=bar.querySelector("#pvAuto");
     return { mode:pick("pvMode")==="multi"?"multi":"single",
              orientation:pick("pvOrient")==="landscape"?"landscape":"portrait",
-             copies:Math.max(1,Math.min(6,num("pvCopies",cur.copies))),
+             by:(pick("pvBy")||cur.by)==="size"?"size":"count",
+             copies:Math.max(1,Math.min(8,num("pvCopies",cur.copies))),
              w:Math.max(2,Math.min(30,num("pvW",cur.w))),
-             h:Math.max(2,Math.min(30,num("pvH",cur.h))),
-             auto:auto?auto.checked:cur.auto };
+             h:Math.max(2,Math.min(30,num("pvH",cur.h))) };
   };
   const apply=(repaintBar)=>{
     const ps=read();
     savePrintSettings(ps);
     applyPageRule(ps.orientation, ps.mode);
-    if(repaintBar) paintPrintBar(); else {
-      const el=bar.querySelector(".plan-prev");
-      if(el) el.outerHTML=printPreview(printSettings());
-    }
+    if(repaintBar) paintPrintBar();
+    else { const el=bar.querySelector("#pvInfo"); if(el) el.textContent=printInfo(printSettings()); }
     paintPrintArea();
     preparePdf();
   };
-  /* the mode changes which fields exist, so that one redraws the panel */
-  bar.querySelectorAll('input[name="pvMode"]').forEach(r=>r.onchange=()=>apply(true));
-  /* both of these change which fields belong on screen */
-  bar.querySelectorAll('input[name="pvOrient"]').forEach(r=>r.onchange=()=>apply(true));
-  if(bar.querySelector("#pvAuto")) bar.querySelector("#pvAuto").onchange=()=>apply(true);
-  if(bar.querySelector("#pvCopies")) bar.querySelector("#pvCopies").onchange=()=>apply(true);
+  /* these change which fields exist, so they redraw the panel */
+  bar.querySelectorAll('input[name="pvMode"],input[name="pvOrient"],input[name="pvBy"]')
+    .forEach(r=>r.onchange=()=>apply(true));
+  /* typing a number redraws the sheet only, so the field keeps its focus */
   ["pvCopies","pvW","pvH"].forEach(id=>{
     const el=bar.querySelector("#"+id);
     if(el) el.oninput=el.onchange=()=>apply(false);
@@ -3830,7 +3866,8 @@ async function renderSheetCanvas(boxW){
     windowWidth:Math.max(window.innerWidth, Math.ceil(boxW*CM/10)+60),
     onclone:doc=>{
       const s=doc.querySelector("#printArea .sheet");
-      if(s){ s.style.width=boxW+"mm"; s.style.maxWidth="none"; }
+      if(s){ s.style.maxWidth="none"; }
+      const im=doc.getElementById("printImg"); if(im) im.remove();
       const area=doc.getElementById("printArea");
       if(area){ area.style.overflow="visible"; area.style.width="auto"; }
     }});
@@ -3846,7 +3883,8 @@ async function buildSchedulePdf(){
   /* as large as the page allows, never stretched out of shape */
   const k=Math.min(boxW/canvas.width, boxH/canvas.height);
   const w=canvas.width*k, h=canvas.height*k;
-  pdf.addImage(canvas.toDataURL("image/jpeg",0.92),"JPEG", m+(boxW-w)/2, m, w, h);
+  _pdf.img=canvas.toDataURL("image/jpeg",0.92);
+  pdf.addImage(_pdf.img,"JPEG", m+(boxW-w)/2, m, w, h);
   return pdf.output("blob");
 }
 /* Safari opens the share sheet only straight out of a tap: making the PDF
@@ -3861,7 +3899,9 @@ function preparePdf(){
   paintPdfButton();
   const run=new Promise(r=>setTimeout(r,250))           // let a burst of changes settle
     .then(()=>gen===_pdf.gen&&document.body.classList.contains("printing")?buildSchedulePdf():null)
-    .then(blob=>{ if(gen===_pdf.gen&&blob){ _pdf.blob=blob; paintPdfButton(); } return blob; })
+    .then(blob=>{ if(gen===_pdf.gen&&blob){ _pdf.blob=blob;
+        const im=document.getElementById("printImg"); if(im) im.src=_pdf.img;
+        paintPdfButton(); } return blob; })
     .catch(e=>{ console.error(e); return null; });
   _pdf.promise=run;
   return run;
@@ -3877,6 +3917,8 @@ function paintPdfButton(){
   if(!btn) return;
   btn.disabled=!_pdf.blob;
   btn.textContent=t(_pdf.blob?"pdf_save":"pdf_busy");
+  /* printing prints the prepared page image, so it waits for it too */
+  const go=document.getElementById("printGo"); if(go) go.disabled=!_pdf.blob;
 }
 function downloadPdf(blob,name){
   const a=document.createElement("a");
