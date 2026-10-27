@@ -697,6 +697,65 @@ await test("guide: it covers every feature a new worker meets", async()=>{
   ok(!tx.includes("בהגדרות ← 🖨️ הגדרות הדפסה"),"stale text: print settings in Settings");
 });
 
+/* ── v55 · Hebrew option values follow the display language ──────────── */
+function theaterWeek(){
+  localStorage.removeItem("agenda_archive"); CFG.fixed_rules=[]; CFG.away_calendar=[];
+  freshWeek(MON); S.days[MON].theater="משקפת"; S.days[TUE].theater="רדיו"; S.days[WED].work_hours="חג";
+}
+await test("values: the theater cell shows the display language, the data stays Hebrew", async()=>{
+  theaterWeek();
+  for(const [lg,want] of [["en","Binoculars"],["es","Prismáticos"],["he","משקפת"]]){
+    S.lang=lg; S.screen="sched"; render(); await tick();
+    const sel=document.querySelector(`table.sched select[data-dk="${MON}"][data-f="theater"]`);
+    eq(sel.options[sel.selectedIndex].textContent,want,lg+" label");
+    eq(sel.value,"משקפת",lg+" stored value");
+  }
+  S.lang="en"; render(); await tick();
+  const sel=document.querySelector(`table.sched select[data-dk="${TUE}"][data-f="theater"]`);
+  const pic=[...sel.options].find(o=>o.textContent==="Photos"); ok(pic,"no Photos option");
+  sel.value=pic.value; sel.dispatchEvent(new Event("change")); await tick();
+  eq(S.days[TUE].theater,"תמונות","choosing in English stored something else");
+  S.lang="he";
+});
+await test("values: holiday in the hours row reads Holiday / Feriado", async()=>{
+  theaterWeek(); S.lang="es"; S.screen="sched"; render(); await tick();
+  const sel=document.querySelector(`table.sched select[data-dk="${WED}"][data-f="work_hours"]`);
+  eq(sel.options[sel.selectedIndex].textContent,"Feriado","Spanish holiday");
+  S.lang="he";
+});
+await test("values: print, Excel and statistics use the display language too", async()=>{
+  theaterWeek(); S.lang="en"; S.screen="sched"; render(); doPrint(); await tick();
+  ok([...document.querySelectorAll("#printArea td")].some(td=>td.textContent==="Binoculars"),"print shows Hebrew");
+  closePrint();
+  const csv=scheduleCsv(S.days); ok(csv.includes("Binoculars")&&!csv.includes("משקפת"),"Excel shows Hebrew");
+  const a={}; a[MON]=S.days; saveArchive(a);
+  S.screen="stats"; S.statsTab="week"; render(); await tick();
+  const tx=document.getElementById("app").textContent;
+  ok(tx.includes("Binoculars")&&!tx.includes("משקפת"),"statistics show Hebrew");
+  S.lang="he";
+});
+await test("values: a worker's message is in their language", async()=>{
+  theaterWeek();
+  CFG.value_labels={...(CFG.value_labels||{}), "בוקר":{en:"Morning",es:"Mañana"}};
+  S.days[TUE].work_hours="בוקר"; S.days[TUE].apt_pe="BUHO";
+  const m=workerMessage("BUHO");
+  ok(m.includes("Mañana")&&!m.includes("בוקר"),"hours not translated:\n"+m);
+});
+await test("values: Settings let you edit the English and Spanish of each Hebrew value", async()=>{
+  S.lang="he"; S.screen="settings"; render(); reopen("vlabels"); await tick();
+  const en=document.querySelector('[data-vlab="משקפת"][data-lang="en"]');
+  ok(en,"no translation field for משקפת");
+  en.value="Field glasses"; document.getElementById("saveVLabels").click(); await tick();
+  eq(CFG.value_labels["משקפת"].en,"Field glasses","saved translation");
+  S.lang="en"; eq(valueLabel("משקפת"),"Field glasses","label after edit"); S.lang="he";
+});
+await test("values: older settings get the shipped translations", async()=>{
+  const raw=JSON.parse(JSON.stringify(CFG)); delete raw.value_labels;
+  localStorage.setItem("agenda_config",JSON.stringify(raw));
+  const c=loadConfig();
+  eq(((c.value_labels||{})["רדיו"]||{}).es,"Radio","Spanish radio");
+});
+
 CFG=JSON.parse(__origCfg);
 window.__results=results;
 return results;
