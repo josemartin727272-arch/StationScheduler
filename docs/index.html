@@ -297,7 +297,7 @@ body.printing>header,body.printing>main{visibility:hidden}
 
 .print-table th,.print-table td{border:.5pt solid #000;padding:2pt 3pt;
   text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.print-table th{font-weight:700;background:#f0f0f0;
+.print-table th{font-weight:500;background:#f0f0f0;
   -webkit-print-color-adjust:exact;print-color-adjust:exact}
 .print-table td{font-weight:500}
 /* a value reads in the direction of its own first letter: "13-D" stays 13-D
@@ -321,8 +321,8 @@ table.sched td .why{font-size:.68rem;line-height:1.25;color:#5b6b7b;margin-top:2
 /* a pair of names breaks after its "+" onto a second line; a single value
    (13-D, a name) never breaks — the type shrinks until it fits instead */
 .print-table td:not(.label){white-space:normal;overflow-wrap:normal}
-.print-table td.label{text-align:start;font-weight:600;background:#f7f7f7;
-  font-size:calc(var(--pt,8pt) * .85);white-space:normal;
+.print-table td.label{text-align:start;font-weight:500;background:#f7f7f7;
+  white-space:normal;
   -webkit-print-color-adjust:exact;print-color-adjust:exact}
 /* a workplace row wears its group's colour, whatever the station chose */
 .print-table tr.grp td{background:var(--bg);
@@ -3309,8 +3309,8 @@ const GUIDE = [
   {li:[
     {he:"סידור מלא — עותק אחד שתופס את כל דף ה-A4.", en:"Full schedule — one copy filling the whole A4 page.", es:"Horario completo — una copia que llena toda la hoja A4."},
     {he:"סידורים מרובים ← לפי מספר עותקים (1–8): המערכת בוחרת את החלוקה (למשל 2×2, 2×3) שנותנת את האותיות הגדולות ביותר.", en:"Several copies → by number of copies (1–8): the app picks the grid (e.g. 2×2, 2×3) that gives the largest type.", es:"Varias copias → por número de copias (1–8): la app elige la cuadrícula (p. ej. 2×2, 2×3) que da la letra más grande."},
-    {he:"סידורים מרובים ← לפי גודל (ס״מ): כותבים רוחב וגובה לכל עותק, והמערכת מרצפת את הדף בכמה שנכנסים — למשל 9×6 ס״מ לאורך = 2 × 4 = 8 עותקים. השורה שליד השדות אומרת כמה יצא.", en:"Several copies → by size (cm): type a width and height per copy, and the app tiles the page with as many as fit — e.g. 9×6 cm portrait = 2 × 4 = 8 copies. The line next to the fields says how many.", es:"Varias copias → por tamaño (cm): escribe ancho y alto por copia, y la app llena la hoja con todas las que entren — p. ej. 9×6 cm vertical = 2 × 4 = 8 copias. La línea junto a los campos dice cuántas."},
-    {he:"לאורך / לרוחב — כיוון הדף. קו מקווקו בין העותקים הוא קו החיתוך.", en:"Portrait / landscape — the page direction. A dashed line between copies is the cutting line.", es:"Vertical / horizontal — la orientación. La línea discontinua entre copias es la línea de corte."}]},
+    {he:"סידורים מרובים ← לפי גודל (ס״מ): כותבים רוחב וגובה לכל עותק, והמערכת מרצפת את הדף בכמה שנכנסים, ומסובבת את הדף לכיוון שמכיל הכי הרבה — למשל 13×9 ס״מ = 2 × 2 = 4 (לרוחב), 9×6 ס״מ = 3 × 3 = 9. השורה שליד השדות אומרת כמה יצא ובאיזה כיוון. דף A4 הוא 21×29.7 ס״מ, ולכן לגודל גדול נכנסים מעט עותקים.", en:"Several copies → by size (cm): type a width and height per copy, and the app tiles the page with as many as fit, turning the page the way that holds the most — e.g. 13×9 cm = 2 × 2 = 4 (landscape), 9×6 cm = 3 × 3 = 9. The line next to the fields says how many and which way. A4 is 21×29.7 cm, so a large size fits few copies.", es:"Varias copias → por tamaño (cm): escribe ancho y alto por copia, y la app llena la hoja con todas las que entren, girando la hoja hacia donde caben más — p. ej. 13×9 cm = 2 × 2 = 4 (horizontal), 9×6 cm = 3 × 3 = 9. La línea junto a los campos dice cuántas y en qué sentido. A4 mide 21×29,7 cm, así que un tamaño grande deja pocas copias."},
+    {he:"לאורך / לרוחב — כיוון הדף. „לרוחב” מודפס כתמונה מסובבת על דף רגיל — הדף יוצא מלא; מסובבים את הנייר כדי לקרוא. קו מקווקו בין העותקים הוא קו החיתוך.", en:"Portrait / landscape — the page direction. “Landscape” prints as a turned picture on an ordinary page — the page comes out full; turn the paper to read it. A dashed line between copies is the cutting line.", es:"Vertical / horizontal — la orientación. “Horizontal” se imprime como imagen girada en una hoja normal — la hoja sale llena; gira el papel para leerla. La línea discontinua entre copias es la línea de corte."}]},
   {p:{he:"🖨️ הדפסה מדפיס תמונה מדויקת של הדף, שמוקטנת לבד אם המדפסת או האייפד מוסיפים שוליים — כך שום חלק לא נדחף לדף שני. הכפתור פעיל אחרי שנייה-שתיים, כשהדף מוכן. ✕ סגור חוזר לסידור. ההגדרות נשמרות במכשיר.",
       en:"🖨️ Print prints an exact picture of the sheet, which shrinks by itself if the printer or iPad adds margins — so nothing is pushed onto a second page. The button is active after a second or two, when the sheet is ready. ✕ Close returns to the schedule. Settings are kept on the device.",
       es:"🖨️ Imprimir imprime una imagen exacta de la hoja, que se achica sola si la impresora o el iPad agregan márgenes — así nada pasa a una segunda página. El botón se activa tras uno o dos segundos, cuando la hoja está lista. ✕ Cerrar vuelve al horario. Los ajustes quedan en el dispositivo."}},
@@ -3426,9 +3426,9 @@ const GUIDE = [
 /* ─────────────────────────────────────────────────────────────────── */
 {id:"news", icon:"🆕", title:{he:"מה חדש — עדכוני 27/10/2026", en:"What's new — updates of 27/10/2026", es:"Novedades — actualizaciones del 27/10/2026"},
  blocks:[
-  {p:{he:"כל מה שהשתנה במערכת ביום אחד, מגרסה 44 עד גרסה 56, לפי סדר העלייה לאוויר.",
-      en:"Everything that changed in one day, from version 44 to version 56, in the order it went live.",
-      es:"Todo lo que cambió en un día, de la versión 44 a la 56, en el orden en que se publicó."}},
+  {p:{he:"כל מה שהשתנה במערכת ביום אחד, מגרסה 44 עד גרסה 57, לפי סדר העלייה לאוויר.",
+      en:"Everything that changed in one day, from version 44 to version 57, in the order it went live.",
+      es:"Todo lo que cambió en un día, de la versión 44 a la 57, en el orden en que se publicó."}},
   {h:{he:"גרסה 44 — נוחות ותיקונים", en:"Version 44 — comfort and fixes", es:"Versión 44 — comodidad y arreglos"}},
   {li:[
     {he:"הדף לא קופץ יותר למעלה אחרי הזנה או מחיקה; קטעים פתוחים נשארים פתוחים.", en:"The page no longer jumps to the top after typing or deleting; open sections stay open.", es:"La página ya no salta arriba al escribir o borrar; las secciones abiertas quedan abiertas."},
@@ -3471,7 +3471,12 @@ const GUIDE = [
   {li:[
     {he:"הטבלה נמתחת למלא את כל הדף ואת כל עותק (במקום כ-50–60%).", en:"The table stretches to fill the whole page and every copy (instead of about 50–60%).", es:"La tabla se estira para llenar toda la hoja y cada copia (en vez de un 50–60%)."},
     {he:"חלוקה לפי מספר עותקים (עד 8) או לפי גודל בס״מ, שמרצף את הדף.", en:"Divide by number of copies (up to 8) or by size in cm, which tiles the page.", es:"Dividir por número de copias (hasta 8) o por tamaño en cm, que llena la hoja."},
-    {he:"ההדפסה תמיד על דף אחד — לא עוד עותק חמישי שקופץ לדף הבא.", en:"Printing always fits one page — no more fifth copy jumping to the next page.", es:"La impresión siempre cabe en una página — se acabó la quinta copia que salta a otra hoja."}]}
+    {he:"ההדפסה תמיד על דף אחד — לא עוד עותק חמישי שקופץ לדף הבא.", en:"Printing always fits one page — no more fifth copy jumping to the next page.", es:"La impresión siempre cabe en una página — se acabó la quinta copia que salta a otra hoja."}]},
+  {h:{he:"גרסה 57 — כיוון, גודל וגופן בהדפסה", en:"Version 57 — direction, size and type in print", es:"Versión 57 — orientación, tamaño y letra al imprimir"}},
+  {li:[
+    {he:"„לרוחב” באמת יוצא לרוחב — גם באייפד.", en:"“Landscape” really prints landscape — on the iPad too.", es:"“Horizontal” realmente sale horizontal — también en el iPad."},
+    {he:"לפי גודל: הדף מסתובב לכיוון שמכיל הכי הרבה עותקים (13×9 ס״מ = 4 בדף).", en:"By size: the page turns to hold the most copies (13×9 cm = 4 a page).", es:"Por tamaño: la hoja gira para que quepan más copias (13×9 cm = 4 por hoja)."},
+    {he:"שמות השורות והתאריכים באותו גופן וגודל כמו שאר הטבלה.", en:"Row names and dates in the same type and size as the rest of the table.", es:"Nombres de filas y fechas con la misma letra y tamaño que el resto de la tabla."}]}
  ]}
 ];
 
@@ -3677,7 +3682,7 @@ function fitFont(wmm,hmm,solo){
   _fitMemo.set(key,f);
   return f;
 }
-function printSettings(){
+function rawPrintSettings(){
   let saved={};
   try{ saved=JSON.parse(localStorage.getItem("agenda_print")||"{}"); }catch(e){}
   const p={...PRINT_DEFAULTS, ...saved};
@@ -3688,6 +3693,17 @@ function printSettings(){
            copies:Math.max(1,Math.min(8,parseInt(p.copies,10)||4)),
            w:Math.max(2,Math.min(30,parseFloat(p.w)||9)),
            h:Math.max(2,Math.min(30,parseFloat(p.h)||6)) };
+}
+function printSettings(){
+  const ps=rawPrintSettings();
+  /* By size the copy is fixed, so the page turns to whichever way holds more
+     of them (13×9 cm: 4 on a landscape sheet, 3 on a portrait one). */
+  if(ps.mode==="multi"&&ps.by==="size"){
+    const n=o=>pageLayout({...ps, orientation:o}).cells.length;
+    const other=ps.orientation==="landscape"?"portrait":"landscape";
+    if(n(other)>n(ps.orientation)) ps.orientation=other;
+  }
+  return ps;
 }
 function savePrintSettings(ps){
   try{ localStorage.setItem("agenda_print", JSON.stringify(ps)); }catch(e){}
@@ -3732,7 +3748,10 @@ function applyPageRule(orient,mode){
   if(!st){ st=document.createElement("style"); st.id="pageStyle"; document.head.appendChild(st); }
   /* a full sheet can afford a proper margin; a sheet of small copies wants
      every millimetre it can get */
-  st.textContent=`@page{size:A4 ${orient};margin:${pageMargin(mode,orient)}mm}`;
+  /* Always a portrait page: the iPad's print ignores a landscape @page, so a
+     landscape sheet is printed as its picture turned a quarter instead —
+     the same paper, filled the same way, whatever the printer honours. */
+  st.textContent=`@page{size:A4 portrait;margin:${pageMargin(mode,orient)}mm}`;
 }
 const CM=96/2.54;                          // one centimetre in CSS pixels
 function paintPrintArea(){
@@ -3765,7 +3784,8 @@ function printInfo(ps){
   if(ps.mode!=="multi") return "";
   const L=pageLayout(ps), c=L.cells[0];
   return t("print_layout",{c:L.cols, r:L.rows, n:L.cells.length,
-    w:+(c.w/10).toFixed(1), h:+(c.h/10).toFixed(1)});
+    w:+(c.w/10).toFixed(1), h:+(c.h/10).toFixed(1)})+
+    (ps.by==="size"?" · "+t(ps.orientation==="landscape"?"print_landscape":"print_portrait"):"");
 }
 function paintPrintBar(){
   const ps=printSettings();
@@ -3795,10 +3815,10 @@ function paintPrintBar(){
           <input type="number" min="1" max="8" id="pvCopies" value="${ps.copies}"></label>`}
       <span class="hint" id="pvInfo">${esc(printInfo(ps))}</span>
     </div>`:""}
-    <div class="radio-row"><b>${esc(t("print_orient"))}</b>
+    ${multi&&ps.by==="size"?"":`<div class="radio-row"><b>${esc(t("print_orient"))}</b>
       ${radio("pvOrient","portrait",ps.orientation,t("print_portrait"))}
       ${radio("pvOrient","landscape",ps.orientation,t("print_landscape"))}
-    </div>
+    </div>`}
     <div class="pb-row">
       <button class="btn primary" id="printGo" ${_pdf.blob?"":"disabled"}>${esc(t("print"))}</button>
       <button class="btn" id="printPdf" ${_pdf.blob?"":"disabled"}>${esc(t(_pdf.blob?"pdf_save":"pdf_busy"))}</button></div>`;
@@ -3813,7 +3833,7 @@ function wirePrintBar(){
                         return el?parseFloat(el.value)||d:d; };
     const cur=printSettings();
     return { mode:pick("pvMode")==="multi"?"multi":"single",
-             orientation:pick("pvOrient")==="landscape"?"landscape":"portrait",
+             orientation:(pick("pvOrient")||rawPrintSettings().orientation)==="landscape"?"landscape":"portrait",
              by:(pick("pvBy")||cur.by)==="size"?"size":"count",
              copies:Math.max(1,Math.min(8,num("pvCopies",cur.copies))),
              w:Math.max(2,Math.min(30,num("pvW",cur.w))),
@@ -3885,6 +3905,12 @@ async function buildSchedulePdf(){
   const w=canvas.width*k, h=canvas.height*k;
   _pdf.img=canvas.toDataURL("image/jpeg",0.92);
   pdf.addImage(_pdf.img,"JPEG", m+(boxW-w)/2, m, w, h);
+  /* the picture that prints: a landscape sheet turned to stand on a portrait page */
+  if(land){
+    const r=document.createElement("canvas"); r.width=canvas.height; r.height=canvas.width;
+    const cx=r.getContext("2d"); cx.translate(r.width,0); cx.rotate(Math.PI/2); cx.drawImage(canvas,0,0);
+    _pdf.printImg=r.toDataURL("image/jpeg",0.92);
+  } else _pdf.printImg=_pdf.img;
   return pdf.output("blob");
 }
 /* Safari opens the share sheet only straight out of a tap: making the PDF
@@ -3900,7 +3926,7 @@ function preparePdf(){
   const run=new Promise(r=>setTimeout(r,250))           // let a burst of changes settle
     .then(()=>gen===_pdf.gen&&document.body.classList.contains("printing")?buildSchedulePdf():null)
     .then(blob=>{ if(gen===_pdf.gen&&blob){ _pdf.blob=blob;
-        const im=document.getElementById("printImg"); if(im) im.src=_pdf.img;
+        const im=document.getElementById("printImg"); if(im) im.src=_pdf.printImg;
         paintPdfButton(); } return blob; })
     .catch(e=>{ console.error(e); return null; });
   _pdf.promise=run;

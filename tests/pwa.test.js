@@ -819,8 +819,39 @@ await test("print bar: choosing by size shows the cm fields and how many fit", a
   document.querySelector('input[name="pvBy"][value="size"]').click(); await tick();
   const w=document.getElementById("pvW"), h=document.getElementById("pvH"); ok(w&&h,"no cm fields");
   w.value="9"; h.value="6"; w.dispatchEvent(new Event("input")); h.dispatchEvent(new Event("input")); await new Promise(r=>setTimeout(r,400));
-  ok(/2\s*×\s*4/.test(document.getElementById("printBar").textContent)&&/8/.test(document.getElementById("printBar").textContent),"no '2 × 4 = 8' summary");
-  eq(document.querySelectorAll("#printArea .pcopy").length,8,"copies drawn");
+  /* since v57 the page turns to hold the most: 9×6 cm fits 3 × 3 = 9 on landscape (8 on portrait) */
+  ok(/3\s*×\s*3\s*=\s*9/.test(document.getElementById("printBar").textContent),"no '3 × 3 = 9' summary");
+  eq(document.querySelectorAll("#printArea .pcopy").length,9,"copies drawn");
+  closePrint(); localStorage.removeItem("agenda_print");
+});
+
+/* ── v57 · size, direction and type on paper ──────────────────────────── */
+await test("by size: 13×9 cm turns the page to fit the most copies (4)", async()=>{
+  freshWeek(); S.screen="sched"; render();
+  savePrintSettings({mode:"multi",by:"size",w:13,h:9,orientation:"portrait",copies:4});
+  const ps=printSettings(), L=pageLayout(ps);
+  eq(ps.orientation,"landscape","orientation chosen for 13×9");
+  eq(L.cells.length,4,"copies of 13×9 on A4");
+  L.cells.forEach(c=>ok(Math.abs(c.w-130)<0.01&&Math.abs(c.h-90)<0.01,"cell "+c.w+"x"+c.h));
+  localStorage.removeItem("agenda_print");
+});
+await test("landscape: the printed picture is turned to fill a portrait sheet", async()=>{
+  await printWith({mode:"multi",by:"count",copies:4,orientation:"landscape"});
+  const img=document.getElementById("printImg");
+  for(let i=0;i<50&&!(img.complete&&img.naturalWidth);i++) await new Promise(r=>setTimeout(r,50));
+  ok(img.naturalHeight>img.naturalWidth,"picture not turned: "+img.naturalWidth+"x"+img.naturalHeight);
+  ok(/size:A4 portrait/.test(document.getElementById("pageStyle").textContent),"page rule not portrait");
+  const txt=await (await pdfPrepared()).text();
+  ok(/\/MediaBox \[0 0 841\.8\d* 595\.2\d*\]/.test(txt),"PDF should stay landscape");
+  closePrint(); localStorage.removeItem("agenda_print");
+});
+await test("type: row names and dates use the same type as the values", async()=>{
+  await printWith({mode:"single",orientation:"portrait"});
+  const cp=document.querySelector("#printArea .pcopy");
+  const val=cp.querySelector(".print-table td:not(.label)"), lab=cp.querySelector(".print-table td.label"), th=cp.querySelector(".print-table th");
+  const f=el=>getComputedStyle(el);
+  eq(f(lab).fontSize,f(val).fontSize,"row-name size"); eq(f(lab).fontWeight,f(val).fontWeight,"row-name weight");
+  eq(f(th).fontSize,f(val).fontSize,"date size"); eq(f(th).fontWeight,f(val).fontWeight,"date weight");
   closePrint(); localStorage.removeItem("agenda_print");
 });
 
