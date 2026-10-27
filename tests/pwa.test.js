@@ -433,6 +433,7 @@ await test("why: with 💬 on, an auto-filled role says why it went to that pers
   localStorage.removeItem("agenda_archive"); CFG.fixed_rules=[]; CFG.away_calendar=[];
   newWeekByButton(MON); await tick();
   document.getElementById("btnAuto").click(); await tick();
+  S.showWhy=false; render(); await tick();       // a fresh page starts with 💬 off
   ok(!document.querySelector("table.sched .why"),"reasons shown before asking");
   document.getElementById("btnWhy").click(); await tick();
   const cell=document.querySelector(`table.sched select[data-dk="${WED}"][data-f="apt_pe"]`).closest("td");
@@ -458,6 +459,67 @@ await test("why: changing a cell by hand drops its reason", async()=>{
   const sel=document.querySelector(`table.sched select[data-dk="${MON}"][data-f="apt_il"]`);
   sel.value=""; sel.dispatchEvent(new Event("change")); await tick();
   ok(!S.why[MON+"|apt_il"],"reason kept after a manual change");
+});
+
+/* ── v49 · 10. a personal WhatsApp message per worker ────────────────── */
+function weekForMessages(){
+  localStorage.removeItem("agenda_archive"); CFG.fixed_rules=[]; CFG.away_calendar=[];
+  freshWeek(MON);
+  S.days[MON].emb_pe="HALCON+BUHO"; S.days[MON].work_hours="7:30-16:00";
+  S.days[TUE].apt_pe="BUHO";
+  S.days[WED].vacation=["BUHO"];
+  S.days[MON].emb_il="TORO";
+}
+await test("message: a PE worker gets his own week in Spanish", async()=>{
+  weekForMessages();
+  const m=workerMessage("BUHO");
+  ok(/lunes/i.test(m)&&/martes/i.test(m),"Spanish day names missing:\n"+m);
+  ok(/EMB/.test(m)&&/\bR\b/.test(m),"roles missing:\n"+m);
+  ok(m.includes("7:30-16:00"),"hours missing:\n"+m);
+  ok(m.includes(I18N.es.cal_vac),"vacation day missing:\n"+m);
+  ok(!m.includes("TORO"),"someone else's place in it:\n"+m);
+});
+await test("message: an IL worker gets Hebrew", async()=>{
+  weekForMessages();
+  ok(workerMessage("TORO").includes(I18N.he.dow_monday),"no Hebrew Monday");
+});
+await test("message: the language follows the group setting", async()=>{
+  weekForMessages(); groupById("g2").lang="en";
+  ok(/Monday/.test(workerMessage("BUHO")),"group language ignored");
+});
+await test("message: older settings give IL Hebrew and PE Spanish", async()=>{
+  const raw=JSON.parse(JSON.stringify(CFG)); raw.groups.forEach(g=>delete g.lang);
+  localStorage.setItem("agenda_config",JSON.stringify(raw));
+  const c=loadConfig();
+  eq(c.groups[0].lang,"he","IL"); eq(c.groups[1].lang,"es","PE");
+});
+await test("message: Settings choose a language per group", async()=>{
+  S.screen="settings"; render(); reopen("groups"); await tick();
+  const sel=document.querySelector('[data-glang="g2"]'); ok(sel,"no language picker");
+  sel.value="en"; document.getElementById("saveGroups").click(); await tick();
+  eq(groupById("g2").lang,"en","saved language");
+});
+await test("send: the panel lists every worker and a tap opens the share sheet at once", async()=>{
+  weekForMessages(); S.screen="sched"; S.sendOpen=false; render();
+  document.getElementById("btnSend").click(); await tick();
+  const rows=[...document.querySelectorAll("[data-send]")].map(b=>b.dataset.send);
+  eq(rows.sort().join(","),allEmps().slice().sort().join(","),"workers listed");
+  let shared=null;
+  const undo=stubShare(d=>{ shared=d; return Promise.resolve(); });
+  try{ document.querySelector('[data-send="BUHO"]').click(); } finally{ undo(); }
+  ok(shared&&shared.text===workerMessage("BUHO"),"share not called straight from the tap");
+  await tick();
+  ok(document.querySelector('[data-send="BUHO"]').closest("[data-sent]"),"not marked as sent");
+});
+await test("send: without a share sheet, WhatsApp opens with the text", async()=>{
+  weekForMessages(); S.screen="sched"; S.sendOpen=false; render();
+  document.getElementById("btnSend").click(); await tick();
+  const had=navigator.share, hadOpen=window.open; let url=null;
+  Object.defineProperty(navigator,"share",{value:undefined,configurable:true});
+  window.open=u=>{ url=u; return null; };
+  try{ document.querySelector('[data-send="TORO"]').click(); }
+  finally{ Object.defineProperty(navigator,"share",{value:had,configurable:true}); window.open=hadOpen; }
+  ok(url&&url.startsWith("https://wa.me/?text=")&&decodeURIComponent(url.slice(20))===workerMessage("TORO"),"url "+url);
 });
 
 window.__results=results;
