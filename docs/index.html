@@ -5196,7 +5196,7 @@ function wireSettings(){
    door, not a safe: the code is public, so it stops visitors, not someone
    who reads the source. The schedules themselves never leave the device.
    null ⇒ no password. */
-const SITE_LOCK = null;
+const SITE_LOCK = "v1:24b614cf16ae6f86a56c53a285f06445:200000:4c1f1b4738b785cecf5635df1e69a8a33333093d2623e50af07d3d7cf4c6e9a4";   // set 2026-10-27 from the code Amihay made in Settings → 🔒
 const LOCK_ITER = 200000;
 const hex=b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("");
 async function lockHash(pw, saltHex, iter){
