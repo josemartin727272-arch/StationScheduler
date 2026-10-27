@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1F4E79">
 <meta name="mobile-web-app-capable" content="yes">
+<!-- private tool: keep it out of search engines -->
+<meta name="robots" content="noindex, nofollow, noarchive">
+<!-- Nothing on this page may talk to another site: no requests, images,
+     frames or form posts outside its own address. Inline script/style are
+     allowed because the whole app is one file; eval is not. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'self'; manifest-src 'self'; media-src 'none'; object-src 'none'; frame-src 'self' blob: data:; base-uri 'none'; form-action 'none'">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -730,8 +736,8 @@ const DEFAULT_VAC_BUDGET = 14;
 const DEFAULT_CONFIG = {
   schema_version: 3,
   groups: [
-    { id:"g1", name:"IL", color:"#D6E4F0", employees:["LEON","TORO"], active:true, lang:"he" },
-    { id:"g2", name:"PE", color:"#FAD7A0", employees:["HALCON","CHCHORRO","BUHO"], active:true, lang:"es" },
+    { id:"g1", name:"IL", color:"#D6E4F0", employees:["עובד 1","עובד 2"], active:true, lang:"he" },
+    { id:"g2", name:"PE", color:"#FAD7A0", employees:["עובד 3","עובד 4","עובד 5"], active:true, lang:"es" },
     { id:"g3", name:"",   color:"#D5F5E3", employees:[], active:false },
     { id:"g4", name:"",   color:"#FADBD8", employees:[], active:false },
     { id:"g5", name:"",   color:"#E8DAEF", employees:[], active:false }
@@ -776,7 +782,9 @@ const DEFAULT_CONFIG = {
     { id:"et5", label:{he:"",en:"",es:""}, options:[], morning_values:[], noon_values:[],
       target_morning:0, target_noon:0, active:false }
   ],
-  vacation_budget: { LEON:14, TORO:14, HALCON:30, CHCHORRO:30, BUHO:30 },
+  /* no names here: a stored budget is merged key by key, so any name in the
+     defaults would appear in every station's list. Missing ⇒ the default. */
+  vacation_budget: {},
   options: {
     entry: ["10","13","10-T","13-D","SPLIT","חג"],
     exit:  ["10","13","13-T","10-D","SPLIT","חג"],
@@ -3560,9 +3568,9 @@ const GUIDE = [
       en:"💬 Why? shows under each cell Auto Assign filled a short line saying why — e.g. “fewest this week (1 so far)”, “Morning taxi: axis A (70%)” or “weekly target: YELLOW × 2”. Tap again to hide. Reasons belong to the last run on the open week; a cell you change by hand loses its reason.",
       es:"💬 ¿Por qué? muestra bajo cada celda que llenó la Asignación Automática una línea corta con el motivo — p. ej. “menos veces esta semana (1 hasta ahora)”, “Taxi de mañana: ruta A (70%)” u “objetivo semanal: YELLOW × 2”. Otro toque lo oculta. Los motivos son de la última asignación en la semana abierta; una celda cambiada a mano pierde su motivo."}},
   {h:{he:"📌 שיבוצים קבועים", en:"📌 Fixed assignments", es:"📌 Asignaciones fijas"}},
-  {p:{he:"בהגדרות ← 📌 שיבוצים קבועים בוחרים יום, שורה וערך — למשל שני · EMB IL · TORO — ולוחצים ➕. מעכשיו כל שבוע חדש נפתח עם התא הזה כבר מלא, ושיבוץ אוטומטי שומר עליו כמו על הזנה ידנית. גם 🗑 נקה מחזיר אותו. אם העובד נעדר באותו יום, התא נשאר ריק ותופיע הערה עם 📌.",
-      en:"In Settings → 📌 Fixed assignments pick a day, a row and a value — e.g. Monday · EMB IL · TORO — and tap ➕. From then on every new week opens with that cell filled, and Auto Assign keeps it like a hand-typed value. 🗑 Clear puts it back too. If the person is away that day the cell stays empty and a 📌 note says why.",
-      es:"En Ajustes → 📌 Asignaciones fijas elige un día, una fila y un valor — p. ej. lunes · EMB IL · TORO — y toca ➕. Desde entonces cada semana nueva abre con esa celda llena, y la Asignación Automática la respeta como un valor escrito a mano. 🗑 Limpiar también la repone. Si la persona está ausente ese día, la celda queda vacía y una nota 📌 lo explica."}},
+  {p:{he:"בהגדרות ← 📌 שיבוצים קבועים בוחרים יום, שורה וערך — למשל שני · EMB IL · עובד 1 — ולוחצים ➕. מעכשיו כל שבוע חדש נפתח עם התא הזה כבר מלא, ושיבוץ אוטומטי שומר עליו כמו על הזנה ידנית. גם 🗑 נקה מחזיר אותו. אם העובד נעדר באותו יום, התא נשאר ריק ותופיע הערה עם 📌.",
+      en:"In Settings → 📌 Fixed assignments pick a day, a row and a value — e.g. Monday · EMB IL · Worker 1 — and tap ➕. From then on every new week opens with that cell filled, and Auto Assign keeps it like a hand-typed value. 🗑 Clear puts it back too. If the person is away that day the cell stays empty and a 📌 note says why.",
+      es:"En Ajustes → 📌 Asignaciones fijas elige un día, una fila y un valor — p. ej. lunes · EMB IL · Trabajador 1 — y toca ➕. Desde entonces cada semana nueva abre con esa celda llena, y la Asignación Automática la respeta como un valor escrito a mano. 🗑 Limpiar también la repone. Si la persona está ausente ese día, la celda queda vacía y una nota 📌 lo explica."}},
   {h:{he:"📲 שליחה לעובדים", en:"📲 Sending to workers", es:"📲 Envío a los trabajadores"}},
   {p:{he:"📲 שלח לעובדים פותח מעל הטבלה רשימה של כל העובדים. לחיצה על „שלח” ליד עובד מכינה הודעה עם השבוע שלו בלבד — לכל יום: השעות ואיפה הוא, או חופשה / נסיעה / פנוי — ופותחת את תפריט השיתוף; בוחרים וואטסאפ ואת העובד. ההודעה נכתבת בשפת הקבוצה שלו, שנקבעת בהגדרות ← 👤 קבוצות עובדים. עובד שנשלח לו מסומן ב-✓ עד שנפתח שבוע חדש.",
       en:"📲 Send to workers opens a list of everyone above the table. “Send” next to a worker builds a message with only their week — for each day: the hours and where they are, or vacation / trip / off — and opens the share menu; pick WhatsApp and the worker. It is written in their group's language, set in Settings → 👤 Employee groups. A worker you sent to is marked ✓ until a new week is opened.",
@@ -4561,7 +4569,7 @@ function reopen(key){
 }
 /* Every place a name lives: the group roster, the vacation budget, fixed
    rules, the absence calendar, every saved week and the open one. Inside a
-   cell only whole names change — "HALCON+BUHO" becomes "HALCON+PUMA". */
+   cell only whole names change — "A+B" becomes "A+C". */
 function renameEmployee(from,to){
   const swap=v=>{
     if(Array.isArray(v)) return v.map(x=>x===from?to:x);

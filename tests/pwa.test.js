@@ -1,9 +1,17 @@
 /* Browser tests for docs/index.html.
    Run: serve the repo root, open /docs/index.html, then in the console
-     await (await fetch("/tests/pwa.test.js?"+Date.now())).text().then(eval)
-   and read window.__results. Every test leaves the app's storage as it found it. */
+     const sc=document.createElement("script"); sc.src="/tests/pwa.test.js?"+Date.now();
+     document.head.appendChild(sc);
+   and read window.__results once it is set. (Loaded as a script, not eval'ed:
+   the page's Content-Security-Policy forbids eval, as it should.)
+   Every test leaves the app's storage as it found it. */
+window.__results=null;
 (async()=>{
 const results=[]; const tick=()=>new Promise(r=>setTimeout(r,30));
+const __origCfg=JSON.stringify(CFG);
+CFG.groups[0].employees=["LEON","TORO"]; CFG.groups[0].active=true; CFG.groups[0].lang="he";
+CFG.groups[1].employees=["HALCON","CHCHORRO","BUHO"]; CFG.groups[1].active=true; CFG.groups[1].lang="es";
+CFG.vacation_budget={LEON:14,TORO:14,HALCON:30,CHCHORRO:30,BUHO:30};
 async function test(name, fn){
   const snap={}; for(const k of Object.keys(localStorage)) snap[k]=localStorage.getItem(k);
   const cfg=JSON.stringify(CFG);
@@ -572,6 +580,44 @@ await test("rename: statistics then show one person, not two", async()=>{
   ok(tx.includes("PUMA")&&!tx.includes("BUHO"),"stats still split the person");
 });
 
+/* ── v51 · privacy and hardening ──────────────────────────────────────── */
+const REAL=["LEON","TORO","HALCON","CHCHORRO","BUHO"];
+await test("privacy: the page asks search engines not to list it", async()=>{
+  const m=document.querySelector('meta[name="robots"]');
+  ok(m&&/noindex/.test(m.content)&&/nofollow/.test(m.content),"no noindex/nofollow");
+});
+await test("privacy: the published code holds none of the station's real names", async()=>{
+  const src=await (await fetch("/docs/index.html?"+Date.now())).text();
+  const found=REAL.filter(n=>src.includes(n));
+  eq(found.join(","),"","names in index.html");
+});
+await test("privacy: a station's own saved names and budgets survive the generic defaults", async()=>{
+  const raw=JSON.parse(JSON.stringify(CFG));          // the fixture: real names, real budgets
+  localStorage.setItem("agenda_config",JSON.stringify(raw));
+  const c=loadConfig();
+  eq(c.groups[1].employees.join(","),"HALCON,CHCHORRO,BUHO","employees");
+  eq(JSON.stringify(c.vacation_budget),JSON.stringify(raw.vacation_budget),"budget gained default keys");
+});
+await test("hardening: a policy forbids sending anything to another site", async()=>{
+  const m=document.querySelector('meta[http-equiv="Content-Security-Policy"]');
+  ok(m,"no Content-Security-Policy");
+  const seen=[]; const on=e=>seen.push(e.violatedDirective+" "+e.blockedURI);
+  document.addEventListener("securitypolicyviolation",on);
+  try{
+    await fetch("https://example.com/leak?x=1").catch(()=>{});
+    const img=new Image(); img.src="https://example.com/leak.png?x=1";
+    await new Promise(r=>setTimeout(r,300));
+  } finally{ document.removeEventListener("securitypolicyviolation",on); }
+  ok(seen.some(x=>x.startsWith("connect-src")&&x.includes("example.com")),"fetch not blocked: "+seen.join(" | "));
+  ok(seen.some(x=>x.startsWith("img-src")&&x.includes("example.com")),"image not blocked: "+seen.join(" | "));
+});
+await test("hardening: the PDF still builds under the policy", async()=>{
+  freshWeek(); S.screen="sched"; render(); doPrint();
+  const b=await buildSchedulePdf(); closePrint();
+  ok(b&&b.size>5000,"no PDF");
+});
+
+CFG=JSON.parse(__origCfg);
 window.__results=results;
 return results;
 })();
