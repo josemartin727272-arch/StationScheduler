@@ -292,6 +292,9 @@ body.printing>header,body.printing>main{visibility:hidden}
 .print-table th{font-weight:700;background:#f0f0f0;
   -webkit-print-color-adjust:exact;print-color-adjust:exact}
 .print-table td{font-weight:500}
+/* a pair of names breaks after its "+" onto a second line instead of being
+   cut off — portrait A4 is too narrow for two long names side by side */
+.print-table td:not(.label){white-space:normal;overflow-wrap:anywhere}
 .print-table td.label{text-align:start;font-weight:600;background:#f7f7f7;
   font-size:6.5pt;white-space:normal;
   -webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -355,6 +358,7 @@ log_export_week:"ייצוא הסידור לשבוע {w}",log_backup:"גיבוי 
 log_cfg_export:"ייצוא הגדרות",log_cfg_import:"ייבוא הגדרות",guide_lead:"מדריך קצר לכל מה שהמערכת יודעת לעשות. פתח פרק כדי לקרוא אותו.",
 week_start:"תחילת שבוע",generate:"צור סידור",auto_assign:"⚡ שיבוץ אוטומטי",save:"💾 שמור",export_excel:"📤 ייצוא Excel",print:"🖨️ הדפסה",
 warn_count:"מספר הערות על הסידור",close:"סגור",
+pdf_save:"📄 שמור PDF",pdf_busy:"מכין PDF…",pdf_fail:"לא הצלחתי ליצור PDF",pdf_ready:"ה-PDF ירד",
 print_orient:"כיוון דף",print_portrait:"לאורך",print_landscape:"לרוחב",
 s_print:"🖨️ הגדרות הדפסה",print_mode:"מצב הדפסה",
 print_single:"סידור מלא — דף A4 שלם, עותק אחד",
@@ -457,6 +461,7 @@ ax_entry_title:"כניסה ↔ ציר בוקר",ax_exit_title:"יציאה ↔ צ
 ax_rules_hint:"סמן אילו צירים מותרים לכל ערך, וקבע אחוז לכל אחד. הסכום חייב להיות 100%. בלי סימון — כל ציר מותר.",
 ax_add:"➕ הוסף ציר",ax_max:"הגעת למספר הצירים המרבי",ax_none:"אין צירים פעילים — הוסף ציר",
 err_axis_ud:"ציר {a}: סכום U+D הוא {n}%, חייב 100%",
+ax_share:"% שימוש בציר",ax_share_hint:"כמה מהשיבוצים יקבל כל ציר מתוך כל הצירים. הסכום חייב להיות 100%. האחוזים של שעות הכניסה/יציאה למטה ממשיכים לפעול יחד איתם.",err_axis_share:"אחוזי השימוש בצירים מסתכמים ב-{n}%, חייב 100%",ax_equal:"↺ חלוקה שווה",ax_taxi_title:"🚕 עדיפות ציר כשיש מונית מיוחדת",ax_taxi_hint:"ביום שבו סוג הרכב הוא {v}, הציר ייבחר מתוך הצירים שסימנת. שעת כניסה/יציאה שהוזנה ידנית נשמרת. לא סימנת כלום — אין עדיפות.",ax_taxi_morning:"מונית בוקר",ax_taxi_noon:"מונית צהריים",
 err_axis_rule_pct:"{f} {v}: סכום אחוזי הצירים הוא {n}%, חייב 100%",
 warn_axis_rule:"{f} {a} לא מותר עבור {e} {v}"},
 en:{app_title:"Asher Taxi Scheduler",nav_sched:"📋 Schedule",nav_settings:"⚙️ Settings",nav_archive:"📁 Archive",nav_stats:"📊 Statistics",
@@ -475,6 +480,7 @@ log_export_week:"Exported the schedule for {w}",log_backup:"Full backup download
 log_cfg_export:"Settings exported",log_cfg_import:"Settings imported",guide_lead:"A short guide to everything the app can do. Open a chapter to read it.",
 week_start:"Week start",generate:"New Schedule",auto_assign:"⚡ Auto Assign",save:"💾 Save",export_excel:"📤 Export Excel",print:"🖨️ Print",
 warn_count:"Notes on this schedule",close:"Close",
+pdf_save:"📄 Save PDF",pdf_busy:"Preparing PDF…",pdf_fail:"Could not create the PDF",pdf_ready:"PDF downloaded",
 print_orient:"Page direction",print_portrait:"Portrait",print_landscape:"Landscape",
 s_print:"🖨️ Print settings",print_mode:"Print mode",
 print_single:"Full schedule — one whole A4 page, a single copy",
@@ -577,6 +583,7 @@ ax_entry_title:"Entry ↔ morning axis",ax_exit_title:"Exit ↔ noon axis",
 ax_rules_hint:"Tick the axes each value may use and set a share for each. Must total 100%. Nothing ticked means any axis is allowed.",
 ax_add:"➕ Add axis",ax_max:"Maximum number of axes reached",ax_none:"No active axes — add one",
 err_axis_ud:"Axis {a}: U+D totals {n}%, must be 100%",
+ax_share:"% axis use",ax_share_hint:"What share of all assignments each axis gets. Must total 100%. The entry/exit shares below keep working alongside.",err_axis_share:"Axis use shares total {n}%, must be 100%",ax_equal:"↺ Equal split",ax_taxi_title:"🚕 Preferred axis with a special taxi",ax_taxi_hint:"On a day whose vehicle is {v}, the axis is chosen from the ones ticked here. An entry/exit typed by hand is kept. Nothing ticked — no preference.",ax_taxi_morning:"Morning taxi",ax_taxi_noon:"Noon taxi",
 err_axis_rule_pct:"{f} {v}: axis shares total {n}%, must be 100%",
 warn_axis_rule:"{f} {a} is not allowed for {e} {v}"},
 es:{app_title:"Asher Programador de Taxis",nav_sched:"📋 Horario",nav_settings:"⚙️ Configuración",nav_archive:"📁 Archivo",nav_stats:"📊 Estadísticas",
@@ -595,6 +602,7 @@ log_export_week:"Se exportó el horario de {w}",log_backup:"Respaldo completo de
 log_cfg_export:"Configuración exportada",log_cfg_import:"Configuración importada",guide_lead:"Una guía breve de todo lo que hace la app. Abre un capítulo para leerlo.",
 week_start:"Inicio de semana",generate:"Nuevo Horario",auto_assign:"⚡ Asignación Automática",save:"💾 Guardar",export_excel:"📤 Exportar Excel",print:"🖨️ Imprimir",
 warn_count:"Observaciones del horario",close:"Cerrar",
+pdf_save:"📄 Guardar PDF",pdf_busy:"Preparando PDF…",pdf_fail:"No se pudo crear el PDF",pdf_ready:"PDF descargado",
 print_orient:"Orientación",print_portrait:"Vertical",print_landscape:"Horizontal",
 s_print:"🖨️ Ajustes de impresión",print_mode:"Modo de impresión",
 print_single:"Horario completo — una hoja A4 entera, una copia",
@@ -697,6 +705,7 @@ ax_entry_title:"Ingreso ↔ ruta mañana",ax_exit_title:"Salida ↔ ruta mediod�
 ax_rules_hint:"Marca las rutas que cada valor puede usar y asigna un porcentaje. Debe sumar 100%. Sin marcar, cualquier ruta vale.",
 ax_add:"➕ Agregar ruta",ax_max:"Número máximo de rutas alcanzado",ax_none:"No hay rutas activas — agrega una",
 err_axis_ud:"Ruta {a}: U+D suma {n}%, debe ser 100%",
+ax_share:"% uso de ruta",ax_share_hint:"Qué parte de todas las asignaciones recibe cada ruta. Debe sumar 100%. Los porcentajes de entrada/salida de abajo siguen funcionando junto a estos.",err_axis_share:"El uso de rutas suma {n}%, debe ser 100%",ax_equal:"↺ División igual",ax_taxi_title:"🚕 Ruta preferida con taxi especial",ax_taxi_hint:"En un día cuyo vehículo es {v}, la ruta se elige entre las marcadas aquí. Una entrada/salida escrita a mano se respeta. Nada marcado — sin preferencia.",ax_taxi_morning:"Taxi de mañana",ax_taxi_noon:"Taxi de mediodía",
 err_axis_rule_pct:"{f} {v}: los porcentajes de rutas suman {n}%, debe ser 100%",
 warn_axis_rule:"{f} {a} no está permitido para {e} {v}"}
 };
@@ -795,6 +804,8 @@ const DEFAULT_CONFIG = {
     "10-D":  { axes:["B","C"], pcts:{B:50, C:50} },
     "SPLIT": { axes:["A","B","C","D"], pcts:{A:25, B:25, C:25, D:25} }
   },
+  /* axes preferred on a special-taxi slot; empty means no preference */
+  taxi_axes: { morning:[], noon:[] },
   special_values: { holiday:"חג", vehicle_special:"YELLOW" },
   /* Weekly quotas, any number of them. `value:""` means "this row is filled",
      any other value means "this exact value". A field listed here is governed
@@ -981,7 +992,12 @@ function migrateConfig(cfg, raw){
     id:String(a.id).toUpperCase(), label:(a.label||a.id),
     pct_u:Math.max(0,Math.min(100,parseInt(a.pct_u,10)||0)),
     pct_d:Math.max(0,Math.min(100,parseInt(a.pct_d,10)||0)),
+    /* share of all assignments; missing means "not set", i.e. all equal */
+    pct:(a.pct==null||a.pct==="")?null:Math.max(0,Math.min(100,parseInt(a.pct,10)||0)),
     active:a.active!==false }));
+  const ta=cfg.taxi_axes||{};
+  cfg.taxi_axes={ morning:(ta.morning||[]).map(x=>String(x).toUpperCase()),
+                  noon:(ta.noon||[]).map(x=>String(x).toUpperCase()) };
   /* The old free-text/letter reference maps become real rules, split evenly
      across the letters they named. */
   [["entry_axis_map","entry_axis_rules"],["exit_axis_map","exit_axis_rules"]].forEach(([oldKey,newKey])=>{
@@ -1404,13 +1420,41 @@ function valuesAllowingAxis(kind, letter, pool){
 /* Pick a composite axis for `value`: the letter comes from that value's rule
    percentages balanced against history, then the chosen axis's own U/D split
    picks the side — also balanced against history, per letter. */
-function pickAxis(kind, value, counts){
+/* each axis's share of all assignments, or null while none was set (then
+   every axis counts the same) */
+function axisShares(){
+  const act=activeAxes();
+  if(!act.length||act.some(a=>a.pct==null)) return null;
+  const m={}; act.forEach(a=>{ m[a.id]=Math.max(0,+a.pct||0); });
+  return m;
+}
+/* the axis letters ticked for a special-taxi slot ("morning" / "noon") */
+function taxiAxes(side){
+  const live=axisLetters();
+  return (((CFG.taxi_axes||{})[side])||[]).filter(L=>live.includes(L));
+}
+/* `value` may be null (the hour is not chosen yet: any axis). `only`, when
+   given, narrows the letters further — the special-taxi preference — unless
+   nothing would be left. The letter is weighted by the hour's own split
+   times the axis's overall share; if those two leave nothing, the hour's
+   split alone decides. */
+function pickAxis(kind, value, counts, only){
   counts=counts||{};
-  const letters=allowedAxesFor(kind, value);
+  let letters=value?allowedAxesFor(kind, value):axisLetters();
+  if(only&&only.length){ const n=letters.filter(L=>only.includes(L)); if(n.length) letters=n; }
   if(!letters.length) return "";
   const letterCounts={};
   for(const v in counts){ const L=axisLetterOf(v); letterCounts[L]=(letterCounts[L]||0)+counts[v]; }
-  const letter=leastUsed(letters, letterCounts, axisPctsFor(kind, value));
+  const rule=value?axisPctsFor(kind, value):null, share=axisShares();
+  let w=rule;
+  if(share){
+    w={};
+    letters.forEach(L=>{
+      const r=rule?(rule[L]!=null?(+rule[L]||0):100/letters.length):1;
+      w[L]=r*(share[L]||0); });
+    if(!letters.some(L=>w[L]>0)) w=rule;
+  }
+  const letter=leastUsed(letters, letterCounts, w);
   const ax=axisById(letter);
   if(!ax) return "";
   const dirCounts={U:0, D:0};
@@ -1636,6 +1680,45 @@ function autoAssign(){
   /* skip rows a quota already filled, and rows the user deleted outright */
   const free=f=>!gov.has(f)&&present.has(f);
 
+  /* People are balanced inside the week: a role goes to whoever has held it
+     the fewest times this week. Only a tie looks further back, at the last
+     90 days, so the odd extra turn rotates between people from week to week
+     instead of landing on the same one. Each name inside a pair counts on
+     its own. (Before, the 90-day history decided outright, and someone who
+     had been away would be handed the same role day after day to catch up.) */
+  const names=v=>String(v||"").split("+").filter(Boolean);
+  const pastPeople={};                       // row key → name → times, last 90 days
+  { const arch=loadArchive(), from=addDays(keys[0],-HISTORY_DAYS);
+    for(const wk in arch) for(const d in arch[wk]){
+      if(d<from||d>=keys[0]) continue;     // this week is counted live, below
+      secs.forEach(x=>{ const rk=x.sec.row_key, c=pastPeople[rk]=pastPeople[rk]||{};
+        names(arch[wk][d][rk]).forEach(e=>{ c[e]=(c[e]||0)+1; }); });
+    } }
+  const thisWeek=rk=>{ const c={};
+    keys.forEach(k=>names(S.days[k][rk]).forEach(e=>{ c[e]=(c[e]||0)+1; })); return c; };
+  const pickPeople=(pool,rk,n)=>{
+    const wc=thisWeek(rk), pc=pastPeople[rk]||{};
+    const groups=n<=1?pool.map(e=>[e]):combos(pool,n).map(names);
+    let best=null, ties=[];
+    groups.forEach(g=>{
+      const sc=[g.reduce((a,e)=>a+(wc[e]||0),0), g.reduce((a,e)=>a+(pc[e]||0),0)];
+      if(!best||sc[0]<best[0]||(sc[0]===best[0]&&sc[1]<best[1])){ best=sc; ties=[g]; }
+      else if(sc[0]===best[0]&&sc[1]===best[1]) ties.push(g);
+    });
+    const g=ties[Math.floor(Math.random()*ties.length)];
+    return g?g.join("+"):"";
+  };
+
+  /* vehicles with no quota of their own still need a value on every day —
+     decided before the days themselves, because a special-taxi slot steers
+     that day's axis */
+  ["vehicle_morning","vehicle_noon"].forEach(f=>{
+    if(!free(f)) return;
+    const counts={...(hist[f]||{})};
+    workKeys.forEach(k=>{ if(!S.days[k][f]){
+      const c=leastUsed(opts("vehicle"),counts,"vehicle"); counts[c]=(counts[c]||0)+1; S.days[k][f]=c; } });
+  });
+
   keys.forEach(dk=>{
     const day=S.days[dk];
     /* a holiday: nothing is added, and whatever was typed by hand stays */
@@ -1645,18 +1728,31 @@ function autoAssign(){
     /* entry ↔ morning axis and exit ↔ noon axis. The value chooses the axis
        letter through the station's rules; the axis's own U/D split chooses the
        side. Whichever of the two is already filled constrains the other. */
-    [["entry","axis_morning"],["exit","axis_noon"]].forEach(([vf,af])=>{
+    const share=axisShares();
+    [["entry","axis_morning","vehicle_morning","morning"],
+     ["exit","axis_noon","vehicle_noon","noon"]].forEach(([vf,af,vh,side])=>{
       const pool=opts(vf).filter(o=>o!==holiday);
+      /* A special-taxi slot prefers the axes ticked for it. Unless the hour
+         was typed by hand, the axis is chosen first and the hour follows it. */
+      const pri=day[vh]===VS?taxiAxes(side):[];
+      if(pri.length&&free(af)&&!day[af]&&!day[vf]&&activeAxes().length){
+        const fits=pri.filter(L=>valuesAllowingAxis(vf,L,pool).length);
+        if(fits.length) day[af]=pickAxis(vf, null, H(af), fits);
+      }
       if(free(vf)&&!day[vf]&&pool.length){
         let cand=pool;
         if(day[af]){
           const narrowed=valuesAllowingAxis(vf, axisLetterOf(day[af]), pool);
           if(narrowed.length) cand=narrowed;
+        } else if(share){
+          /* an hour whose every axis is at 0% would leave no usable axis */
+          const n=pool.filter(v=>allowedAxesFor(vf,v).some(L=>share[L]>0));
+          if(n.length) cand=n;
         }
         day[vf]=leastUsed(cand,H(vf),vf);
       }
       if(free(af)&&!day[af]&&activeAxes().length)
-        day[af]=pickAxis(vf, day[vf], H(af));
+        day[af]=pickAxis(vf, day[vf], H(af), pri);
     });
 
     /* Roles in the configured staffing order. Each one draws from its own
@@ -1677,8 +1773,7 @@ function autoAssign(){
       const pool=(g?groupEmps(g.id):allEmps())
         .filter(e=>!away.has(e)&&e!==other&&!busy.has(e));
       if(pool.length<want) return "";                // the floor cannot be met
-      return want===1?leastUsed(pool,H(sec.row_key))
-                     :leastUsed(combos(pool,want),H(sec.row_key));
+      return pickPeople(pool,sec.row_key,want);
     };
     /* grow a section that already holds its floor up to max_workers */
     const topUp=(sec,busy,owed)=>{
@@ -1691,8 +1786,7 @@ function autoAssign(){
       /* never grow a row past its floor on someone a later workplace needs */
       want=Math.min(want, pool.length-((owed&&owed.get(sec.group_id||""))||0));
       if(want<1||!pool.length) return;
-      const add=want===1?leastUsed(pool,H(sec.row_key))
-                        :leastUsed(combos(pool,Math.min(want,pool.length)),H(sec.row_key));
+      const add=pickPeople(pool,sec.row_key,Math.min(want,pool.length));
       if(!add) return;
       day[sec.row_key]=have.concat(String(add).split("+").filter(Boolean)).join("+");
       String(add).split("+").forEach(e=>busy.add(e));
@@ -1720,13 +1814,6 @@ function autoAssign(){
     for(const f of hFields) bump(weekly,f,day[f]);
   });
 
-  /* vehicles with no quota of their own still need a value on every day */
-  ["vehicle_morning","vehicle_noon"].forEach(f=>{
-    if(!free(f)) return;
-    const counts={...(hist[f]||{})};
-    workKeys.forEach(k=>{ if(!S.days[k][f]){
-      const c=leastUsed(opts("vehicle"),counts,"vehicle"); counts[c]=(counts[c]||0)+1; S.days[k][f]=c; } });
-  });
 
   /* extra tasks: each row gets its own morning/noon targets, balanced by type */
   activeExtras().forEach(et=>{
@@ -1851,6 +1938,11 @@ function validate(){
     const sum=(+a.pct_u||0)+(+a.pct_d||0);
     if(sum!==100) errs.push({lvl:"err",msg:"❌ "+t("err_axis_ud",{a:axisLabel(a),n:sum})});
   });
+  const share=axisShares();
+  if(share){
+    const sum=Object.values(share).reduce((a,b)=>a+b,0);
+    if(sum!==100) errs.push({lvl:"err",msg:"❌ "+t("err_axis_share",{n:sum})});
+  }
   ["entry","exit"].forEach(kind=>{
     const rules=axisRules(kind);
     for(const v in rules){
@@ -1877,7 +1969,53 @@ function validate(){
 }
 
 /* ═══════════════ render: shell ═══════════════ */
+/* ── keeping the page still across a re-render ───────────────────────────
+   render() rebuilds the whole screen, which used to close every open
+   section, reset every scrolling table to its top and move the page under
+   the user's finger. Before rebuilding we note what was open, where each
+   table was scrolled, and where on screen the last thing touched sat; after
+   rebuilding we put all three back. Only on the same screen — a new screen
+   starts at its top. */
+let _touched=null, _shownScreen=null;
+["pointerdown","focusin","change"].forEach(type=>
+  document.addEventListener(type, ev=>{ _touched=ev.target; }, true));
+function detailsKey(d){ return d.dataset.sect||d.dataset.guide||d.dataset.month||""; }
+/* a selector that finds "the same" element in the rebuilt screen */
+function anchorSelector(el){
+  for(let n=el; n&&n.id!=="app"; n=n.parentElement){
+    const attrs=Object.keys(n.dataset||{});
+    if(n.id) return "#"+CSS.escape(n.id);
+    if(attrs.length) return n.tagName.toLowerCase()+attrs.map(k=>
+      `[data-${k.replace(/[A-Z]/g,c=>"-"+c.toLowerCase())}="${CSS.escape(n.dataset[k])}"]`).join("");
+  }
+  return null;
+}
+function captureView(){
+  const app=document.getElementById("app");
+  const open={};
+  app.querySelectorAll("details").forEach(d=>{ const k=detailsKey(d); if(k) open[k]=d.open; });
+  const boxes=[...app.querySelectorAll(".tbl-wrap")].map(b=>[b.scrollTop,b.scrollLeft]);
+  let anchor=null;
+  if(_touched&&app.contains(_touched)){
+    const sel=anchorSelector(_touched);
+    if(sel) anchor={sel, top:_touched.getBoundingClientRect().top};
+  }
+  return {open, boxes, anchor, x:window.scrollX, y:window.scrollY};
+}
+function restoreView(v){
+  const app=document.getElementById("app");
+  app.querySelectorAll("details").forEach(d=>{ const k=detailsKey(d); if(k in v.open) d.open=v.open[k]; });
+  const boxes=app.querySelectorAll(".tbl-wrap");
+  if(boxes.length===v.boxes.length)
+    boxes.forEach((b,i)=>{ b.scrollTop=v.boxes[i][0]; b.scrollLeft=v.boxes[i][1]; });
+  window.scrollTo(v.x, v.y);
+  const el=v.anchor&&app.querySelector(v.anchor.sel);
+  if(el){ _touched=el; window.scrollBy(0, el.getBoundingClientRect().top-v.anchor.top); }
+}
+
 function render(){
+  const same=_shownScreen===S.screen;
+  const view=same?captureView():null;
   document.documentElement.lang=S.lang;
   document.documentElement.dir=(S.lang==="he")?"rtl":"ltr";
   document.title=t("app_title")+" 🚕";
@@ -1901,6 +2039,8 @@ function render(){
   else if(S.screen==="guide") app.innerHTML=viewGuide();
   else app.innerHTML=viewStats();
   wire();
+  if(view) restoreView(view); else if(_shownScreen!==null) window.scrollTo(0,0);
+  _shownScreen=S.screen;
 }
 
 /* ═══════════════ screen 1: schedule ═══════════════ */
@@ -2448,22 +2588,46 @@ function axesPanel(){
   const act=activeAxes();
   if(!act.length) h+=`<div class="msg warn">${t("ax_none")}</div>`;
   else {
+    const share=axisShares();
+    /* not set yet: show the equal split it behaves as, remainder on the last */
+    const eqp=Math.floor(100/act.length);
+    const shown=a=>share?share[a.id]:(a===act[act.length-1]?100-eqp*(act.length-1):eqp);
     h+=`<table class="stats"><tr><th>${t("opt_axis")}</th><th>% U</th><th>% D</th>
-      <th>${t("pct_total")}</th><th></th></tr>`;
+      <th>${t("pct_total")}</th><th>${t("ax_share")}</th><th></th></tr>`;
     act.forEach(a=>{
       const sum=(+a.pct_u||0)+(+a.pct_d||0);
       h+=`<tr><td><input data-axlabel="${esc(a.id)}" value="${esc(axisLabel(a))}" style="width:80px"></td>
         <td><input type="number" min="0" max="100" data-axu="${esc(a.id)}" value="${+a.pct_u||0}"></td>
         <td><input type="number" min="0" max="100" data-axd="${esc(a.id)}" value="${+a.pct_d||0}"></td>
         <td><span class="pct-tot ${sum===100?"ok":"bad"}" data-axtot="${esc(a.id)}">${sum}%</span></td>
+        <td><input type="number" min="0" max="100" data-axpct="${esc(a.id)}" value="${shown(a)}"></td>
         <td><button class="btn small warn" data-axremove="${esc(a.id)}">🗑</button></td></tr>`;
     });
+    const tot=act.reduce((x,a)=>x+shown(a),0);
+    h+=`<tr><td colspan="4" class="hint">${t("ax_share_hint")}</td>
+      <td><span class="pct-tot ${tot===100?"ok":"bad"}" id="axShareTot">${tot}%</span>
+        <br><button class="btn small" id="axShareEq">${t("ax_equal")}</button></td><td></td></tr>`;
     h+=`</table>`;
   }
   h+=`<p class="row-flex">
     <button class="btn" id="addAxis" ${act.length<MAX_AXES?"":"disabled"}>${t("ax_add")}</button>
     <button class="btn primary" id="saveAxes">${t("save_settings")}</button></p>`;
-  return h;
+  return h+taxiAxesPanel();
+}
+/* the axes a special-taxi slot prefers, morning and noon */
+function taxiAxesPanel(){
+  const letters=axisLetters();
+  let h=`<h3>${t("ax_taxi_title")}</h3>
+    <div class="hint">${esc(t("ax_taxi_hint",{v:CFG.special_values.vehicle_special}))}</div>`;
+  if(!letters.length) return h;
+  [["morning","ax_taxi_morning"],["noon","ax_taxi_noon"]].forEach(([side,lbl])=>{
+    const on=taxiAxes(side);
+    h+=`<div class="sec-row"><b style="min-width:110px">${t(lbl)}</b><div class="chk-row">`+
+      letters.map(L=>`<label class="chk"><input type="checkbox" data-taxiax="${side}"
+        data-letter="${esc(L)}" ${on.includes(L)?"checked":""}> ${esc(axisLabel(axisById(L)))}</label>`).join("")+
+      `</div></div>`;
+  });
+  return h+`<p><button class="btn primary" id="saveTaxiAxes">${t("save_settings")}</button></p>`;
 }
 /* parts B and C: which axes each entry/exit value may use, and in what share */
 function axisRulesPanel(kind){
@@ -2511,7 +2675,7 @@ function viewArchive(){
   const months=[...new Set(weeks.map(w=>w.slice(0,7)))];
   months.forEach((ym,mi)=>{
     const mWeeks=weeks.filter(w=>w.startsWith(ym));
-    h+=`<details ${mi===0?"open":""}><summary style="cursor:pointer;padding:8px 0;font-weight:700;color:var(--primary)">📅 ${ym} (${mWeeks.length} ${t("st_weeks")})</summary>`;
+    h+=`<details data-month="${esc(ym)}" ${mi===0?"open":""}><summary style="cursor:pointer;padding:8px 0;font-weight:700;color:var(--primary)">📅 ${ym} (${mWeeks.length} ${t("st_weeks")})</summary>`;
     mWeeks.forEach(wk=>{
       const conf=S.pendingConfirm==="delarch_"+wk;
       h+=`<div class="arch-item"><span class="wk">${wk}</span>
@@ -3053,6 +3217,14 @@ const GUIDE = [
   {p:{he:"בשיבוץ האוטומטי המערכת בוחרת קודם את שעת הכניסה, ואז ציר מתוך אלה שמותרים לה. אם תזין ידנית צמד שאינו מותר — תופיע הערה בסימן האזהרה, אבל השמירה לא תיחסם.",
       en:"When it assigns, the app picks the entry time first and then an axis from the ones that time allows. Type a pair by hand that is not allowed and a note appears under the badge — saving is never blocked.",
       es:"Al asignar, la app elige primero la hora de entrada y luego un eje entre los permitidos. Si escribes a mano un par no permitido aparece una observación en la insignia — guardar nunca se bloquea."}},
+  {h:{he:"% שימוש בציר", en:"Axis use share", es:"Porcentaje de uso de ruta"}},
+  {p:{he:"בטבלת הצירים יש עמודה % שימוש בציר: כמה מכלל השיבוצים יקבל כל ציר. הסכום חייב להיות 100%. ציר עם 0% לא ייבחר לעולם. האחוזים האלה פועלים יחד עם האחוזים של שעת הכניסה/יציאה — המערכת מכפילה ביניהם — כך שבחלוקה שווה (ברירת המחדל) שום דבר לא משתנה.",
+      en:"The axis table has a % axis use column: the share of all assignments each axis gets. It must total 100%. An axis at 0% is never chosen. These shares work together with the entry/exit shares — the app multiplies the two — so with an equal split (the default) nothing changes.",
+      es:"La tabla de rutas tiene una columna % uso de ruta: la parte de todas las asignaciones que recibe cada ruta. Debe sumar 100%. Una ruta al 0% nunca se elige. Estos porcentajes funcionan junto con los de entrada/salida — la app los multiplica — así que con una división igual (por defecto) nada cambia."}},
+  {h:{he:"🚕 עדיפות ציר כשיש מונית מיוחדת", en:"🚕 Preferred axis with a special taxi", es:"🚕 Ruta preferida con taxi especial"}},
+  {p:{he:"מתחת לטבלת הצירים מסמנים לכל אחת משתי המוניות — בוקר וצהריים — אילו צירים מועדפים. ביום שבו סוג הרכב של הבוקר הוא המונית המיוחדת, ציר הבוקר ייבחר מתוך מה שסימנת, ושעת הכניסה תיבחר כך שתתאים לו. אותו דבר בצהריים עם שעת היציאה. שעה שהזנת ידנית נשמרת תמיד — אם היא לא מתירה את הציר המועדף, ייבחר ציר שהיא כן מתירה.",
+      en:"Below the axis table, tick the preferred axes for each of the two taxis — morning and noon. On a day whose morning vehicle is the special taxi, the morning axis is chosen from the ticked ones and the entry time is picked to suit it. The same at noon with the exit time. A time you typed by hand is always kept — if it does not allow the preferred axis, an axis it does allow is chosen.",
+      es:"Debajo de la tabla de rutas marca las rutas preferidas para cada uno de los dos taxis — mañana y mediodía. En un día cuyo vehículo de mañana es el taxi especial, la ruta de mañana se elige entre las marcadas y la hora de entrada se ajusta a ella. Lo mismo al mediodía con la hora de salida. Una hora escrita a mano siempre se respeta — si no permite la ruta preferida, se elige una que sí permita."}},
 
   {h:{he:"🖨️ הגדרות הדפסה", en:"🖨️ Print settings", es:"🖨️ Ajustes de impresión"}},
   {p:{he:"שני מצבי הדפסה, ובוחרים ביניהם כאן:",
@@ -3135,8 +3307,9 @@ const GUIDE = [
      en:"The weekly quotas you set.", es:"Las metas semanales que fijaste."},
     {he:"אחוזי האיזון שהגדרת.",
      en:"The balance percentages you set.", es:"Los porcentajes de equilibrio que fijaste."},
-    {he:"ההיסטוריה של 90 הימים האחרונים.",
-     en:"The history of the last 90 days.", es:"El historial de los últimos 90 días."},
+    {he:"איזון שבועי בין העובדים — מי שקיבל תפקיד הכי מעט פעמים השבוע מקבל אותו. רק בתיקו מסתכלים על השבועות הקודמים.",
+     en:"A weekly balance between people — whoever held a role the fewest times this week gets it. Only a tie looks back at earlier weeks.",
+     es:"Un equilibrio semanal entre personas — quien tuvo un puesto menos veces esta semana lo recibe. Solo un empate mira las semanas anteriores."},
     {he:"מי בחופשה — הוא לא ישובץ.",
      en:"Who is away — they are not placed.", es:"Quién está ausente — no se le asigna."},
     {he:"סדר השיבוץ שקבעת בהגדרות — התפקיד שלמעלה מקבל עובד ראשון.",
@@ -3208,9 +3381,9 @@ const GUIDE = [
     {he:"📤 ייצוא Excel — מוריד קובץ שאפשר לפתוח באקסל או בגיליון אחר. שמות הימים בקובץ יוצאים בשפה שבחרת בסרגל העליון.",
      en:"📤 Export Excel — downloads a file you can open in Excel or another spreadsheet. The day names in it come out in the language you picked in the top bar.",
      es:"📤 Exportar Excel — descarga un archivo para abrir en Excel u otra hoja. Los nombres de los días salen en el idioma que elegiste arriba."},
-    {he:"🖨️ הדפסה — פותח תצוגת הדפסה: בורר כיוון דף, כפתור הדפסה, וכפתור ✕ סגור באדום שמחזיר אותך לסידור. הכפתורים האלה אינם מודפסים. אפשר גם לשמור מכאן כ-PDF.",
-     en:"🖨️ Print — opens the print view: a page-direction picker, a print button, and a red ✕ Close that takes you back to the schedule. None of those buttons are printed. You can save as a PDF from here too.",
-     es:"🖨️ Imprimir — abre la vista de impresión: un selector de orientación, un botón de imprimir y un ✕ Cerrar rojo que te devuelve al horario. Esos botones no se imprimen. También puedes guardar en PDF desde aquí."},
+    {he:"🖨️ הדפסה — פותח תצוגת הדפסה: בורר כיוון דף, כפתור הדפסה, וכפתור ✕ סגור באדום שמחזיר אותך לסידור. הכפתורים האלה אינם מודפסים. הכפתור 📄 שמור PDF יוצר קובץ PDF של הסידור — באייפד ובאייפון נפתח תפריט שיתוף (שמירה לקבצים, הדפסה, וואטסאפ), ובשאר המכשירים הקובץ יורד.",
+     en:"🖨️ Print — opens the print view: a page-direction picker, a print button, and a red ✕ Close that takes you back to the schedule. None of those buttons are printed. The 📄 Save PDF button makes a PDF file of the schedule — on an iPad or iPhone the share menu opens (Save to Files, Print, WhatsApp); on other devices the file downloads.",
+     es:"🖨️ Imprimir — abre la vista de impresión: un selector de orientación, un botón de imprimir y un ✕ Cerrar rojo que te devuelve al horario. Esos botones no se imprimen. El botón 📄 Guardar PDF crea un archivo PDF del horario — en iPad o iPhone se abre el menú compartir (Guardar en Archivos, Imprimir, WhatsApp); en otros dispositivos el archivo se descarga."},
     {he:"הדף יוצא A4 עם שוליים של 5 מ״מ, והטבלה נמתחת על כל רוחב הדף. כמה עותקים יש בדף ובאיזה גודל — נקבע בהגדרות → 🖨️ הגדרות הדפסה.",
      en:"The sheet comes out A4 with 5mm margins and the table stretches across its full width. How many copies fit on a sheet, and at what size, is set in Settings → 🖨️ Print settings.",
      es:"La hoja sale A4 con márgenes de 5 mm y la tabla ocupa todo el ancho. Cuántas copias caben y a qué tamaño se define en Ajustes → 🖨️ Ajustes de impresión."},
@@ -3338,9 +3511,9 @@ const GUIDE = [
       es:"En la columna Total asignaciones, un número rojo marca a quien está a más del veinte por ciento del promedio."}},
 
   {h:{he:"חלון 90 הימים", en:"The 90-day window", es:"La ventana de 90 días"}},
-  {p:{he:"כשהמערכת מחליטה את מי לשבץ, היא מסתכלת 90 יום אחורה — כשלושה חודשים, סביב שלושה-עשר שבועות. כל מה שרחוק יותר אינו משפיע על ההחלטה.",
-      en:"When the app decides who to place, it looks 90 days back — about three months, roughly thirteen weeks. Anything older does not affect the decision.",
-      es:"Cuando la app decide a quién asignar, mira 90 días atrás — unos tres meses, cerca de trece semanas. Lo más antiguo no influye."}},
+  {p:{he:"עובדים מאוזנים בתוך השבוע: תפקיד הולך למי שמילא אותו הכי מעט פעמים השבוע, כך ששבוע אחד לא נופל כולו על אותו אדם. רק כשיש תיקו המערכת מסתכלת 90 יום אחורה — כשלושה חודשים — ונותנת את התור למי שקיבל פחות לאחרונה. ערכים אחרים (שעות, צירים, נקודות הגעה) ממשיכים להתאזן לפי 90 הימים.",
+      en:"People are balanced within the week: a role goes to whoever held it the fewest times this week, so one week never falls on the same person. Only on a tie does the app look 90 days back — about three months — and give the turn to whoever had it less lately. Other values (times, axes, arrival points) keep balancing over the 90 days.",
+      es:"Las personas se equilibran dentro de la semana: un puesto va a quien lo tuvo menos veces esta semana, así una semana nunca recae en la misma persona. Solo en un empate la app mira 90 días atrás — unos tres meses — y da el turno a quien lo tuvo menos últimamente. Los demás valores (horas, rutas, puntos de llegada) siguen equilibrándose en los 90 días."}},
   {p:{he:"החלון הזה נבחר כדי ששבוע ראשון בשנה חדשה לא יתחיל מדף ריק: הוא ממשיך לראות את החודשים שלפניו, גם כשמעבירים שנה.",
       en:"That window was chosen so the first week of a new year does not start from a blank slate: it still sees the months before it, even across a year boundary.",
       es:"Esa ventana se eligió para que la primera semana de un año nuevo no empiece en blanco: sigue viendo los meses anteriores, incluso al cambiar de año."}},
@@ -3772,7 +3945,8 @@ function paintPrintBar(){
       ${radio("pvOrient","landscape",ps.orientation,t("print_landscape"))}
     </div>
     <div class="pb-row">${printPreview(ps)}
-      <button class="btn primary" id="printGo">${esc(t("print"))}</button></div>
+      <button class="btn primary" id="printGo">${esc(t("print"))}</button>
+      <button class="btn" id="printPdf">${esc(t("pdf_save"))}</button></div>
     <div class="hint" id="printClip"></div>`;
   wirePrintBar();
   /* measured after the copies exist, so it reports what really happened */
@@ -3820,7 +3994,76 @@ function wirePrintBar(){
     if(el) el.oninput=el.onchange=()=>apply(false);
   });
   bar.querySelector("#printGo").onclick=()=>window.print();
+  bar.querySelector("#printPdf").onclick=savePdf;
   bar.querySelector("#printClose").onclick=closePrint;
+}
+/* ── a real PDF file ──────────────────────────────────────────────────────
+   The iPad's print dialog has no "save as PDF" the way Android's does, so the
+   print view can also hand over a PDF file of exactly what it shows. The
+   sheet is drawn to an image (html2canvas) and placed on an A4 page (jsPDF);
+   both libraries live in vendor/ and are cached for offline use like the
+   rest of the app. They load on the first tap, not with the page. */
+function loadScript(src){
+  return new Promise((ok,fail)=>{
+    if(document.querySelector(`script[data-src="${src}"]`)) return ok();
+    const s=document.createElement("script");
+    s.src=src; s.dataset.src=src; s.onload=()=>ok(); s.onerror=()=>fail(new Error(src));
+    document.head.appendChild(s);
+  });
+}
+/* the sheet as an image, laid out at the width of the paper rather than of
+   the screen: on a tablet the preview is narrower than A4 and long cells
+   would be cut. 2.5× is about 250 dpi on A4 — sharp on paper, small enough
+   to send in a chat. */
+async function renderSheetCanvas(boxW){
+  await loadScript("vendor/html2canvas.min.js");
+  const sheet=document.querySelector("#printArea .sheet");
+  if(!sheet) throw new Error("no sheet");
+  return html2canvas(sheet,{scale:2.5, backgroundColor:"#ffffff", logging:false,
+    windowWidth:Math.max(window.innerWidth, Math.ceil(boxW*CM/10)+60),
+    onclone:doc=>{
+      const s=doc.querySelector("#printArea .sheet");
+      if(s){ s.style.width=boxW+"mm"; s.style.maxWidth="none"; }
+      const area=doc.getElementById("printArea");
+      if(area){ area.style.overflow="visible"; area.style.width="auto"; }
+    }});
+}
+async function buildSchedulePdf(){
+  await loadScript("vendor/jspdf.umd.min.js");
+  const ps=printSettings();
+  const land=ps.orientation==="landscape";
+  const pdf=new jspdf.jsPDF({orientation:land?"landscape":"portrait", unit:"mm", format:"a4"});
+  const [pw,ph]=land?[297,210]:[210,297], m=pageMargin(ps.mode,ps.orientation);
+  const boxW=pw-2*m, boxH=ph-2*m;
+  const canvas=await renderSheetCanvas(boxW);
+  /* as large as the page allows, never stretched out of shape */
+  const k=Math.min(boxW/canvas.width, boxH/canvas.height);
+  const w=canvas.width*k, h=canvas.height*k;
+  pdf.addImage(canvas.toDataURL("image/jpeg",0.92),"JPEG", m+(boxW-w)/2, m, w, h);
+  return pdf.output("blob");
+}
+async function savePdf(){
+  const btn=document.getElementById("printPdf");
+  if(btn){ btn.disabled=true; btn.textContent=t("pdf_busy"); }
+  try{
+    const wk=Object.keys(S.days).sort()[0];
+    const name=`schedule_${wk}.pdf`;
+    const blob=await buildSchedulePdf();
+    const file=new File([blob],name,{type:"application/pdf"});
+    logAction("export_excel","log_export_week",{w:wk},{week:wk});
+    /* iPad / iPhone: the share sheet — Save to Files, Print, WhatsApp… */
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{ await navigator.share({files:[file], title:name}); }
+      catch(e){ if(e&&e.name!=="AbortError") throw e; }
+    } else {
+      const a=document.createElement("a");
+      a.href=URL.createObjectURL(blob); a.download=name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+      toast("✅ "+t("pdf_ready"));
+    }
+  }catch(e){ console.error(e); toast("⚠️ "+t("pdf_fail")); }
+  finally{ if(btn){ btn.disabled=false; btn.textContent=t("pdf_save"); } }
 }
 function doPrint(){
   if(!S.days) return;
@@ -4348,11 +4591,32 @@ function wireSettings(){
     document.querySelectorAll("[data-axd]").forEach(inp=>{
       const a=axisById(inp.dataset.axd);
       if(a) a.pct_d=Math.max(0,Math.min(100,parseInt(inp.value,10)||0)); });
+    document.querySelectorAll("[data-axpct]").forEach(inp=>{
+      const a=axisById(inp.dataset.axpct);
+      if(a) a.pct=Math.max(0,Math.min(100,parseInt(inp.value,10)||0)); });
+  };
+  const paintShare=()=>{
+    const el=$("axShareTot"); if(!el) return;
+    let n=0; document.querySelectorAll("[data-axpct]").forEach(i=>{ n+=parseInt(i.value,10)||0; });
+    el.textContent=n+"%"; el.className="pct-tot "+(n===100?"ok":"bad");
+  };
+  document.querySelectorAll("[data-axpct]").forEach(inp=>{ inp.oninput=paintShare; });
+  if($("axShareEq")) $("axShareEq").onclick=()=>{
+    const ins=[...document.querySelectorAll("[data-axpct]")], e=Math.floor(100/ins.length);
+    ins.forEach((i,ix)=>{ i.value=ix===ins.length-1?100-e*(ins.length-1):e; });
+    paintShare();
+  };
+  if($("saveTaxiAxes")) $("saveTaxiAxes").onclick=()=>{
+    const pick=side=>[...document.querySelectorAll(`[data-taxiax="${side}"]:checked`)].map(c=>c.dataset.letter);
+    CFG.taxi_axes={morning:pick("morning"), noon:pick("noon")};
+    saveConfig(); toast("✅ "+t("saved")); render(); reopen("axes");
   };
   if($("saveAxes")) $("saveAxes").onclick=()=>{
     readAxes();
     const bad=activeAxes().find(a=>((+a.pct_u||0)+(+a.pct_d||0))!==100);
     if(bad){ toast("⚠️ "+t("err_axis_ud",{a:axisLabel(bad),n:(+bad.pct_u||0)+(+bad.pct_d||0)})); return; }
+    const shareSum=activeAxes().reduce((x,a)=>x+(+a.pct||0),0);
+    if(shareSum!==100){ toast("⚠️ "+t("err_axis_share",{n:shareSum})); return; }
     saveConfig(); render(); reopen("axes");
   };
   if($("addAxis")) $("addAxis").onclick=()=>{
@@ -4363,9 +4627,10 @@ function wireSettings(){
     if(!slot){
       const next="ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").find(L=>!used.has(L));
       if(!next||activeAxes().length>=MAX_AXES){ toast("⚠️ "+t("ax_max")); return; }
-      slot={id:next, label:next, pct_u:50, pct_d:50, active:false};
+      slot={id:next, label:next, pct_u:50, pct_d:50, pct:null, active:false};
       CFG.axes=axesAll().concat([slot]);
     }
+    if(axisShares()) slot.pct=0;            // shares in use: it starts at 0%
     slot.active=true;
     saveConfig(); render(); reopen("axes");
   };

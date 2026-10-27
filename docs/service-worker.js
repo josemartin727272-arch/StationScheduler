@@ -2,13 +2,15 @@
    request goes to the network first and the cache is the fallback for when
    there is no network. A version that is live is therefore the version you
    get on the next load, with no tabs to close first. */
-const CACHE = "agenda-pwa-v43";
+const CACHE = "agenda-pwa-v44";
 const ASSETS = [
   "./",
   "./index.html",
   "./manifest.json",
   "./icon-192.png",
-  "./icon-512.png"
+  "./icon-512.png",
+  "./vendor/html2canvas.min.js",
+  "./vendor/jspdf.umd.min.js"
 ];
 
 self.addEventListener("install", (e) => {
