@@ -292,6 +292,12 @@ body.printing>header,body.printing>main{visibility:hidden}
 .print-table th{font-weight:700;background:#f0f0f0;
   -webkit-print-color-adjust:exact;print-color-adjust:exact}
 .print-table td{font-weight:500}
+/* a value reads in the direction of its own first letter: "13-D" stays 13-D
+   inside the Hebrew sheet, while a Hebrew value still reads right to left */
+.print-table td:not(.label),table.sched select{unicode-bidi:plaintext}
+.bal-sum{font-size:.92rem;line-height:1.7}
+.bal-sum .bal-line b{display:inline-block;min-width:7.5em}
+.bal-sum .bal-off{color:#b45309;font-weight:600}
 /* a pair of names breaks after its "+" onto a second line instead of being
    cut off — portrait A4 is too narrow for two long names side by side */
 .print-table td:not(.label){white-space:normal;overflow-wrap:anywhere}
@@ -358,7 +364,7 @@ log_export_week:"ייצוא הסידור לשבוע {w}",log_backup:"גיבוי 
 log_cfg_export:"ייצוא הגדרות",log_cfg_import:"ייבוא הגדרות",guide_lead:"מדריך קצר לכל מה שהמערכת יודעת לעשות. פתח פרק כדי לקרוא אותו.",
 week_start:"תחילת שבוע",generate:"צור סידור",auto_assign:"⚡ שיבוץ אוטומטי",save:"💾 שמור",export_excel:"📤 ייצוא Excel",print:"🖨️ הדפסה",
 warn_count:"מספר הערות על הסידור",close:"סגור",
-pdf_save:"📄 שמור PDF",pdf_busy:"מכין PDF…",pdf_fail:"לא הצלחתי ליצור PDF",pdf_ready:"ה-PDF ירד",
+pdf_save:"📄 שמור PDF",undo_auto:"↶ בטל שיבוץ",bal_title:"⚖️ איזון השבוע",pdf_busy:"מכין PDF…",pdf_fail:"לא הצלחתי ליצור PDF",pdf_ready:"ה-PDF ירד",
 print_orient:"כיוון דף",print_portrait:"לאורך",print_landscape:"לרוחב",
 s_print:"🖨️ הגדרות הדפסה",print_mode:"מצב הדפסה",
 print_single:"סידור מלא — דף A4 שלם, עותק אחד",
@@ -480,7 +486,7 @@ log_export_week:"Exported the schedule for {w}",log_backup:"Full backup download
 log_cfg_export:"Settings exported",log_cfg_import:"Settings imported",guide_lead:"A short guide to everything the app can do. Open a chapter to read it.",
 week_start:"Week start",generate:"New Schedule",auto_assign:"⚡ Auto Assign",save:"💾 Save",export_excel:"📤 Export Excel",print:"🖨️ Print",
 warn_count:"Notes on this schedule",close:"Close",
-pdf_save:"📄 Save PDF",pdf_busy:"Preparing PDF…",pdf_fail:"Could not create the PDF",pdf_ready:"PDF downloaded",
+pdf_save:"📄 Save PDF",undo_auto:"↶ Undo assign",bal_title:"⚖️ This week's balance",pdf_busy:"Preparing PDF…",pdf_fail:"Could not create the PDF",pdf_ready:"PDF downloaded",
 print_orient:"Page direction",print_portrait:"Portrait",print_landscape:"Landscape",
 s_print:"🖨️ Print settings",print_mode:"Print mode",
 print_single:"Full schedule — one whole A4 page, a single copy",
@@ -602,7 +608,7 @@ log_export_week:"Se exportó el horario de {w}",log_backup:"Respaldo completo de
 log_cfg_export:"Configuración exportada",log_cfg_import:"Configuración importada",guide_lead:"Una guía breve de todo lo que hace la app. Abre un capítulo para leerlo.",
 week_start:"Inicio de semana",generate:"Nuevo Horario",auto_assign:"⚡ Asignación Automática",save:"💾 Guardar",export_excel:"📤 Exportar Excel",print:"🖨️ Imprimir",
 warn_count:"Observaciones del horario",close:"Cerrar",
-pdf_save:"📄 Guardar PDF",pdf_busy:"Preparando PDF…",pdf_fail:"No se pudo crear el PDF",pdf_ready:"PDF descargado",
+pdf_save:"📄 Guardar PDF",undo_auto:"↶ Deshacer asignación",bal_title:"⚖️ Equilibrio de la semana",pdf_busy:"Preparando PDF…",pdf_fail:"No se pudo crear el PDF",pdf_ready:"PDF descargado",
 print_orient:"Orientación",print_portrait:"Vertical",print_landscape:"Horizontal",
 s_print:"🖨️ Ajustes de impresión",print_mode:"Modo de impresión",
 print_single:"Horario completo — una hoja A4 entera, una copia",
@@ -1678,6 +1684,7 @@ function applyWeeklyTargets(keys, hist){
 
 function autoAssign(){
   if(!S.days) return;
+  S.undo=JSON.stringify(S.days);        // one level: what ↶ brings back
   const keys=Object.keys(S.days).sort();
   const filledBefore=filledCells(S.days);
   /* 90-day window: covers ~13 weeks so year-boundary never creates a cold start */
@@ -2087,6 +2094,7 @@ function viewSched(){
     <button class="btn primary" id="btnGen">🔄 ${t("generate")}</button>
     <button class="btn" id="btnClear" ${S.days?"":"disabled"}>🗑 ${t("clear_week")}</button>
     <button class="btn primary" id="btnAuto" ${S.days?"":"disabled"}>${t("auto_assign")}</button>
+    <button class="btn" id="btnUndo" ${S.days&&S.undo?"":"disabled"}>${t("undo_auto")}</button>
     <button class="btn" id="btnSave" ${S.days?"":"disabled"}>${t("save")}<span id="saveDot" class="dot" style="display:${S.dirty?"inline-block":"none"}"></span></button>
     <button class="btn" id="btnCsv" ${S.days?"":"disabled"}>${t("export_excel")}</button>
     <button class="btn" id="btnPrint" ${S.days?"":"disabled"}>${t("print")}</button>
@@ -2111,7 +2119,29 @@ function viewSched(){
     h+=renderRow(rk,keys);
   }
   h+=`</tbody></table></div>`;
-  return h;
+  return h+balanceSummary();
+}
+/* How many times each person holds each role this week — the fairness the
+   auto-assign aims at, readable at a glance. A pair counts each name. A line
+   turns orange when the most and the least differ by more than one. People
+   away on every working day of the week are left out of their line. */
+function balanceSummary(){
+  if(!S.days) return "";
+  const keys=Object.keys(S.days).sort();
+  const work=keys.filter(k=>!isHolidayDay(S.days[k]));
+  const lines=allSections().filter(x=>sectionSize(x.sec)>0).map(x=>{
+    const rk=x.sec.row_key, g=groupById(x.sec.group_id);
+    const c={};
+    (g?groupEmps(g.id):allEmps()).forEach(e=>{ c[e]=0; });
+    keys.forEach(k=>String(S.days[k][rk]||"").split("+").filter(Boolean)
+      .forEach(e=>{ c[e]=(c[e]||0)+1; }));
+    const shown=Object.keys(c).filter(e=>c[e]>0||work.some(k=>!awayToday(S.days[k]).has(e)));
+    if(!shown.length) return "";
+    const v=shown.map(e=>c[e]), off=Math.max(...v)-Math.min(...v)>1;
+    return `<div class="bal-line${off?" bal-off":""}" data-bal="${esc(rk)}"><b>${esc(sectionLabel(x))}</b>`+
+      shown.map(e=>`${esc(e)} ${c[e]}`).join(" · ")+`</div>`;
+  }).join("");
+  return lines?`<div class="card bal-sum" id="balSum"><b>${t("bal_title")}</b>${lines}</div>`:"";
 }
 
 /* ── away rows as tags with a picker ─────────────────────────────────────── */
@@ -2248,14 +2278,25 @@ function updateStatus(){
   }
   const dot=document.getElementById("saveDot");
   if(dot) dot.style.display=S.dirty?"inline-block":"none";
+  const bs=document.getElementById("balSum");
+  if(bs) bs.outerHTML=balanceSummary();
+}
+/* A value's own reading direction, from its first letter: "13-D", "A-U" and
+   plain numbers read left to right, a Hebrew value right to left. A select
+   does not honour unicode-bidi, so the cell is told outright. */
+function textDir(v){
+  const m=String(v||"").match(/[A-Za-z\u00C0-\u024F]|[\u0590-\u08FF]/);
+  if(m) return /[\u0590-\u08FF]/.test(m[0])?"rtl":"ltr";
+  return /\d/.test(String(v||""))?"ltr":"";
 }
 function selCell(dk,field,options,val,cls,bg){
   let o=`<option value=""></option>`;
   const list=options.slice();
   if(val&&!list.includes(val)) list.push(val);
-  list.forEach(v=>{ o+=`<option value="${esc(v)}" ${v===val?"selected":""}>${esc(v)}</option>`; });
-  const st=bg?` style="background:${esc(bg)}"`:"";
-  return `<td class="${cls||""}"><select data-dk="${dk}" data-f="${field}"${st}>${o}</select></td>`;
+  list.forEach(v=>{ const d=textDir(v);
+    o+=`<option value="${esc(v)}"${d?` dir="${d}"`:""} ${v===val?"selected":""}>${esc(v)}</option>`; });
+  const st=bg?` style="background:${esc(bg)}"`:"", d=textDir(val);
+  return `<td class="${cls||""}"><select data-dk="${dk}" data-f="${field}"${d?` dir="${d}"`:""}${st}>${o}</select></td>`;
 }
 function renderRow(rk,keys){
   const cr=customRows().find(r=>r.key===rk);
@@ -3354,6 +3395,12 @@ const GUIDE = [
   {p:{he:"אחרי השיבוץ — עבור על הסידור ותקן ידנית מה שצריך. אפשר ללחוץ שוב על שיבוץ אוטומטי בכל רגע.",
       en:"After it runs, look the schedule over and fix anything by hand. You can press Auto Assign again at any time.",
       es:"Después, revisa el horario y corrige a mano lo que haga falta. Puedes volver a pulsar Asignación Automática cuando quieras."}},
+  {p:{he:"לא אהבת את התוצאה? ↶ בטל שיבוץ מחזיר את הטבלה בדיוק כפי שהייתה לפני הלחיצה האחרונה על שיבוץ אוטומטי. הביטול נשמר עד שתשמור את השבוע או תפתח שבוע אחר.",
+      en:"Not happy with the result? ↶ Undo assign puts the table back exactly as it was before the last Auto Assign. It is available until you save the week or open another one.",
+      es:"¿No te gusta el resultado? ↶ Deshacer asignación devuelve la tabla exactamente como estaba antes de la última Asignación Automática. Está disponible hasta que guardes la semana o abras otra."}},
+  {p:{he:"מתחת לטבלה מופיע ⚖️ איזון השבוע: לכל תפקיד, כמה פעמים כל עובד ממלא אותו השבוע (בזוג — כל שם נספר לחוד). שורה בכתום פירושה שההפרש בין מי שקיבל הכי הרבה למי שקיבל הכי מעט גדול מאחד. הסיכום מתעדכן עם כל שינוי בטבלה.",
+      en:"Under the table, ⚖️ This week's balance shows for each role how many times each person holds it this week (in a pair each name counts). An orange line means the most and the least differ by more than one. It updates with every change.",
+      es:"Debajo de la tabla, ⚖️ Equilibrio de la semana muestra para cada puesto cuántas veces lo tiene cada persona esta semana (en una pareja cuenta cada nombre). Una línea naranja significa que el máximo y el mínimo difieren en más de uno. Se actualiza con cada cambio."}},
 
   {h:{he:"4. בדיקת תקינות", en:"4. Checking it", es:"4. Revisarlo"}},
   {p:{he:"בראש הדף מופיע סימן מצב: ✓ תקין בירוק, או ⚠️ עם מספר באדום.",
@@ -4157,19 +4204,24 @@ function wire(){
     $("btnGen").onclick=()=>{
       const target=snapMonday($("weekPick").value||S.weekStart);
       if(loadArchive()[target]||(S.days&&Object.keys(S.days)[0]===target)){ S.pendingConfirm="gen"; S.weekStart=target; render(); }
-      else { S.weekStart=target; S.days=emptyWeek(target); saveDraft(); render(); }
+      else { S.weekStart=target; S.undo=null; S.days=emptyWeek(target); saveDraft(); render(); }
     };
-    const gy=$("genYes"); if(gy) gy.onclick=()=>{ S.pendingConfirm=null; S.days=emptyWeek(S.weekStart); S.dirty=true; saveDraft(); render(); };
+    const gy=$("genYes"); if(gy) gy.onclick=()=>{ S.pendingConfirm=null; S.undo=null; S.days=emptyWeek(S.weekStart); S.dirty=true; saveDraft(); render(); };
     const gn=$("genNo"); if(gn) gn.onclick=()=>{ S.pendingConfirm=null; render(); };
     if($("btnClear")) $("btnClear").onclick=()=>{ S.pendingConfirm="clear"; render(); };
-    const cy=$("clearYes"); if(cy) cy.onclick=()=>{ S.pendingConfirm=null;
+    const cy=$("clearYes"); if(cy) cy.onclick=()=>{ S.pendingConfirm=null; S.undo=null;
       S.days=emptyWeek(Object.keys(S.days).sort()[0]); S.dirty=true; saveDraft(); render(); };
     const cn=$("clearNo"); if(cn) cn.onclick=()=>{ S.pendingConfirm=null; render(); };
     if($("btnAuto")) $("btnAuto").onclick=autoAssign;
+    if($("btnUndo")) $("btnUndo").onclick=()=>{
+      if(!S.undo) return;
+      S.days=JSON.parse(S.undo); S.undo=null;
+      S.dirty=true; saveDraft(); render(); toast("↶ ✓"); };
     if($("btnSave")) $("btnSave").onclick=()=>{ const a=loadArchive();
       const wk=Object.keys(S.days).sort()[0];
       a[wk]=S.days; saveArchive(a);
-      S.dirty=false; saveDraft(); updateStatus(); toast("✅ "+t("saved"));
+      S.dirty=false; S.undo=null; saveDraft(); updateStatus(); toast("✅ "+t("saved"));
+      const ub=$("btnUndo"); if(ub) ub.disabled=true;
       logAction("save_schedule","log_saved",{w:wk},{week:wk,changes:filledCells(S.days)});
       if(S.screen==="settings") render(); };
     if($("btnCsv")) $("btnCsv").onclick=()=>{
@@ -4192,6 +4244,7 @@ function wire(){
     });
     document.querySelectorAll("table.sched select,table.sched input:not([data-away])").forEach(el=>{
       el.onchange=()=>{ S.days[el.dataset.dk][el.dataset.f]=el.value; S.dirty=true; saveDraft();
+        if(el.tagName==="SELECT") el.dir=textDir(el.value);
         const rerender=sectionRowKeys().concat(extraRowKeys(),
           ["vehicle_morning","vehicle_noon","theater","other_empl","entry","exit"]);
         if(rerender.includes(el.dataset.f)) render();
@@ -4222,7 +4275,7 @@ function wire(){
     const rn=$("restoreNo"); if(rn) rn.onclick=()=>{
       window.__restoreData=null; S.pendingConfirm=null; render(); };
     document.querySelectorAll("[data-load]").forEach(b=>b.onclick=()=>{
-      const wk=b.dataset.load; S.days=JSON.parse(JSON.stringify(loadArchive()[wk])); S.weekStart=wk;
+      const wk=b.dataset.load; S.undo=null; S.days=JSON.parse(JSON.stringify(loadArchive()[wk])); S.weekStart=wk;
       Object.values(S.days).forEach(normalizeAway);
       S.dirty=false; saveDraft(); S.screen="sched"; toast("✅ "+t("loaded")); render(); });
     document.querySelectorAll("[data-csv]").forEach(b=>b.onclick=()=>{

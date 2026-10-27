@@ -18,7 +18,8 @@ const eq=(a,b,msg)=>{ if(a!==b) throw new Error((msg||"")+" expected "+b+", got 
 const ok=(c,msg)=>{ if(!c) throw new Error(msg||"assertion failed"); };
 
 /* a week with nothing filled, no archive */
-function freshWeek(ws){ ws=ws||"2026-10-26"; S.weekStart=ws; S.days=emptyWeek(ws); S.dirty=false; }
+/* like the app's own "new week" button: a fresh week has nothing to undo */
+function freshWeek(ws){ ws=ws||"2026-10-26"; S.weekStart=ws; S.days=emptyWeek(ws); S.dirty=false; S.undo=null; }
 function seedArchive(arch){ localStorage.setItem("agenda_archive",JSON.stringify(arch)); }
 
 /* ── 1. no page jumps ───────────────────────────────────────────────── */
@@ -263,6 +264,85 @@ await test("taxi %: the settings take a percentage per ticked axis and refuse a 
 await test("taxi %: an older setting with ticks but no percentages splits evenly", async()=>{
   CFG.taxi_axes={morning:["B","C"], noon:[]}; delete CFG.taxi_axes_pcts;
   const w=taxiAxisPcts("morning"); eq(w.B,50,"B"); eq(w.C,50,"C");
+});
+
+/* ── v47 · 4. balance summary under the table ─────────────────────────── */
+await test("summary: each role lists how many times each person holds it this week", async()=>{
+  localStorage.removeItem("agenda_archive");
+  freshWeek(); const k=Object.keys(S.days);
+  ["BUHO","BUHO","HALCON","CHCHORRO","CHCHORRO"].forEach((n,i)=>S.days[k[i]].apt_pe=n);
+  S.days[k[0]].emb_pe="HALCON+CHCHORRO";
+  S.screen="sched"; render(); await tick();
+  const line=document.querySelector('#balSum [data-bal="apt_pe"]');
+  ok(line,"no summary line for R PE");
+  ok(/BUHO\s*2/.test(line.textContent)&&/HALCON\s*1/.test(line.textContent)&&/CHCHORRO\s*2/.test(line.textContent),
+     "R PE line: "+line.textContent);
+  const emb=document.querySelector('#balSum [data-bal="emb_pe"]').textContent;
+  ok(/HALCON\s*1/.test(emb)&&/CHCHORRO\s*1/.test(emb),"a pair is counted per name: "+emb);
+});
+await test("summary: a gap above one marks the line", async()=>{
+  freshWeek(); const k=Object.keys(S.days);
+  k.forEach(d=>S.days[d].apt_pe="BUHO");                    // 5 / 0 / 0
+  S.screen="sched"; render(); await tick();
+  ok(document.querySelector('#balSum [data-bal="apt_pe"]').classList.contains("bal-off"),"not marked");
+  k.forEach((d,i)=>S.days[d].apt_pe=PE[i%3]);               // 2 / 2 / 1
+  render(); await tick();
+  ok(!document.querySelector('#balSum [data-bal="apt_pe"]').classList.contains("bal-off"),"marked while balanced");
+});
+await test("summary: follows a change typed into a cell", async()=>{
+  freshWeek(); S.screen="sched"; render(); await tick();
+  const sel=document.querySelector('table.sched select[data-f="apt_il"]');
+  sel.value="LEON"; sel.dispatchEvent(new Event("change")); await tick();
+  ok(/LEON\s*1/.test(document.querySelector('#balSum [data-bal="apt_il"]').textContent),"summary did not update");
+});
+
+/* ── v47 · 5. undo auto-assign ───────────────────────────────────────── */
+await test("undo: ↶ brings back the exact week from before ⚡", async()=>{
+  freshWeek(); const k=Object.keys(S.days)[1];
+  S.days[k].emb_il="TORO"; S.screen="sched"; render();
+  const before=JSON.stringify(S.days);
+  ok(!document.getElementById("btnUndo")||document.getElementById("btnUndo").disabled,"undo offered before ⚡");
+  document.getElementById("btnAuto").click(); await tick();
+  ok(JSON.stringify(S.days)!==before,"⚡ changed nothing");
+  document.getElementById("btnUndo").click(); await tick();
+  eq(JSON.stringify(S.days),before,"week after undo");
+  ok(document.getElementById("btnUndo").disabled,"undo still offered after use");
+});
+await test("undo: saving the week ends the undo", async()=>{
+  freshWeek(); S.screen="sched"; render();
+  document.getElementById("btnAuto").click(); await tick();
+  document.getElementById("btnSave").click(); await tick();
+  ok(document.getElementById("btnUndo").disabled,"undo offered after save");
+});
+
+/* ── v47 · 9. values read left to right ──────────────────────────────── */
+function charsInOrder(cell,a,b){
+  const tn=[...cell.childNodes].find(n=>n.nodeType===3&&n.textContent.includes(a));
+  const r=document.createRange(), x=ch=>{ const i=tn.textContent.indexOf(ch);
+    r.setStart(tn,i); r.setEnd(tn,i+1); return r.getBoundingClientRect().left; };
+  return x(a)<x(b);
+}
+await test("print: 13-D prints as 13-D, not D-13, in the Hebrew sheet", async()=>{
+  freshWeek(); S.lang="he"; const k=Object.keys(S.days)[0];
+  S.days[k].entry="13-D"; S.screen="sched"; render(); doPrint(); await tick();
+  const td=[...document.querySelectorAll("#printArea td")].find(x=>x.textContent==="13-D");
+  ok(td,"cell not found");
+  ok(charsInOrder(td,"1","D"),"the 1 is not left of the D");
+  /* a Hebrew value still reads right to left */
+  S.days[k].theater="משקפת"; paintPrintArea(); await tick();
+  const he=[...document.querySelectorAll("#printArea td")].find(x=>x.textContent==="משקפת");
+  ok(!charsInOrder(he,"מ","ת"),"Hebrew value turned left to right");
+});
+
+await test("screen: a 13-D cell reads left to right, a Hebrew cell right to left", async()=>{
+  freshWeek(); S.lang="he"; const k=Object.keys(S.days)[0];
+  S.days[k].entry="13-D"; S.days[k].theater="משקפת"; S.screen="sched"; render(); await tick();
+  const sel=f=>document.querySelector(`table.sched select[data-dk="${k}"][data-f="${f}"]`);
+  eq(sel("entry").dir,"ltr","13-D cell direction");
+  eq(sel("theater").dir,"rtl","Hebrew cell direction");
+  /* the choice follows the value as it changes */
+  sel("entry").value="10"; sel("entry").dispatchEvent(new Event("change")); await tick();
+  eq(sel("entry").dir,"ltr","10 cell direction");
 });
 
 window.__results=results;
