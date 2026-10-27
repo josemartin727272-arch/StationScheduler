@@ -461,7 +461,7 @@ ax_entry_title:"כניסה ↔ ציר בוקר",ax_exit_title:"יציאה ↔ צ
 ax_rules_hint:"סמן אילו צירים מותרים לכל ערך, וקבע אחוז לכל אחד. הסכום חייב להיות 100%. בלי סימון — כל ציר מותר.",
 ax_add:"➕ הוסף ציר",ax_max:"הגעת למספר הצירים המרבי",ax_none:"אין צירים פעילים — הוסף ציר",
 err_axis_ud:"ציר {a}: סכום U+D הוא {n}%, חייב 100%",
-ax_share:"% שימוש בציר",ax_share_hint:"כמה מהשיבוצים יקבל כל ציר מתוך כל הצירים. הסכום חייב להיות 100%. האחוזים של שעות הכניסה/יציאה למטה ממשיכים לפעול יחד איתם.",err_axis_share:"אחוזי השימוש בצירים מסתכמים ב-{n}%, חייב 100%",ax_equal:"↺ חלוקה שווה",ax_taxi_title:"🚕 עדיפות ציר כשיש מונית מיוחדת",ax_taxi_hint:"ביום שבו סוג הרכב הוא {v}, הציר ייבחר מתוך הצירים שסימנת. שעת כניסה/יציאה שהוזנה ידנית נשמרת. לא סימנת כלום — אין עדיפות.",ax_taxi_morning:"מונית בוקר",ax_taxi_noon:"מונית צהריים",
+ax_share:"% שימוש בציר",ax_share_hint:"כמה מהשיבוצים יקבל כל ציר מתוך כל הצירים. הסכום חייב להיות 100%. האחוזים של שעות הכניסה/יציאה למטה ממשיכים לפעול יחד איתם.",err_axis_share:"אחוזי השימוש בצירים מסתכמים ב-{n}%, חייב 100%",ax_equal:"↺ חלוקה שווה",ax_taxi_title:"🚕 עדיפות ציר כשיש מונית מיוחדת",ax_taxi_hint:"ביום שבו סוג הרכב הוא {v}, הציר ייבחר מתוך הצירים שסימנת, לפי האחוז שלידם (סכום 100%). שעת כניסה/יציאה שהוזנה ידנית נשמרת. לא סימנת כלום — אין עדיפות.",ax_taxi_morning:"מונית בוקר",ax_taxi_noon:"מונית צהריים",err_taxi_pct:"{s}: סכום האחוזים הוא {n}%, חייב 100%",
 err_axis_rule_pct:"{f} {v}: סכום אחוזי הצירים הוא {n}%, חייב 100%",
 warn_axis_rule:"{f} {a} לא מותר עבור {e} {v}"},
 en:{app_title:"Asher Taxi Scheduler",nav_sched:"📋 Schedule",nav_settings:"⚙️ Settings",nav_archive:"📁 Archive",nav_stats:"📊 Statistics",
@@ -583,7 +583,7 @@ ax_entry_title:"Entry ↔ morning axis",ax_exit_title:"Exit ↔ noon axis",
 ax_rules_hint:"Tick the axes each value may use and set a share for each. Must total 100%. Nothing ticked means any axis is allowed.",
 ax_add:"➕ Add axis",ax_max:"Maximum number of axes reached",ax_none:"No active axes — add one",
 err_axis_ud:"Axis {a}: U+D totals {n}%, must be 100%",
-ax_share:"% axis use",ax_share_hint:"What share of all assignments each axis gets. Must total 100%. The entry/exit shares below keep working alongside.",err_axis_share:"Axis use shares total {n}%, must be 100%",ax_equal:"↺ Equal split",ax_taxi_title:"🚕 Preferred axis with a special taxi",ax_taxi_hint:"On a day whose vehicle is {v}, the axis is chosen from the ones ticked here. An entry/exit typed by hand is kept. Nothing ticked — no preference.",ax_taxi_morning:"Morning taxi",ax_taxi_noon:"Noon taxi",
+ax_share:"% axis use",ax_share_hint:"What share of all assignments each axis gets. Must total 100%. The entry/exit shares below keep working alongside.",err_axis_share:"Axis use shares total {n}%, must be 100%",ax_equal:"↺ Equal split",ax_taxi_title:"🚕 Preferred axis with a special taxi",ax_taxi_hint:"On a day whose vehicle is {v}, the axis is chosen from the ones ticked here, by the share next to each (total 100%). An entry/exit typed by hand is kept. Nothing ticked — no preference.",ax_taxi_morning:"Morning taxi",ax_taxi_noon:"Noon taxi",err_taxi_pct:"{s}: shares total {n}%, must be 100%",
 err_axis_rule_pct:"{f} {v}: axis shares total {n}%, must be 100%",
 warn_axis_rule:"{f} {a} is not allowed for {e} {v}"},
 es:{app_title:"Asher Programador de Taxis",nav_sched:"📋 Horario",nav_settings:"⚙️ Configuración",nav_archive:"📁 Archivo",nav_stats:"📊 Estadísticas",
@@ -705,7 +705,7 @@ ax_entry_title:"Ingreso ↔ ruta mañana",ax_exit_title:"Salida ↔ ruta mediod�
 ax_rules_hint:"Marca las rutas que cada valor puede usar y asigna un porcentaje. Debe sumar 100%. Sin marcar, cualquier ruta vale.",
 ax_add:"➕ Agregar ruta",ax_max:"Número máximo de rutas alcanzado",ax_none:"No hay rutas activas — agrega una",
 err_axis_ud:"Ruta {a}: U+D suma {n}%, debe ser 100%",
-ax_share:"% uso de ruta",ax_share_hint:"Qué parte de todas las asignaciones recibe cada ruta. Debe sumar 100%. Los porcentajes de entrada/salida de abajo siguen funcionando junto a estos.",err_axis_share:"El uso de rutas suma {n}%, debe ser 100%",ax_equal:"↺ División igual",ax_taxi_title:"🚕 Ruta preferida con taxi especial",ax_taxi_hint:"En un día cuyo vehículo es {v}, la ruta se elige entre las marcadas aquí. Una entrada/salida escrita a mano se respeta. Nada marcado — sin preferencia.",ax_taxi_morning:"Taxi de mañana",ax_taxi_noon:"Taxi de mediodía",
+ax_share:"% uso de ruta",ax_share_hint:"Qué parte de todas las asignaciones recibe cada ruta. Debe sumar 100%. Los porcentajes de entrada/salida de abajo siguen funcionando junto a estos.",err_axis_share:"El uso de rutas suma {n}%, debe ser 100%",ax_equal:"↺ División igual",ax_taxi_title:"🚕 Ruta preferida con taxi especial",ax_taxi_hint:"En un día cuyo vehículo es {v}, la ruta se elige entre las marcadas aquí, según el porcentaje de cada una (total 100%). Una entrada/salida escrita a mano se respeta. Nada marcado — sin preferencia.",ax_taxi_morning:"Taxi de mañana",ax_taxi_noon:"Taxi de mediodía",err_taxi_pct:"{s}: los porcentajes suman {n}%, debe ser 100%",
 err_axis_rule_pct:"{f} {v}: los porcentajes de rutas suman {n}%, debe ser 100%",
 warn_axis_rule:"{f} {a} no está permitido para {e} {v}"}
 };
@@ -806,6 +806,8 @@ const DEFAULT_CONFIG = {
   },
   /* axes preferred on a special-taxi slot; empty means no preference */
   taxi_axes: { morning:[], noon:[] },
+  /* each ticked axis's share of that taxi's days; empty means an even split */
+  taxi_axes_pcts: { morning:{}, noon:{} },
   special_values: { holiday:"חג", vehicle_special:"YELLOW" },
   /* Weekly quotas, any number of them. `value:""` means "this row is filled",
      any other value means "this exact value". A field listed here is governed
@@ -998,6 +1000,10 @@ function migrateConfig(cfg, raw){
   const ta=cfg.taxi_axes||{};
   cfg.taxi_axes={ morning:(ta.morning||[]).map(x=>String(x).toUpperCase()),
                   noon:(ta.noon||[]).map(x=>String(x).toUpperCase()) };
+  const tp=cfg.taxi_axes_pcts||{}, cleanP=m=>{ const o={};
+    for(const k in (m||{})) o[String(k).toUpperCase()]=Math.max(0,Math.min(100,parseInt(m[k],10)||0));
+    return o; };
+  cfg.taxi_axes_pcts={ morning:cleanP(tp.morning), noon:cleanP(tp.noon) };
   /* The old free-text/letter reference maps become real rules, split evenly
      across the letters they named. */
   [["entry_axis_map","entry_axis_rules"],["exit_axis_map","exit_axis_rules"]].forEach(([oldKey,newKey])=>{
@@ -1433,12 +1439,23 @@ function taxiAxes(side){
   const live=axisLetters();
   return (((CFG.taxi_axes||{})[side])||[]).filter(L=>live.includes(L));
 }
+/* the share each ticked axis gets on that taxi's days; an even split when
+   the saved shares are missing or do not add up to 100 */
+function taxiAxisPcts(side){
+  const L=taxiAxes(side);
+  if(!L.length) return null;
+  const saved=((CFG.taxi_axes_pcts||{})[side])||{};
+  const sum=L.reduce((a,x)=>a+(+saved[x]||0),0);
+  const out={};
+  L.forEach(x=>{ out[x]=sum===100?(+saved[x]||0):100/L.length; });
+  return out;
+}
 /* `value` may be null (the hour is not chosen yet: any axis). `only`, when
    given, narrows the letters further — the special-taxi preference — unless
    nothing would be left. The letter is weighted by the hour's own split
    times the axis's overall share; if those two leave nothing, the hour's
    split alone decides. */
-function pickAxis(kind, value, counts, only){
+function pickAxis(kind, value, counts, only, taxiW){
   counts=counts||{};
   let letters=value?allowedAxesFor(kind, value):axisLetters();
   if(only&&only.length){ const n=letters.filter(L=>only.includes(L)); if(n.length) letters=n; }
@@ -1453,6 +1470,10 @@ function pickAxis(kind, value, counts, only){
       const r=rule?(rule[L]!=null?(+rule[L]||0):100/letters.length):1;
       w[L]=r*(share[L]||0); });
     if(!letters.some(L=>w[L]>0)) w=rule;
+  }
+  /* a special-taxi slot follows the taxi's own split instead */
+  if(taxiW&&letters.some(L=>(taxiW[L]||0)>0)){
+    w={}; letters.forEach(L=>{ w[L]=taxiW[L]||0; });
   }
   const letter=leastUsed(letters, letterCounts, w);
   const ax=axisById(letter);
@@ -1729,15 +1750,25 @@ function autoAssign(){
        letter through the station's rules; the axis's own U/D split chooses the
        side. Whichever of the two is already filled constrains the other. */
     const share=axisShares();
+    /* on a taxi slot the axis is balanced against taxi days only — the
+       other days would otherwise water the taxi's split down */
+    const taxiCounts=(af,vh)=>{
+      const c={}, from=addDays(keys[0],-HISTORY_DAYS), arch=loadArchive();
+      const add=d=>{ if(d&&d[vh]===VS&&d[af]) c[d[af]]=(c[d[af]]||0)+1; };
+      for(const wk in arch) for(const d in arch[wk]) if(d>=from&&d<keys[0]) add(arch[wk][d]);
+      keys.forEach(k=>{ if(k!==dk) add(S.days[k]); });
+      return c;
+    };
     [["entry","axis_morning","vehicle_morning","morning"],
      ["exit","axis_noon","vehicle_noon","noon"]].forEach(([vf,af,vh,side])=>{
       const pool=opts(vf).filter(o=>o!==holiday);
       /* A special-taxi slot prefers the axes ticked for it. Unless the hour
          was typed by hand, the axis is chosen first and the hour follows it. */
       const pri=day[vh]===VS?taxiAxes(side):[];
+      const tw=pri.length?taxiAxisPcts(side):null;
       if(pri.length&&free(af)&&!day[af]&&!day[vf]&&activeAxes().length){
         const fits=pri.filter(L=>valuesAllowingAxis(vf,L,pool).length);
-        if(fits.length) day[af]=pickAxis(vf, null, H(af), fits);
+        if(fits.length) day[af]=pickAxis(vf, null, taxiCounts(af,vh), fits, tw);
       }
       if(free(vf)&&!day[vf]&&pool.length){
         let cand=pool;
@@ -1752,7 +1783,8 @@ function autoAssign(){
         day[vf]=leastUsed(cand,H(vf),vf);
       }
       if(free(af)&&!day[af]&&activeAxes().length)
-        day[af]=pickAxis(vf, day[vf], H(af), pri);
+        day[af]=pri.length?pickAxis(vf, day[vf], taxiCounts(af,vh), pri, tw)
+                          :pickAxis(vf, day[vf], H(af));
     });
 
     /* Roles in the configured staffing order. Each one draws from its own
@@ -2621,11 +2653,15 @@ function taxiAxesPanel(){
     <div class="hint">${esc(t("ax_taxi_hint",{v:CFG.special_values.vehicle_special}))}</div>`;
   if(!letters.length) return h;
   [["morning","ax_taxi_morning"],["noon","ax_taxi_noon"]].forEach(([side,lbl])=>{
-    const on=taxiAxes(side);
+    const on=taxiAxes(side), w=taxiAxisPcts(side)||{};
+    const sum=on.reduce((a,L)=>a+Math.round(w[L]||0),0);
     h+=`<div class="sec-row"><b style="min-width:110px">${t(lbl)}</b><div class="chk-row">`+
       letters.map(L=>`<label class="chk"><input type="checkbox" data-taxiax="${side}"
-        data-letter="${esc(L)}" ${on.includes(L)?"checked":""}> ${esc(axisLabel(axisById(L)))}</label>`).join("")+
-      `</div></div>`;
+        data-letter="${esc(L)}" ${on.includes(L)?"checked":""}> ${esc(axisLabel(axisById(L)))}
+        <input type="number" min="0" max="100" style="width:62px" data-taxipct="${side}"
+          data-letter="${esc(L)}" value="${on.includes(L)?Math.round(w[L]||0):0}"
+          ${on.includes(L)?"":"disabled"}></label>`).join("")+
+      `</div><span class="pct-tot ${!on.length||sum===100?"ok":"bad"}" data-taxitot="${side}">${on.length?sum+"%":"—"}</span></div>`;
   });
   return h+`<p><button class="btn primary" id="saveTaxiAxes">${t("save_settings")}</button></p>`;
 }
@@ -3222,9 +3258,9 @@ const GUIDE = [
       en:"The axis table has a % axis use column: the share of all assignments each axis gets. It must total 100%. An axis at 0% is never chosen. These shares work together with the entry/exit shares — the app multiplies the two — so with an equal split (the default) nothing changes.",
       es:"La tabla de rutas tiene una columna % uso de ruta: la parte de todas las asignaciones que recibe cada ruta. Debe sumar 100%. Una ruta al 0% nunca se elige. Estos porcentajes funcionan junto con los de entrada/salida — la app los multiplica — así que con una división igual (por defecto) nada cambia."}},
   {h:{he:"🚕 עדיפות ציר כשיש מונית מיוחדת", en:"🚕 Preferred axis with a special taxi", es:"🚕 Ruta preferida con taxi especial"}},
-  {p:{he:"מתחת לטבלת הצירים מסמנים לכל אחת משתי המוניות — בוקר וצהריים — אילו צירים מועדפים. ביום שבו סוג הרכב של הבוקר הוא המונית המיוחדת, ציר הבוקר ייבחר מתוך מה שסימנת, ושעת הכניסה תיבחר כך שתתאים לו. אותו דבר בצהריים עם שעת היציאה. שעה שהזנת ידנית נשמרת תמיד — אם היא לא מתירה את הציר המועדף, ייבחר ציר שהיא כן מתירה.",
-      en:"Below the axis table, tick the preferred axes for each of the two taxis — morning and noon. On a day whose morning vehicle is the special taxi, the morning axis is chosen from the ticked ones and the entry time is picked to suit it. The same at noon with the exit time. A time you typed by hand is always kept — if it does not allow the preferred axis, an axis it does allow is chosen.",
-      es:"Debajo de la tabla de rutas marca las rutas preferidas para cada uno de los dos taxis — mañana y mediodía. En un día cuyo vehículo de mañana es el taxi especial, la ruta de mañana se elige entre las marcadas y la hora de entrada se ajusta a ella. Lo mismo al mediodía con la hora de salida. Una hora escrita a mano siempre se respeta — si no permite la ruta preferida, se elige una que sí permita."}},
+  {p:{he:"מתחת לטבלת הצירים מסמנים לכל אחת משתי המוניות — בוקר וצהריים — אילו צירים מועדפים. ביום שבו סוג הרכב של הבוקר הוא המונית המיוחדת, ציר הבוקר ייבחר מתוך מה שסימנת, ושעת הכניסה תיבחר כך שתתאים לו. אותו דבר בצהריים עם שעת היציאה. ליד כל ציר שסימנת יש שדה אחוז — למשל 70 ל-A ו-30 ל-D — והסכום חייב להיות 100%. סימון או הסרה של ציר מחלקים מחדש שווה בשווה, ומשם משנים. האחוזים נספרים רק על ימים עם מונית, כך שהחלוקה נשמרת לאורך השבועות. שעה שהזנת ידנית נשמרת תמיד — אם היא לא מתירה את הציר המועדף, ייבחר ציר שהיא כן מתירה.",
+      en:"Below the axis table, tick the preferred axes for each of the two taxis — morning and noon. On a day whose morning vehicle is the special taxi, the morning axis is chosen from the ticked ones and the entry time is picked to suit it. The same at noon with the exit time. Each ticked axis has a share field — say 70 for A and 30 for D — totalling 100%. Ticking or unticking re-splits evenly; edit from there. The shares count taxi days only, so the split holds over the weeks. A time you typed by hand is always kept — if it does not allow the preferred axis, an axis it does allow is chosen.",
+      es:"Debajo de la tabla de rutas marca las rutas preferidas para cada uno de los dos taxis — mañana y mediodía. En un día cuyo vehículo de mañana es el taxi especial, la ruta de mañana se elige entre las marcadas y la hora de entrada se ajusta a ella. Lo mismo al mediodía con la hora de salida. Cada ruta marcada tiene un campo de porcentaje — por ejemplo 70 para A y 30 para D — que suma 100%. Marcar o desmarcar reparte de nuevo por igual; ajusta desde ahí. Los porcentajes cuentan solo los días con taxi, así el reparto se mantiene a lo largo de las semanas. Una hora escrita a mano siempre se respeta — si no permite la ruta preferida, se elige una que sí permita."}},
 
   {h:{he:"🖨️ הגדרות הדפסה", en:"🖨️ Print settings", es:"🖨️ Ajustes de impresión"}},
   {p:{he:"שני מצבי הדפסה, ובוחרים ביניהם כאן:",
@@ -3381,7 +3417,7 @@ const GUIDE = [
     {he:"📤 ייצוא Excel — מוריד קובץ שאפשר לפתוח באקסל או בגיליון אחר. שמות הימים בקובץ יוצאים בשפה שבחרת בסרגל העליון.",
      en:"📤 Export Excel — downloads a file you can open in Excel or another spreadsheet. The day names in it come out in the language you picked in the top bar.",
      es:"📤 Exportar Excel — descarga un archivo para abrir en Excel u otra hoja. Los nombres de los días salen en el idioma que elegiste arriba."},
-    {he:"🖨️ הדפסה — פותח תצוגת הדפסה: בורר כיוון דף, כפתור הדפסה, וכפתור ✕ סגור באדום שמחזיר אותך לסידור. הכפתורים האלה אינם מודפסים. הכפתור 📄 שמור PDF יוצר קובץ PDF של הסידור — באייפד ובאייפון נפתח תפריט שיתוף (שמירה לקבצים, הדפסה, וואטסאפ), ובשאר המכשירים הקובץ יורד.",
+    {he:"🖨️ הדפסה — פותח תצוגת הדפסה: בורר כיוון דף, כפתור הדפסה, וכפתור ✕ סגור באדום שמחזיר אותך לסידור. הכפתורים האלה אינם מודפסים. הכפתור 📄 שמור PDF (הקובץ מוכן אחרי שנייה-שתיים מפתיחת התצוגה) יוצר קובץ PDF של הסידור — באייפד ובאייפון נפתח תפריט שיתוף (שמירה לקבצים, הדפסה, וואטסאפ), ובשאר המכשירים הקובץ יורד.",
      en:"🖨️ Print — opens the print view: a page-direction picker, a print button, and a red ✕ Close that takes you back to the schedule. None of those buttons are printed. The 📄 Save PDF button makes a PDF file of the schedule — on an iPad or iPhone the share menu opens (Save to Files, Print, WhatsApp); on other devices the file downloads.",
      es:"🖨️ Imprimir — abre la vista de impresión: un selector de orientación, un botón de imprimir y un ✕ Cerrar rojo que te devuelve al horario. Esos botones no se imprimen. El botón 📄 Guardar PDF crea un archivo PDF del horario — en iPad o iPhone se abre el menú compartir (Guardar en Archivos, Imprimir, WhatsApp); en otros dispositivos el archivo se descarga."},
     {he:"הדף יוצא A4 עם שוליים של 5 מ״מ, והטבלה נמתחת על כל רוחב הדף. כמה עותקים יש בדף ובאיזה גודל — נקבע בהגדרות → 🖨️ הגדרות הדפסה.",
@@ -3901,6 +3937,7 @@ function printOverflow(){
            cm:Math.ceil(((need/have)*box.getBoundingClientRect().height)/CMpx*10)/10+0.2 };
 }
 function closePrint(){
+  _pdf.gen++; _pdf.blob=null;               // a preparation still running is dropped
   document.body.classList.remove("printing");
   document.getElementById("printArea").innerHTML="";
   document.getElementById("printBar").innerHTML="";
@@ -3946,7 +3983,7 @@ function paintPrintBar(){
     </div>
     <div class="pb-row">${printPreview(ps)}
       <button class="btn primary" id="printGo">${esc(t("print"))}</button>
-      <button class="btn" id="printPdf">${esc(t("pdf_save"))}</button></div>
+      <button class="btn" id="printPdf" ${_pdf.blob?"":"disabled"}>${esc(t(_pdf.blob?"pdf_save":"pdf_busy"))}</button></div>
     <div class="hint" id="printClip"></div>`;
   wirePrintBar();
   /* measured after the copies exist, so it reports what really happened */
@@ -3982,6 +4019,7 @@ function wirePrintBar(){
       if(el) el.outerHTML=printPreview(printSettings());
     }
     paintPrintArea();
+    preparePdf();
   };
   /* the mode changes which fields exist, so that one redraws the panel */
   bar.querySelectorAll('input[name="pvMode"]').forEach(r=>r.onchange=()=>apply(true));
@@ -4042,28 +4080,59 @@ async function buildSchedulePdf(){
   pdf.addImage(canvas.toDataURL("image/jpeg",0.92),"JPEG", m+(boxW-w)/2, m, w, h);
   return pdf.output("blob");
 }
-async function savePdf(){
+/* Safari opens the share sheet only straight out of a tap: making the PDF
+   first (seconds on a tablet) and sharing after it lost the tap, so Safari
+   refused and nothing was saved. The PDF is therefore made in the
+   background as soon as the print view opens, and again whenever its
+   settings change; the tap then hands over a file that is already there. */
+let _pdf={gen:0, blob:null, promise:null};
+function preparePdf(){
+  const gen=++_pdf.gen;
+  _pdf.blob=null;
+  paintPdfButton();
+  const run=new Promise(r=>setTimeout(r,250))           // let a burst of changes settle
+    .then(()=>gen===_pdf.gen&&document.body.classList.contains("printing")?buildSchedulePdf():null)
+    .then(blob=>{ if(gen===_pdf.gen&&blob){ _pdf.blob=blob; paintPdfButton(); } return blob; })
+    .catch(e=>{ console.error(e); return null; });
+  _pdf.promise=run;
+  return run;
+}
+/* the newest preparation, whatever started it */
+async function pdfPrepared(){
+  let p;
+  do{ p=_pdf.promise; await p; } while(p!==_pdf.promise);
+  return _pdf.blob;
+}
+function paintPdfButton(){
   const btn=document.getElementById("printPdf");
-  if(btn){ btn.disabled=true; btn.textContent=t("pdf_busy"); }
-  try{
-    const wk=Object.keys(S.days).sort()[0];
-    const name=`schedule_${wk}.pdf`;
-    const blob=await buildSchedulePdf();
-    const file=new File([blob],name,{type:"application/pdf"});
-    logAction("export_excel","log_export_week",{w:wk},{week:wk});
-    /* iPad / iPhone: the share sheet — Save to Files, Print, WhatsApp… */
-    if(navigator.canShare&&navigator.canShare({files:[file]})){
-      try{ await navigator.share({files:[file], title:name}); }
-      catch(e){ if(e&&e.name!=="AbortError") throw e; }
-    } else {
-      const a=document.createElement("a");
-      a.href=URL.createObjectURL(blob); a.download=name;
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(()=>URL.revokeObjectURL(a.href),3000);
-      toast("✅ "+t("pdf_ready"));
-    }
-  }catch(e){ console.error(e); toast("⚠️ "+t("pdf_fail")); }
-  finally{ if(btn){ btn.disabled=false; btn.textContent=t("pdf_save"); } }
+  if(!btn) return;
+  btn.disabled=!_pdf.blob;
+  btn.textContent=t(_pdf.blob?"pdf_save":"pdf_busy");
+}
+function downloadPdf(blob,name){
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download=name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),3000);
+  toast("✅ "+t("pdf_ready"));
+}
+function savePdf(){
+  const blob=_pdf.blob;
+  if(!blob){ toast(t("pdf_busy")); return Promise.resolve(); }
+  const wk=Object.keys(S.days).sort()[0];
+  const name=`schedule_${wk}.pdf`;
+  const file=new File([blob],name,{type:"application/pdf"});
+  logAction("export_excel","log_export_week",{w:wk},{week:wk});
+  /* iPad / iPhone: the share sheet — Save to Files, Print, WhatsApp… —
+     called synchronously, while the tap still counts */
+  if(navigator.canShare&&navigator.canShare({files:[file]})){
+    return navigator.share({files:[file], title:name}).catch(e=>{
+      if(e&&e.name==="AbortError") return;      // the user closed the sheet
+      downloadPdf(blob,name);                   // refused: download it instead
+    });
+  }
+  downloadPdf(blob,name);
+  return Promise.resolve();
 }
 function doPrint(){
   if(!S.days) return;
@@ -4072,6 +4141,7 @@ function doPrint(){
   document.body.classList.add("printing");
   paintPrintBar();
   paintPrintArea();
+  preparePdf();
 }
 
 /* ═══════════════ wiring ═══════════════ */
@@ -4606,9 +4676,32 @@ function wireSettings(){
     ins.forEach((i,ix)=>{ i.value=ix===ins.length-1?100-e*(ins.length-1):e; });
     paintShare();
   };
+  const taxiPct=(side,L)=>document.querySelector(`[data-taxipct="${side}"][data-letter="${L}"]`);
+  const taxiTicked=side=>[...document.querySelectorAll(`[data-taxiax="${side}"]:checked`)].map(c=>c.dataset.letter);
+  const taxiSum=side=>taxiTicked(side).reduce((a,L)=>a+(parseInt(taxiPct(side,L).value,10)||0),0);
+  const paintTaxi=side=>{
+    const el=document.querySelector(`[data-taxitot="${side}"]`); if(!el) return;
+    const any=taxiTicked(side).length, n=taxiSum(side);
+    el.textContent=any?n+"%":"—"; el.className="pct-tot "+(!any||n===100?"ok":"bad");
+  };
+  /* ticking or unticking re-splits the ticked axes evenly; edit from there */
+  document.querySelectorAll("[data-taxiax]").forEach(cb=>cb.onchange=()=>{
+    const side=cb.dataset.taxiax, on=taxiTicked(side), e=on.length?Math.floor(100/on.length):0;
+    document.querySelectorAll(`[data-taxipct="${side}"]`).forEach(i=>{
+      const ix=on.indexOf(i.dataset.letter);
+      i.disabled=ix<0; i.value=ix<0?0:(ix===on.length-1?100-e*(on.length-1):e); });
+    paintTaxi(side);
+  });
+  document.querySelectorAll("[data-taxipct]").forEach(i=>{ i.oninput=()=>paintTaxi(i.dataset.taxipct); });
   if($("saveTaxiAxes")) $("saveTaxiAxes").onclick=()=>{
-    const pick=side=>[...document.querySelectorAll(`[data-taxiax="${side}"]:checked`)].map(c=>c.dataset.letter);
-    CFG.taxi_axes={morning:pick("morning"), noon:pick("noon")};
+    for(const side of ["morning","noon"]){
+      const n=taxiSum(side);
+      if(taxiTicked(side).length&&n!==100){
+        toast("⚠️ "+t("err_taxi_pct",{s:t(side==="morning"?"ax_taxi_morning":"ax_taxi_noon"),n})); return; }
+    }
+    const pcts=side=>{ const o={}; taxiTicked(side).forEach(L=>{ o[L]=parseInt(taxiPct(side,L).value,10)||0; }); return o; };
+    CFG.taxi_axes={morning:taxiTicked("morning"), noon:taxiTicked("noon")};
+    CFG.taxi_axes_pcts={morning:pcts("morning"), noon:pcts("noon")};
     saveConfig(); toast("✅ "+t("saved")); render(); reopen("axes");
   };
   if($("saveAxes")) $("saveAxes").onclick=()=>{

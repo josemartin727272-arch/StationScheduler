@@ -79,6 +79,49 @@ await test("print: the PDF button builds an A4 PDF of the week", async()=>{
   window.__lastPdf=blob;
 });
 
+/* Safari lets a page open the share sheet only straight out of a tap. The PDF
+   is therefore prepared while the print view is open, and the tap hands it
+   over at once — no waiting in between. */
+function stubShare(impl){
+  const had={share:navigator.share, canShare:navigator.canShare};
+  Object.defineProperty(navigator,"canShare",{value:()=>true,configurable:true});
+  Object.defineProperty(navigator,"share",{value:impl,configurable:true});
+  return ()=>{ Object.defineProperty(navigator,"share",{value:had.share,configurable:true});
+               Object.defineProperty(navigator,"canShare",{value:had.canShare,configurable:true}); };
+}
+await test("pdf: the print view prepares the PDF before it is tapped", async()=>{
+  freshWeek(); S.screen="sched"; render(); doPrint();
+  ok(window.pdfPrepared, "no preparation started");
+  const blob=await pdfPrepared();
+  ok(blob&&blob.size>5000,"nothing prepared");
+  const b=document.getElementById("printPdf");
+  ok(!b.disabled && b.textContent===t("pdf_save"),"button not ready: "+b.textContent);
+});
+await test("pdf: a tap on a ready PDF opens the share sheet at once", async()=>{
+  freshWeek(); S.screen="sched"; render(); doPrint(); await pdfPrepared();
+  let calledSync=false, shared=null;
+  const undo=stubShare(d=>{ shared=d; return Promise.resolve(); });
+  try{ const p=savePdf(); calledSync=!!shared; await p; } finally{ undo(); }
+  ok(calledSync,"share was not called straight from the tap");
+  ok(shared.files[0].type==="application/pdf","shared something else");
+});
+await test("pdf: when the share sheet is refused, the file downloads instead", async()=>{
+  freshWeek(); S.screen="sched"; render(); doPrint(); await pdfPrepared();
+  const undo=stubShare(()=>Promise.reject(Object.assign(new Error("x"),{name:"NotAllowedError"})));
+  const orig=HTMLAnchorElement.prototype.click; let dl=null;
+  HTMLAnchorElement.prototype.click=function(){ dl=this.download; };
+  try{ await savePdf(); } finally{ undo(); HTMLAnchorElement.prototype.click=orig; }
+  ok(dl&&/\.pdf$/.test(dl),"no download fallback");
+});
+await test("pdf: changing the page direction prepares a fresh PDF", async()=>{
+  freshWeek(); S.screen="sched"; render();
+  savePrintSettings({...printSettings(), orientation:"portrait", mode:"single"});
+  doPrint(); await pdfPrepared();
+  document.querySelector('input[name="pvOrient"][value="landscape"]').click();
+  const txt=await (await pdfPrepared()).text();
+  ok(/\/MediaBox \[0 0 841\.8\d* 595\.2\d*\]/.test(txt),"still portrait");
+});
+
 /* ── 5. employees balanced within the week ───────────────────────────── */
 /* eight past weeks in which HALCON and CHCHORRO did R and BUHO barely did */
 function skewedArchive(){
@@ -179,8 +222,47 @@ await test("settings: axis shares and taxi preferences can be edited and saved",
   document.getElementById("saveAxes").click(); await tick();
   eq(axisById("A").pct,70,"saved share");
   const cb=document.querySelector('[data-taxiax="noon"][data-letter="B"]'); ok(cb,"no taxi checkbox");
-  cb.checked=true; document.getElementById("saveTaxiAxes").click(); await tick();
+  cb.click(); document.getElementById("saveTaxiAxes").click(); await tick();
   ok((CFG.taxi_axes.noon||[]).includes("B"),"taxi preference not saved");
+});
+
+/* ── 4b. percentages inside the taxi preference ───────────────────────── */
+await test("taxi %: over twelve weeks the taxi mornings split about 75/25", async()=>{
+  localStorage.removeItem("agenda_archive");
+  CFG.taxi_axes={morning:["A","D"], noon:[]};
+  CFG.taxi_axes_pcts={morning:{A:75,D:25}, noon:{}};
+  const VS=CFG.special_values.vehicle_special; let A=0, D=0, other=0;
+  let ws="2026-08-03";
+  for(let w=0;w<12;w++){
+    freshWeek(ws); autoAssign();
+    Object.values(S.days).forEach(d=>{ if(d.vehicle_morning!==VS) return;
+      const L=axisLetterOf(d.axis_morning); if(L==="A") A++; else if(L==="D") D++; else other++; });
+    const a=loadArchive(); a[ws]=S.days; saveArchive(a);
+    ws=addDays(ws,7);
+  }
+  eq(other,0,"taxi mornings off the ticked axes");
+  const share=A/(A+D);
+  ok(share>=0.62&&share<=0.88, "A share "+A+"/"+(A+D));
+});
+await test("taxi %: the settings take a percentage per ticked axis and refuse a wrong total", async()=>{
+  S.screen="settings"; render(); reopen("axes"); await tick();
+  const cb=L=>document.querySelector(`[data-taxiax="noon"][data-letter="${L}"]`);
+  const pc=L=>document.querySelector(`[data-taxipct="noon"][data-letter="${L}"]`);
+  ok(pc("A"),"no percentage field");
+  ok(pc("A").disabled,"field open while the axis is not ticked");
+  cb("A").click(); cb("B").click(); await tick();
+  ok(!pc("A").disabled,"field still closed after ticking");
+  eq(+pc("A").value+ +pc("B").value,100,"ticking does not split evenly");
+  pc("A").value=60; pc("B").value=60; pc("A").dispatchEvent(new Event("input"));
+  document.getElementById("saveTaxiAxes").click(); await tick();
+  ok(!((CFG.taxi_axes_pcts||{}).noon||{}).A,"saved a total of 120%");
+  pc("A").value=60; pc("B").value=40;
+  document.getElementById("saveTaxiAxes").click(); await tick();
+  eq(CFG.taxi_axes_pcts.noon.A,60,"A share"); eq(CFG.taxi_axes_pcts.noon.B,40,"B share");
+});
+await test("taxi %: an older setting with ticks but no percentages splits evenly", async()=>{
+  CFG.taxi_axes={morning:["B","C"], noon:[]}; delete CFG.taxi_axes_pcts;
+  const w=taxiAxisPcts("morning"); eq(w.B,50,"B"); eq(w.C,50,"C");
 });
 
 window.__results=results;
