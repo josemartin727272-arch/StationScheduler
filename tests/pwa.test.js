@@ -522,6 +522,56 @@ await test("send: without a share sheet, WhatsApp opens with the text", async()=
   ok(url&&url.startsWith("https://wa.me/?text=")&&decodeURIComponent(url.slice(20))===workerMessage("TORO"),"url "+url);
 });
 
+/* ── v50 · 12. renaming an employee keeps their history ──────────────── */
+function renameSetup(){
+  const arch={}; arch[MON]={}; arch[MON][MON]={apt_pe:"BUHO", emb_pe:"HALCON+BUHO", vacation:[], trip:["BUHO"], other_empl:"BUHO"};
+  arch[MON][TUE]={apt_pe:"HALCON", emb_pe:"CHCHORRO+BUHO", vacation:["BUHO"], trip:[]};
+  seedArchive(arch);
+  CFG.vacation_budget.BUHO=21;
+  CFG.fixed_rules=[{day:"monday",row:"emb_pe",value:"HALCON+BUHO"}];
+  CFG.away_calendar=[{name:"BUHO",kind:"trip",from:"2026-12-01",to:"2026-12-03"}];
+  freshWeek(MON); S.days[MON].apt_pe="BUHO";
+  S.screen="settings"; render(); reopen("groups");
+}
+async function renameByUi(from,to){
+  const f=id=>document.getElementById(id);
+  f("rnFrom").value=from; f("rnTo").value=to; f("rnGo").click(); await tick();
+  const yes=f("rnYes"); if(yes){ yes.click(); await tick(); }
+}
+await test("rename: asks first, and changes nothing until confirmed", async()=>{
+  renameSetup(); await tick();
+  const f=id=>document.getElementById(id);
+  ok(f("rnFrom")&&f("rnTo")&&f("rnGo"),"no rename form");
+  f("rnFrom").value="BUHO"; f("rnTo").value="PUMA"; f("rnGo").click(); await tick();
+  ok(f("rnYes"),"no confirmation");
+  ok(allEmps().includes("BUHO"),"renamed before confirming");
+});
+await test("rename: every place the name lives follows it", async()=>{
+  renameSetup(); await tick(); await renameByUi("BUHO","PUMA");
+  ok(allEmps().includes("PUMA")&&!allEmps().includes("BUHO"),"groups");
+  eq(CFG.vacation_budget.PUMA,21,"budget moved"); ok(!("BUHO" in CFG.vacation_budget),"old budget key left");
+  eq(CFG.fixed_rules[0].value,"HALCON+PUMA","fixed rule");
+  eq(CFG.away_calendar[0].name,"PUMA","calendar");
+  const a=loadArchive()[MON];
+  eq(a[MON].apt_pe,"PUMA","archive single"); eq(a[MON].emb_pe,"HALCON+PUMA","archive pair");
+  eq(JSON.stringify(a[MON].trip),'["PUMA"]',"archive trip"); eq(a[MON].other_empl,"PUMA","archive other task");
+  eq(JSON.stringify(a[TUE].vacation),'["PUMA"]',"archive vacation");
+  eq(S.days[MON].apt_pe,"PUMA","open week");
+  ok(!JSON.stringify(loadArchive()).includes("BUHO"),"BUHO left somewhere in the archive");
+});
+await test("rename: a taken, empty or '+' name is refused", async()=>{
+  for(const bad of ["HALCON","","A+B","A,B"]){
+    renameSetup(); await tick(); await renameByUi("BUHO",bad);
+    ok(allEmps().includes("BUHO"),"accepted '"+bad+"'");
+  }
+});
+await test("rename: statistics then show one person, not two", async()=>{
+  renameSetup(); await tick(); await renameByUi("BUHO","PUMA");
+  S.screen="stats"; S.statsTab="year"; S.statsYear="2026"; render(); await tick();
+  const tx=document.getElementById("app").textContent;
+  ok(tx.includes("PUMA")&&!tx.includes("BUHO"),"stats still split the person");
+});
+
 window.__results=results;
 return results;
 })();
