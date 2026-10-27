@@ -296,6 +296,8 @@ body.printing>header,body.printing>main{visibility:hidden}
    inside the Hebrew sheet, while a Hebrew value still reads right to left */
 .print-table td:not(.label),table.sched select{unicode-bidi:plaintext}
 .bal-sum{font-size:.92rem;line-height:1.7}
+table.sched td .why{font-size:.68rem;line-height:1.25;color:#5b6b7b;margin-top:2px;
+  white-space:normal;max-width:12em}
 .bal-sum .bal-line b{display:inline-block;min-width:7.5em}
 .bal-sum .bal-off{color:#b45309;font-weight:600}
 /* a pair of names breaks after its "+" onto a second line instead of being
@@ -364,7 +366,7 @@ log_export_week:"ייצוא הסידור לשבוע {w}",log_backup:"גיבוי 
 log_cfg_export:"ייצוא הגדרות",log_cfg_import:"ייבוא הגדרות",guide_lead:"מדריך קצר לכל מה שהמערכת יודעת לעשות. פתח פרק כדי לקרוא אותו.",
 week_start:"תחילת שבוע",generate:"צור סידור",auto_assign:"⚡ שיבוץ אוטומטי",save:"💾 שמור",export_excel:"📤 ייצוא Excel",print:"🖨️ הדפסה",
 warn_count:"מספר הערות על הסידור",close:"סגור",
-pdf_save:"📄 שמור PDF",undo_auto:"↶ בטל שיבוץ",bal_title:"⚖️ איזון השבוע",pdf_busy:"מכין PDF…",pdf_fail:"לא הצלחתי ליצור PDF",pdf_ready:"ה-PDF ירד",
+pdf_save:"📄 שמור PDF",why_btn:"💬 למה?",why_week_word:"השבוע",why_raw:"{s}",why_person:"הכי מעט השבוע ({n} עד כה)",why_tie:"בתיקו — פחות לאחרונה",why_quota:"יעד שבועי: {v} × {n}",why_quota_any:"יעד שבועי: {n} פעמים",why_taxi_axis:"{s}: ציר {a} ({p}%)",why_axis:"ציר שמותר לשעה {v}",why_fit_axis:"שעה שמתאימה לציר {a}",why_balance:"איזון לפי 90 הימים האחרונים",s_fixed:"📌 שיבוצים קבועים",fx_hint:"תא שמתמלא מעצמו בכל שבוע חדש, ונשמר בשיבוץ האוטומטי כמו הזנה ידנית. עובד שנעדר באותו יום לא ישובץ, ותופיע הערה.",fx_none:"אין עדיין שיבוצים קבועים",fx_add:"➕ הוסף שיבוץ קבוע",warn_fixed_away:"שיבוץ קבוע לא הוחל — {e} נעדר ({r})",s_calendar:"🏖 לוח חופשות",cal_hint:"חופשות ונסיעות מראש. הן נכנסות לבד לשורות החופשה/נסיעה בשבוע שבו הן נופלות — כשנוצר שבוע וכשפותחים אותו. סימון ידני לא נמחק.",cal_none:"אין חופשות מתוכננות",cal_vac:"חופשה",cal_trip:"נסיעה",cal_from:"מ־",cal_to:"עד",cal_add:"➕ הוסף",cal_need_dates:"בחר עובד ושני תאריכים",cal_backwards:"תאריך הסיום לפני תאריך ההתחלה",undo_auto:"↶ בטל שיבוץ",bal_title:"⚖️ איזון השבוע",pdf_busy:"מכין PDF…",pdf_fail:"לא הצלחתי ליצור PDF",pdf_ready:"ה-PDF ירד",
 print_orient:"כיוון דף",print_portrait:"לאורך",print_landscape:"לרוחב",
 s_print:"🖨️ הגדרות הדפסה",print_mode:"מצב הדפסה",
 print_single:"סידור מלא — דף A4 שלם, עותק אחד",
@@ -486,7 +488,7 @@ log_export_week:"Exported the schedule for {w}",log_backup:"Full backup download
 log_cfg_export:"Settings exported",log_cfg_import:"Settings imported",guide_lead:"A short guide to everything the app can do. Open a chapter to read it.",
 week_start:"Week start",generate:"New Schedule",auto_assign:"⚡ Auto Assign",save:"💾 Save",export_excel:"📤 Export Excel",print:"🖨️ Print",
 warn_count:"Notes on this schedule",close:"Close",
-pdf_save:"📄 Save PDF",undo_auto:"↶ Undo assign",bal_title:"⚖️ This week's balance",pdf_busy:"Preparing PDF…",pdf_fail:"Could not create the PDF",pdf_ready:"PDF downloaded",
+pdf_save:"📄 Save PDF",why_btn:"💬 Why?",why_week_word:"this week",why_raw:"{s}",why_person:"fewest this week ({n} so far)",why_tie:"tie — fewer lately",why_quota:"weekly target: {v} × {n}",why_quota_any:"weekly target: {n} times",why_taxi_axis:"{s}: axis {a} ({p}%)",why_axis:"axis allowed for {v}",why_fit_axis:"time that suits axis {a}",why_balance:"balanced over the last 90 days",s_fixed:"📌 Fixed assignments",fx_hint:"A cell that fills itself in every new week and is kept by Auto Assign like a hand-typed value. Someone away that day is not placed, and a note says so.",fx_none:"No fixed assignments yet",fx_add:"➕ Add fixed assignment",warn_fixed_away:"Fixed assignment not applied — {e} is away ({r})",s_calendar:"🏖 Absence calendar",cal_hint:"Vacations and trips ahead. They land by themselves in the away rows of the week they fall in — when a week is created and when it is opened. Hand marks are never removed.",cal_none:"No planned absences",cal_vac:"Vacation",cal_trip:"Trip",cal_from:"From",cal_to:"To",cal_add:"➕ Add",cal_need_dates:"Pick a person and both dates",cal_backwards:"The end date is before the start date",undo_auto:"↶ Undo assign",bal_title:"⚖️ This week's balance",pdf_busy:"Preparing PDF…",pdf_fail:"Could not create the PDF",pdf_ready:"PDF downloaded",
 print_orient:"Page direction",print_portrait:"Portrait",print_landscape:"Landscape",
 s_print:"🖨️ Print settings",print_mode:"Print mode",
 print_single:"Full schedule — one whole A4 page, a single copy",
@@ -608,7 +610,7 @@ log_export_week:"Se exportó el horario de {w}",log_backup:"Respaldo completo de
 log_cfg_export:"Configuración exportada",log_cfg_import:"Configuración importada",guide_lead:"Una guía breve de todo lo que hace la app. Abre un capítulo para leerlo.",
 week_start:"Inicio de semana",generate:"Nuevo Horario",auto_assign:"⚡ Asignación Automática",save:"💾 Guardar",export_excel:"📤 Exportar Excel",print:"🖨️ Imprimir",
 warn_count:"Observaciones del horario",close:"Cerrar",
-pdf_save:"📄 Guardar PDF",undo_auto:"↶ Deshacer asignación",bal_title:"⚖️ Equilibrio de la semana",pdf_busy:"Preparando PDF…",pdf_fail:"No se pudo crear el PDF",pdf_ready:"PDF descargado",
+pdf_save:"📄 Guardar PDF",why_btn:"💬 ¿Por qué?",why_week_word:"esta semana",why_raw:"{s}",why_person:"menos veces esta semana ({n} hasta ahora)",why_tie:"empate — menos últimamente",why_quota:"objetivo semanal: {v} × {n}",why_quota_any:"objetivo semanal: {n} veces",why_taxi_axis:"{s}: ruta {a} ({p}%)",why_axis:"ruta permitida para {v}",why_fit_axis:"hora que encaja con la ruta {a}",why_balance:"equilibrado en los últimos 90 días",s_fixed:"📌 Asignaciones fijas",fx_hint:"Una celda que se llena sola en cada semana nueva y que la Asignación Automática respeta como un valor escrito a mano. Quien esté ausente ese día no se asigna, y aparece una nota.",fx_none:"Aún no hay asignaciones fijas",fx_add:"➕ Añadir asignación fija",warn_fixed_away:"Asignación fija no aplicada — {e} está ausente ({r})",s_calendar:"🏖 Calendario de ausencias",cal_hint:"Vacaciones y viajes por adelantado. Entran solos en las filas de ausencia de la semana en que caen — al crear la semana y al abrirla. Las marcas a mano nunca se borran.",cal_none:"No hay ausencias planificadas",cal_vac:"Vacaciones",cal_trip:"Viaje",cal_from:"Desde",cal_to:"Hasta",cal_add:"➕ Añadir",cal_need_dates:"Elige una persona y las dos fechas",cal_backwards:"La fecha final es anterior a la inicial",undo_auto:"↶ Deshacer asignación",bal_title:"⚖️ Equilibrio de la semana",pdf_busy:"Preparando PDF…",pdf_fail:"No se pudo crear el PDF",pdf_ready:"PDF descargado",
 print_orient:"Orientación",print_portrait:"Vertical",print_landscape:"Horizontal",
 s_print:"🖨️ Ajustes de impresión",print_mode:"Modo de impresión",
 print_single:"Horario completo — una hoja A4 entera, una copia",
@@ -810,6 +812,10 @@ const DEFAULT_CONFIG = {
     "10-D":  { axes:["B","C"], pcts:{B:50, C:50} },
     "SPLIT": { axes:["A","B","C","D"], pcts:{A:25, B:25, C:25, D:25} }
   },
+  /* cells filled by themselves in every new week: {day:"monday", row, value} */
+  fixed_rules: [],
+  /* absences entered ahead: {name, kind:"vacation"|"trip", from, to} (ISO dates) */
+  away_calendar: [],
   /* axes preferred on a special-taxi slot; empty means no preference */
   taxi_axes: { morning:[], noon:[] },
   /* each ticked axis's share of that taxi's days; empty means an even split */
@@ -1010,6 +1016,13 @@ function migrateConfig(cfg, raw){
     for(const k in (m||{})) o[String(k).toUpperCase()]=Math.max(0,Math.min(100,parseInt(m[k],10)||0));
     return o; };
   cfg.taxi_axes_pcts={ morning:cleanP(tp.morning), noon:cleanP(tp.noon) };
+  cfg.fixed_rules=(Array.isArray(cfg.fixed_rules)?cfg.fixed_rules:[])
+    .filter(r=>r&&r.day&&r.row&&r.value)
+    .map(r=>({day:String(r.day), row:String(r.row), value:String(r.value)}));
+  const isoRe=/^\d{4}-\d{2}-\d{2}$/;
+  cfg.away_calendar=(Array.isArray(cfg.away_calendar)?cfg.away_calendar:[])
+    .filter(e=>e&&e.name&&isoRe.test(e.from)&&isoRe.test(e.to)&&e.from<=e.to)
+    .map(e=>({name:String(e.name), kind:e.kind==="trip"?"trip":"vacation", from:e.from, to:e.to}));
   /* The old free-text/letter reference maps become real rules, split evenly
      across the letters they named. */
   [["entry_axis_map","entry_axis_rules"],["exit_axis_map","exit_axis_rules"]].forEach(([oldKey,newKey])=>{
@@ -1130,6 +1143,7 @@ let S = {
     const d = JSON.parse(localStorage.getItem(LS.draft)||"null");
     if (d && d.weekStart && d.days){ S.weekStart=d.weekStart; S.days=d.days; S.dirty=!!d.dirty; }
     if (S.days) Object.values(S.days).forEach(normalizeAway);
+    if (S.days && applyCalendar(S.days)) S.dirty=true;
   }catch(e){}
 })();
 function saveDraft(){ localStorage.setItem(LS.draft, JSON.stringify({weekStart:S.weekStart, days:S.days, dirty:S.dirty})); }
@@ -1551,6 +1565,40 @@ function emptyWeek(weekStart){
 }
 /* Reshape the open week after the configuration changed (days added/removed,
    a workplace section created) while keeping every value already entered. */
+/* ── fixed rules and the absence calendar ──────────────────────────────── */
+function dowOf(iso){ return DOW_ORDER[(new Date(iso+"T12:00:00").getDay()+6)%7]; }
+/* Absences entered ahead are added to the week's away rows. Only added:
+   a mark typed by hand is never removed. Returns whether anything changed. */
+function applyCalendar(days){
+  let changed=false;
+  for(const dk in days){
+    (CFG.away_calendar||[]).forEach(e=>{
+      if(dk<e.from||dk>e.to) return;
+      const list=awayList(days[dk],e.kind);
+      if(!list.includes(e.name)){ list.push(e.name); days[dk][e.kind]=list; changed=true; }
+    });
+  }
+  return changed;
+}
+/* A fixed rule fills its cell like a hand-typed value, so auto-assign keeps
+   it. Someone away that day is not placed — validate() names the rule. */
+function applyFixed(days){
+  for(const dk in days){
+    const dow=dowOf(dk), away=awayToday(days[dk]);
+    (CFG.fixed_rules||[]).forEach(r=>{
+      if(r.day!==dow||!(r.row in days[dk])||days[dk][r.row]) return;
+      if(String(r.value).split("+").some(n=>away.has(n))) return;
+      days[dk][r.row]=r.value;
+    });
+  }
+  return days;
+}
+/* a week as the app opens it: empty, absences from the calendar, fixed cells */
+function newWeek(weekStart){
+  const days=emptyWeek(weekStart);
+  applyCalendar(days); applyFixed(days);
+  return days;
+}
 function resyncDays(){
   if(!S.days) return;
   const wk=snapMonday(Object.keys(S.days).sort()[0]||S.weekStart);
@@ -1592,6 +1640,11 @@ function fieldPcts(key){
   return any?out:def;
 }
 /* ═══════════════ history & auto-assign (port of schedule_logic.py) ═══════════════ */
+/* Why a cell got its value: auto-assign leaves one short line per cell it
+   fills, shown under the cell when 💬 is on. Kept in memory with the open
+   week only — not saved to the archive. Key: "<date>|<row>". */
+let _why=null;
+function noteWhy(dk,f,key,vars){ if(_why) _why[dk+"|"+f]=t(key,vars); }
 /* 90-day window: covers ~13 weeks so year-boundary never creates a cold start */
 const HISTORY_DAYS = 90;
 function historyFloor(){
@@ -1661,7 +1714,8 @@ function applyWeeklyTargets(keys, hist){
     list.filter(t=>t.value).forEach(t=>{
       let need=t.count-keys.filter(k=>S.days[k][f]===t.value).length;
       const free=shuffle(open.filter(k=>!S.days[k][f]));
-      while(need-->0&&free.length){ S.days[free.shift()][f]=t.value; counts[t.value]=(counts[t.value]||0)+1; }
+      while(need-->0&&free.length){ const k=free.shift(); S.days[k][f]=t.value; counts[t.value]=(counts[t.value]||0)+1;
+        noteWhy(k,f,"why_quota",{v:t.value, n:t.count}); }
     });
     if(anyT){
       /* "any value" quota: fill up to count days, leave the rest blank */
@@ -1670,7 +1724,7 @@ function applyWeeklyTargets(keys, hist){
       const free=shuffle(open.filter(k=>!S.days[k][f]));
       while(need-->0&&free.length&&pool.length){
         const c=leastUsed(pool,counts); counts[c]=(counts[c]||0)+1;
-        S.days[free.shift()][f]=c;
+        const k=free.shift(); S.days[k][f]=c; noteWhy(k,f,"why_quota_any",{n:anyT.count});
       }
     } else {
       /* only exact-value quotas: the other days take the unclaimed values */
@@ -1685,6 +1739,9 @@ function applyWeeklyTargets(keys, hist){
 function autoAssign(){
   if(!S.days) return;
   S.undo=JSON.stringify(S.days);        // one level: what ↶ brings back
+  S.undoWhy=S.why||{};
+  const before=JSON.parse(S.undo);
+  _why={};
   const keys=Object.keys(S.days).sort();
   const filledBefore=filledCells(S.days);
   /* 90-day window: covers ~13 weeks so year-boundary never creates a cold start */
@@ -1734,8 +1791,12 @@ function autoAssign(){
       else if(sc[0]===best[0]&&sc[1]===best[1]) ties.push(g);
     });
     const g=ties[Math.floor(Math.random()*ties.length)];
+    /* was the week alone enough, or did a tie fall back to recent weeks? */
+    const tied=groups.filter(x=>x.reduce((a,e)=>a+(wc[e]||0),0)===best[0]).length>1;
+    lastPick=g?t("why_person",{n:best[0]})+(tied?" · "+t("why_tie"):""):"";
     return g?g.join("+"):"";
   };
+  let lastPick="";
 
   /* vehicles with no quota of their own still need a value on every day —
      decided before the days themselves, because a special-taxi slot steers
@@ -1775,7 +1836,9 @@ function autoAssign(){
       const tw=pri.length?taxiAxisPcts(side):null;
       if(pri.length&&free(af)&&!day[af]&&!day[vf]&&activeAxes().length){
         const fits=pri.filter(L=>valuesAllowingAxis(vf,L,pool).length);
-        if(fits.length) day[af]=pickAxis(vf, null, taxiCounts(af,vh), fits, tw);
+        if(fits.length){ day[af]=pickAxis(vf, null, taxiCounts(af,vh), fits, tw);
+          const L=axisLetterOf(day[af]);
+          noteWhy(dk,af,"why_taxi_axis",{s:t(side==="morning"?"ax_taxi_morning":"ax_taxi_noon"), a:L, p:Math.round((tw||{})[L]||0)}); }
       }
       if(free(vf)&&!day[vf]&&pool.length){
         let cand=pool;
@@ -1788,10 +1851,15 @@ function autoAssign(){
           if(n.length) cand=n;
         }
         day[vf]=leastUsed(cand,H(vf),vf);
+        if(day[af]) noteWhy(dk,vf,"why_fit_axis",{a:axisLetterOf(day[af])});
       }
       if(free(af)&&!day[af]&&activeAxes().length)
-        day[af]=pri.length?pickAxis(vf, day[vf], taxiCounts(af,vh), pri, tw)
+      { day[af]=pri.length?pickAxis(vf, day[vf], taxiCounts(af,vh), pri, tw)
                           :pickAxis(vf, day[vf], H(af));
+        const L=axisLetterOf(day[af]);
+        if(pri.length&&pri.includes(L))
+          noteWhy(dk,af,"why_taxi_axis",{s:t(side==="morning"?"ax_taxi_morning":"ax_taxi_noon"), a:L, p:Math.round((tw||{})[L]||0)});
+        else if(day[vf]) noteWhy(dk,af,"why_axis",{v:day[vf]}); }
     });
 
     /* Roles in the configured staffing order. Each one draws from its own
@@ -1828,6 +1896,7 @@ function autoAssign(){
       const add=pickPeople(pool,sec.row_key,Math.min(want,pool.length));
       if(!add) return;
       day[sec.row_key]=have.concat(String(add).split("+").filter(Boolean)).join("+");
+      noteWhy(dk,sec.row_key,"why_raw",{s:lastPick});
       String(add).split("+").forEach(e=>busy.add(e));
     };
     /* One list, one order. Every role is staffed in the order the settings
@@ -1839,7 +1908,7 @@ function autoAssign(){
       if(day[x.sec.row_key]) continue;
       const c=pickN(x.sec,taken,1);
       if(!c) continue;
-      day[x.sec.row_key]=c;
+      day[x.sec.row_key]=c; noteWhy(dk,x.sec.row_key,"why_raw",{s:lastPick});
       String(c).split("+").forEach(e=>taken.add(e));
     }
     /* a second lap down the same list hands the roles that take more than one
@@ -1875,6 +1944,13 @@ function autoAssign(){
     day.taxi_emb=yn?(day.taxi_emb||leastUsed(opts("taxi_emb"),hist.taxi_emb||{},"taxi_apt")):"";
     day.taxi_arrival_noon=yn?(day.taxi_arrival_noon||leastUsed(opts("taxi_arrival_noon"),hist.taxi_arrival_noon||{},"taxi_arrival")):"";
   });
+  /* every cell this run filled gets a line; the specific ones were noted on
+     the way, the rest were plain balancing over the last 90 days */
+  for(const dk in S.days) for(const f in S.days[dk]){
+    const v=S.days[dk][f];
+    if(v&&!Array.isArray(v)&&!(before[dk]||{})[f]&&!_why[dk+"|"+f]) _why[dk+"|"+f]=t("why_balance");
+  }
+  S.why={...(S.why||{}), ..._why}; _why=null;
   const filledAfter=filledCells(S.days);
   logAction("auto_assign","log_auto",{w:keys[0]},
     {week:keys[0], changes:Math.max(0, filledAfter-filledBefore)});
@@ -1945,6 +2021,12 @@ function validate(){
       const staffed=wpSections(w).filter(sec=>sectionSize(sec)>0&&day[sec.row_key]).length;
       if(staffed<floor) errs.push({lvl:"warn", msg:d+": "+
         t("warn_wp_min_sections",{w:wpName(w), n:floor, c:staffed})});
+    });
+    /* a fixed rule that could not be applied because its person is away */
+    (CFG.fixed_rules||[]).forEach(r=>{
+      if(r.day!==dowOf(dk)||day[r.row]) return;
+      const off=String(r.value).split("+").find(n=>awayToday(day).has(n));
+      if(off) errs.push({lvl:"warn", msg:d+": 📌 "+t("warn_fixed_away",{e:off, r:rowLabel(r.row)})});
     });
     /* someone cannot be on holiday and away on a trip at once */
     const vacNames=awayList(day,"vacation"), tripNames=awayList(day,"trip");
@@ -2095,6 +2177,7 @@ function viewSched(){
     <button class="btn" id="btnClear" ${S.days?"":"disabled"}>🗑 ${t("clear_week")}</button>
     <button class="btn primary" id="btnAuto" ${S.days?"":"disabled"}>${t("auto_assign")}</button>
     <button class="btn" id="btnUndo" ${S.days&&S.undo?"":"disabled"}>${t("undo_auto")}</button>
+    <button class="btn${S.showWhy?" primary":""}" id="btnWhy" ${S.days?"":"disabled"} aria-pressed="${S.showWhy?"true":"false"}">${t("why_btn")}</button>
     <button class="btn" id="btnSave" ${S.days?"":"disabled"}>${t("save")}<span id="saveDot" class="dot" style="display:${S.dirty?"inline-block":"none"}"></span></button>
     <button class="btn" id="btnCsv" ${S.days?"":"disabled"}>${t("export_excel")}</button>
     <button class="btn" id="btnPrint" ${S.days?"":"disabled"}>${t("print")}</button>
@@ -2296,7 +2379,9 @@ function selCell(dk,field,options,val,cls,bg){
   list.forEach(v=>{ const d=textDir(v);
     o+=`<option value="${esc(v)}"${d?` dir="${d}"`:""} ${v===val?"selected":""}>${esc(v)}</option>`; });
   const st=bg?` style="background:${esc(bg)}"`:"", d=textDir(val);
-  return `<td class="${cls||""}"><select data-dk="${dk}" data-f="${field}"${d?` dir="${d}"`:""}${st}>${o}</select></td>`;
+  const why=S.showWhy&&val&&S.why?S.why[dk+"|"+field]:"";
+  return `<td class="${cls||""}"><select data-dk="${dk}" data-f="${field}"${d?` dir="${d}"`:""}${st}>${o}</select>`+
+    (why?`<div class="why">${esc(why)}</div>`:"")+`</td>`;
 }
 function renderRow(rk,keys){
   const cr=customRows().find(r=>r.key===rk);
@@ -2576,6 +2661,8 @@ function viewSettings(){
   /* targets */
   const tgt=`${targetsPanel()}${pctTables()}`;
   h+=sect("targets",t("s_targets"),tgt);
+  h+=sect("fixed",t("s_fixed"),fixedPanel());
+  h+=sect("calendar",t("s_calendar"),calendarPanel());
   h+=sect("notes",t("s_notes"),notesPanel());
   h+=sect("log",t("s_log"),logPanel());
   return h;
@@ -2686,6 +2773,52 @@ function axesPanel(){
     <button class="btn" id="addAxis" ${act.length<MAX_AXES?"":"disabled"}>${t("ax_add")}</button>
     <button class="btn primary" id="saveAxes">${t("save_settings")}</button></p>`;
   return h+taxiAxesPanel();
+}
+/* every value a row's cell can hold, as the schedule table offers it */
+function rowChoices(rk){
+  const cr=customRows().find(r=>r.key===rk), sx=sectionByRow(rk), ex=extraByRow(rk);
+  if(rk==="work_hours") return hourOptions();
+  if(sx){ const g=groupById(sx.sec.group_id), pool=g?groupEmps(g.id):allEmps();
+          const size=sectionSize(sx.sec);
+          return size>=2?pool.concat(combos(pool,Math.min(size,pool.length))):pool.slice(); }
+  if(ex) return (ex.options||[]).filter(Boolean);
+  if(rk==="other_empl") return allEmps();
+  if(cr) return cr.input==="select"?(cr.options||[]).filter(Boolean):[];
+  if(rk==="axis_morning"||rk==="axis_noon") return axisValues();
+  if(TEXT_ROWS.has(rk)) return [];
+  return opts(ROW_OPTS[rk]||"");
+}
+function fixedPanel(){
+  const days=workDays(), rows=reorderableKeys().filter(rk=>!AWAY_ROWS.includes(rk)&&rowChoices(rk).length);
+  const label=d=>((CFG.work_days||{}).labels||{})[d]||t(d);
+  let h=`<div class="hint">${t("fx_hint")}</div>`;
+  const list=CFG.fixed_rules||[];
+  h+=list.length?`<table class="stats">`+list.map((r,i)=>`<tr><td>${esc(label(r.day))}</td>
+      <td>${esc(rowLabel(r.row))}</td><td><b>${esc(r.value)}</b></td>
+      <td><button class="btn small warn" data-fxdel="${i}">🗑</button></td></tr>`).join("")+`</table>`
+    :`<div class="hint">${t("fx_none")}</div>`;
+  const row0=rows[0]||"";
+  h+=`<div class="row-flex" style="margin-top:8px">
+    <select id="fxDay">${days.map(d=>`<option value="${d}">${esc(label(d))}</option>`).join("")}</select>
+    <select id="fxRow">${rows.map(rk=>`<option value="${esc(rk)}">${esc(rowLabel(rk))}</option>`).join("")}</select>
+    <select id="fxVal">${rowChoices(row0).map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join("")}</select>
+    <button class="btn primary" id="fxAdd">${t("fx_add")}</button></div>`;
+  return h;
+}
+function calendarPanel(){
+  const list=(CFG.away_calendar||[]).map((e,i)=>({...e,i})).sort((a,b)=>a.from<b.from?-1:1);
+  let h=`<div class="hint">${t("cal_hint")}</div>`;
+  h+=list.length?`<table class="stats">`+list.map(e=>`<tr><td><b>${esc(e.name)}</b></td>
+      <td>${t(e.kind==="trip"?"cal_trip":"cal_vac")}</td><td><bdi>${fmtDM(e.from)}</bdi> – <bdi>${fmtDM(e.to)}</bdi></td>
+      <td><button class="btn small warn" data-caldel="${e.i}">🗑</button></td></tr>`).join("")+`</table>`
+    :`<div class="hint">${t("cal_none")}</div>`;
+  h+=`<div class="row-flex" style="margin-top:8px">
+    <select id="calName">${allEmps().map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("")}</select>
+    <select id="calKind"><option value="vacation">${t("cal_vac")}</option><option value="trip">${t("cal_trip")}</option></select>
+    <label>${t("cal_from")} <input type="date" id="calFrom"></label>
+    <label>${t("cal_to")} <input type="date" id="calTo"></label>
+    <button class="btn primary" id="calAdd">${t("cal_add")}</button></div>`;
+  return h;
 }
 /* the axes a special-taxi slot prefers, morning and noon */
 function taxiAxesPanel(){
@@ -3401,6 +3534,13 @@ const GUIDE = [
   {p:{he:"מתחת לטבלה מופיע ⚖️ איזון השבוע: לכל תפקיד, כמה פעמים כל עובד ממלא אותו השבוע (בזוג — כל שם נספר לחוד). שורה בכתום פירושה שההפרש בין מי שקיבל הכי הרבה למי שקיבל הכי מעט גדול מאחד. הסיכום מתעדכן עם כל שינוי בטבלה.",
       en:"Under the table, ⚖️ This week's balance shows for each role how many times each person holds it this week (in a pair each name counts). An orange line means the most and the least differ by more than one. It updates with every change.",
       es:"Debajo de la tabla, ⚖️ Equilibrio de la semana muestra para cada puesto cuántas veces lo tiene cada persona esta semana (en una pareja cuenta cada nombre). Una línea naranja significa que el máximo y el mínimo difieren en más de uno. Se actualiza con cada cambio."}},
+  {p:{he:"💬 למה? מראה מתחת לכל תא שהשיבוץ האוטומטי מילא שורה קצרה שמסבירה למה — למשל „הכי מעט השבוע (1 עד כה)”, „מונית בוקר: ציר A (70%)” או „יעד שבועי: YELLOW × 2”. לחיצה נוספת מסתירה. ההסברים שייכים לשיבוץ האחרון בשבוע הפתוח, ותא ששינית ידנית מאבד את ההסבר שלו.",
+      en:"💬 Why? shows under each cell Auto Assign filled a short line saying why — e.g. “fewest this week (1 so far)”, “Morning taxi: axis A (70%)” or “weekly target: YELLOW × 2”. Tap again to hide. Reasons belong to the last run on the open week; a cell you change by hand loses its reason.",
+      es:"💬 ¿Por qué? muestra bajo cada celda que llenó la Asignación Automática una línea corta con el motivo — p. ej. “menos veces esta semana (1 hasta ahora)”, “Taxi de mañana: ruta A (70%)” u “objetivo semanal: YELLOW × 2”. Otro toque lo oculta. Los motivos son de la última asignación en la semana abierta; una celda cambiada a mano pierde su motivo."}},
+  {h:{he:"📌 שיבוצים קבועים", en:"📌 Fixed assignments", es:"📌 Asignaciones fijas"}},
+  {p:{he:"בהגדרות ← 📌 שיבוצים קבועים בוחרים יום, שורה וערך — למשל שני · EMB IL · TORO — ולוחצים ➕. מעכשיו כל שבוע חדש נפתח עם התא הזה כבר מלא, ושיבוץ אוטומטי שומר עליו כמו על הזנה ידנית. גם 🗑 נקה מחזיר אותו. אם העובד נעדר באותו יום, התא נשאר ריק ותופיע הערה עם 📌.",
+      en:"In Settings → 📌 Fixed assignments pick a day, a row and a value — e.g. Monday · EMB IL · TORO — and tap ➕. From then on every new week opens with that cell filled, and Auto Assign keeps it like a hand-typed value. 🗑 Clear puts it back too. If the person is away that day the cell stays empty and a 📌 note says why.",
+      es:"En Ajustes → 📌 Asignaciones fijas elige un día, una fila y un valor — p. ej. lunes · EMB IL · TORO — y toca ➕. Desde entonces cada semana nueva abre con esa celda llena, y la Asignación Automática la respeta como un valor escrito a mano. 🗑 Limpiar también la repone. Si la persona está ausente ese día, la celda queda vacía y una nota 📌 lo explica."}},
 
   {h:{he:"4. בדיקת תקינות", en:"4. Checking it", es:"4. Revisarlo"}},
   {p:{he:"בראש הדף מופיע סימן מצב: ✓ תקין בירוק, או ⚠️ עם מספר באדום.",
@@ -3427,6 +3567,10 @@ const GUIDE = [
       en:"The two groups the app ships with are a light blue and a light orange. Change a group's colour in Settings and the table follows at once.",
       es:"Los dos grupos que trae la app son azul claro y naranja claro. Cambia el color de un grupo en Ajustes y la tabla cambia enseguida."}},
 
+  {h:{he:"🏖 לוח חופשות", en:"🏖 Absence calendar", es:"🏖 Calendario de ausencias"}},
+  {p:{he:"חופשה או נסיעה שידועה מראש נרשמת פעם אחת בהגדרות ← 🏖 לוח חופשות: עובד, סוג, מתאריך ועד תאריך. היא נכנסת לבד לשורות החופשה/נסיעה בשבוע שבו היא נופלת — כשנוצר השבוע וגם כשפותחים שבוע קיים — והשיבוץ לא ישבץ את העובד בימים האלה. סימונים ידניים לא נמחקים. מחיקת רשומה מהלוח לא מסירה סימונים שכבר נכנסו לשבוע.",
+      en:"A vacation or trip known ahead is entered once in Settings → 🏖 Absence calendar: person, kind, from and to. It lands by itself in the away rows of the week it falls in — when the week is created and when an existing week is opened — and Auto Assign keeps that person free on those days. Hand marks are never removed. Deleting an entry does not remove marks already in a week.",
+      es:"Una vacación o viaje conocido de antemano se registra una vez en Ajustes → 🏖 Calendario de ausencias: persona, tipo, desde y hasta. Entra sola en las filas de ausencia de la semana en que cae — al crear la semana y al abrir una existente — y la Asignación Automática deja libre a esa persona esos días. Las marcas a mano nunca se borran. Borrar una entrada no quita marcas que ya están en una semana."}},
   {h:{he:"שורות נסיעה וחופשה", en:"The trip and vacation rows", es:"Las filas de viaje y vacaciones"}},
   {p:{he:"שתי השורות האחרונות בטבלה אינן רשימות בחירה אלא תגיות. לחץ על התא ותיפתח רשימת כל העובדים עם תיבות סימון — סמן את מי שנעדר באותו יום.",
       en:"The last two rows are not dropdowns but tags. Click the cell and a list of everyone opens with checkboxes — tick whoever is away that day.",
@@ -4204,18 +4348,19 @@ function wire(){
     $("btnGen").onclick=()=>{
       const target=snapMonday($("weekPick").value||S.weekStart);
       if(loadArchive()[target]||(S.days&&Object.keys(S.days)[0]===target)){ S.pendingConfirm="gen"; S.weekStart=target; render(); }
-      else { S.weekStart=target; S.undo=null; S.days=emptyWeek(target); saveDraft(); render(); }
+      else { S.weekStart=target; S.undo=null; S.why={}; S.days=newWeek(target); saveDraft(); render(); }
     };
-    const gy=$("genYes"); if(gy) gy.onclick=()=>{ S.pendingConfirm=null; S.undo=null; S.days=emptyWeek(S.weekStart); S.dirty=true; saveDraft(); render(); };
+    const gy=$("genYes"); if(gy) gy.onclick=()=>{ S.pendingConfirm=null; S.undo=null; S.why={}; S.days=newWeek(S.weekStart); S.dirty=true; saveDraft(); render(); };
     const gn=$("genNo"); if(gn) gn.onclick=()=>{ S.pendingConfirm=null; render(); };
     if($("btnClear")) $("btnClear").onclick=()=>{ S.pendingConfirm="clear"; render(); };
     const cy=$("clearYes"); if(cy) cy.onclick=()=>{ S.pendingConfirm=null; S.undo=null;
-      S.days=emptyWeek(Object.keys(S.days).sort()[0]); S.dirty=true; saveDraft(); render(); };
+      S.why={}; S.days=newWeek(Object.keys(S.days).sort()[0]); S.dirty=true; saveDraft(); render(); };
     const cn=$("clearNo"); if(cn) cn.onclick=()=>{ S.pendingConfirm=null; render(); };
     if($("btnAuto")) $("btnAuto").onclick=autoAssign;
+    if($("btnWhy")) $("btnWhy").onclick=()=>{ S.showWhy=!S.showWhy; render(); };
     if($("btnUndo")) $("btnUndo").onclick=()=>{
       if(!S.undo) return;
-      S.days=JSON.parse(S.undo); S.undo=null;
+      S.days=JSON.parse(S.undo); S.undo=null; S.why=S.undoWhy||{}; S.undoWhy=null;
       S.dirty=true; saveDraft(); render(); toast("↶ ✓"); };
     if($("btnSave")) $("btnSave").onclick=()=>{ const a=loadArchive();
       const wk=Object.keys(S.days).sort()[0];
@@ -4245,6 +4390,10 @@ function wire(){
     document.querySelectorAll("table.sched select,table.sched input:not([data-away])").forEach(el=>{
       el.onchange=()=>{ S.days[el.dataset.dk][el.dataset.f]=el.value; S.dirty=true; saveDraft();
         if(el.tagName==="SELECT") el.dir=textDir(el.value);
+        /* a value set by hand no longer has auto-assign's reason */
+        if(S.why&&S.why[el.dataset.dk+"|"+el.dataset.f]){
+          delete S.why[el.dataset.dk+"|"+el.dataset.f];
+          const w=el.parentElement.querySelector(".why"); if(w) w.remove(); }
         const rerender=sectionRowKeys().concat(extraRowKeys(),
           ["vehicle_morning","vehicle_noon","theater","other_empl","entry","exit"]);
         if(rerender.includes(el.dataset.f)) render();
@@ -4277,7 +4426,9 @@ function wire(){
     document.querySelectorAll("[data-load]").forEach(b=>b.onclick=()=>{
       const wk=b.dataset.load; S.undo=null; S.days=JSON.parse(JSON.stringify(loadArchive()[wk])); S.weekStart=wk;
       Object.values(S.days).forEach(normalizeAway);
-      S.dirty=false; saveDraft(); S.screen="sched"; toast("✅ "+t("loaded")); render(); });
+      S.why={};
+      S.dirty=applyCalendar(S.days);      // absences entered since it was saved
+      saveDraft(); S.screen="sched"; toast("✅ "+t("loaded")); render(); });
     document.querySelectorAll("[data-csv]").forEach(b=>b.onclick=()=>{
       downloadCsv(loadArchive()[b.dataset.csv], b.dataset.csv);
       logAction("export_excel","log_export_week",{w:b.dataset.csv},{week:b.dataset.csv}); });
@@ -4324,7 +4475,32 @@ function reopen(key){
   const el=document.querySelector(`details.sect[data-sect="${key}"]`);
   if(el) el.open=true;
 }
+function wireFixedAndCalendar(){
+  const $=id=>document.getElementById(id);
+  if($("fxRow")) $("fxRow").onchange=()=>{
+    $("fxVal").innerHTML=rowChoices($("fxRow").value).map(v=>`<option value="${esc(v)}">${esc(v)}</option>`).join(""); };
+  if($("fxAdd")) $("fxAdd").onclick=()=>{
+    const r={day:$("fxDay").value, row:$("fxRow").value, value:$("fxVal").value};
+    if(!r.day||!r.row||!r.value) return;
+    /* one rule per day and row: a new one replaces the old */
+    CFG.fixed_rules=(CFG.fixed_rules||[]).filter(x=>!(x.day===r.day&&x.row===r.row)).concat([r]);
+    saveConfig(); toast("✅ "+t("saved")); render(); reopen("fixed"); };
+  document.querySelectorAll("[data-fxdel]").forEach(b=>b.onclick=()=>{
+    CFG.fixed_rules.splice(+b.dataset.fxdel,1); saveConfig(); render(); reopen("fixed"); });
+  if($("calAdd")) $("calAdd").onclick=()=>{
+    const e={name:$("calName").value, kind:$("calKind").value==="trip"?"trip":"vacation",
+             from:$("calFrom").value, to:$("calTo").value};
+    if(!e.name||!e.from||!e.to){ toast("⚠️ "+t("cal_need_dates")); return; }
+    if(e.to<e.from){ toast("⚠️ "+t("cal_backwards")); return; }
+    CFG.away_calendar=(CFG.away_calendar||[]).concat([e]);
+    saveConfig();
+    if(S.days&&applyCalendar(S.days)){ S.dirty=true; saveDraft(); }
+    toast("✅ "+t("saved")); render(); reopen("calendar"); };
+  document.querySelectorAll("[data-caldel]").forEach(b=>b.onclick=()=>{
+    CFG.away_calendar.splice(+b.dataset.caldel,1); saveConfig(); render(); reopen("calendar"); });
+}
 function wireSettings(){
+  wireFixedAndCalendar();
   const $=id=>document.getElementById(id);
   $("btnCfgExport").onclick=()=>{
     downloadJson(cfgSnapshot(), `agenda_settings_${new Date().toISOString().slice(0,10)}.json`);

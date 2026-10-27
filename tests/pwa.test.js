@@ -345,6 +345,121 @@ await test("screen: a 13-D cell reads left to right, a Hebrew cell right to left
   eq(sel("entry").dir,"ltr","10 cell direction");
 });
 
+/* ── v48 · 6. fixed weekday assignments ──────────────────────────────── */
+const MON="2026-10-26", TUE="2026-10-27", WED="2026-10-28";
+function newWeekByButton(ws){
+  S.screen="sched"; S.days=null; S.undo=null; localStorage.removeItem("agenda_draft");
+  render(); document.getElementById("weekPick").value=ws;
+  document.getElementById("weekPick").dispatchEvent(new Event("change"));
+  document.getElementById("btnGen").click();
+}
+await test("fixed: a rule added in Settings is saved", async()=>{
+  CFG.fixed_rules=[]; S.screen="settings"; render(); reopen("fixed"); await tick();
+  const f=id=>document.getElementById(id);
+  ok(f("fxDay")&&f("fxRow")&&f("fxVal"),"no fixed-rule form");
+  f("fxDay").value="monday"; f("fxRow").value="emb_il"; f("fxRow").dispatchEvent(new Event("change"));
+  await tick(); f("fxVal").value="TORO"; f("fxAdd").click(); await tick();
+  eq(JSON.stringify(CFG.fixed_rules),JSON.stringify([{day:"monday",row:"emb_il",value:"TORO"}]),"saved rule");
+});
+await test("fixed: a new week opens with the fixed cell filled, and ⚡ keeps it", async()=>{
+  localStorage.removeItem("agenda_archive"); CFG.away_calendar=[];
+  CFG.fixed_rules=[{day:"monday",row:"emb_il",value:"TORO"}];
+  newWeekByButton(MON); await tick();
+  eq(S.days[MON].emb_il,"TORO","Monday EMB IL");
+  eq(S.days[TUE].emb_il,"","Tuesday untouched");
+  document.getElementById("btnAuto").click(); await tick();
+  eq(S.days[MON].emb_il,"TORO","after ⚡");
+});
+await test("fixed: 🗑 Clear puts the fixed cell back", async()=>{
+  CFG.fixed_rules=[{day:"monday",row:"emb_il",value:"TORO"}]; CFG.away_calendar=[];
+  newWeekByButton(MON); await tick();
+  document.getElementById("btnAuto").click(); await tick();
+  document.getElementById("btnClear").click(); await tick();
+  document.getElementById("clearYes").click(); await tick();
+  eq(S.days[MON].emb_il,"TORO","after clear");
+  eq(S.days[TUE].apt_il,"","clear emptied the rest");
+});
+
+/* ── v48 · 8. vacation calendar ──────────────────────────────────────── */
+await test("calendar: a vacation entered ahead lands in its week and keeps the person free", async()=>{
+  localStorage.removeItem("agenda_archive"); CFG.fixed_rules=[];
+  CFG.away_calendar=[{name:"BUHO", kind:"vacation", from:TUE, to:WED}];
+  newWeekByButton(MON); await tick();
+  ok(awayList(S.days[TUE],"vacation").includes("BUHO"),"Tuesday");
+  ok(awayList(S.days[WED],"vacation").includes("BUHO"),"Wednesday");
+  ok(!awayList(S.days[MON],"vacation").includes("BUHO"),"Monday");
+  document.getElementById("btnAuto").click(); await tick();
+  [TUE,WED].forEach(d=>secRows().forEach(rk=>ok(!String(S.days[d][rk]).includes("BUHO"),"BUHO placed on "+d)));
+});
+function secRows(){ return allSections().map(x=>x.sec.row_key); }
+await test("calendar: a vacation entered after the week was saved shows when it is opened, manual marks kept", async()=>{
+  CFG.fixed_rules=[]; CFG.away_calendar=[];
+  freshWeek(MON); S.days[MON].trip=["LEON"];
+  const a={}; a[MON]=JSON.parse(JSON.stringify(S.days)); saveArchive(a);
+  CFG.away_calendar=[{name:"TORO", kind:"trip", from:MON, to:MON}];
+  S.screen="archive"; render(); await tick();
+  document.querySelector(`[data-load="${MON}"]`).click(); await tick();
+  const trip=awayList(S.days[MON],"trip");
+  ok(trip.includes("TORO")&&trip.includes("LEON"),"trip list "+JSON.stringify(trip));
+});
+await test("calendar: entries are added in Settings; an end before the start is refused", async()=>{
+  CFG.away_calendar=[]; S.screen="settings"; render(); reopen("calendar"); await tick();
+  const f=id=>document.getElementById(id);
+  ok(f("calName")&&f("calKind")&&f("calFrom")&&f("calTo"),"no calendar form");
+  f("calName").value="HALCON"; f("calKind").value="vacation"; f("calFrom").value="2026-11-10"; f("calTo").value="2026-11-03";
+  f("calAdd").click(); await tick();
+  eq(CFG.away_calendar.length,0,"saved a backwards range");
+  f("calFrom").value="2026-11-03"; f("calTo").value="2026-11-10"; f("calAdd").click(); await tick();
+  eq(JSON.stringify(CFG.away_calendar),JSON.stringify([{name:"HALCON",kind:"vacation",from:"2026-11-03",to:"2026-11-10"}]),"saved entry");
+});
+await test("fixed vs calendar: someone away is not placed by a fixed rule, and a warning says why", async()=>{
+  localStorage.removeItem("agenda_archive");
+  CFG.fixed_rules=[{day:"monday",row:"emb_il",value:"TORO"}];
+  CFG.away_calendar=[{name:"TORO", kind:"vacation", from:MON, to:MON}];
+  newWeekByButton(MON); await tick();
+  eq(S.days[MON].emb_il,"","TORO placed while on vacation");
+  ok(validate().some(e=>e.msg.includes("TORO")&&e.msg.includes("📌")),"no warning about the fixed rule");
+});
+await test("old settings without rules or calendar still load", async()=>{
+  const raw=JSON.parse(JSON.stringify(CFG)); delete raw.fixed_rules; delete raw.away_calendar;
+  localStorage.setItem("agenda_config",JSON.stringify(raw));
+  const c=loadConfig();
+  ok(Array.isArray(c.fixed_rules)&&c.fixed_rules.length===0,"fixed_rules");
+  ok(Array.isArray(c.away_calendar)&&c.away_calendar.length===0,"away_calendar");
+});
+
+/* ── v48 · 7. why this value ─────────────────────────────────────────── */
+await test("why: with 💬 on, an auto-filled role says why it went to that person", async()=>{
+  localStorage.removeItem("agenda_archive"); CFG.fixed_rules=[]; CFG.away_calendar=[];
+  newWeekByButton(MON); await tick();
+  document.getElementById("btnAuto").click(); await tick();
+  ok(!document.querySelector("table.sched .why"),"reasons shown before asking");
+  document.getElementById("btnWhy").click(); await tick();
+  const cell=document.querySelector(`table.sched select[data-dk="${WED}"][data-f="apt_pe"]`).closest("td");
+  const why=cell.querySelector(".why");
+  ok(why&&why.textContent.trim().length>3,"no reason under R PE");
+  ok(why.textContent.includes(t("why_week_word")),"reason does not speak of the week: "+why.textContent);
+});
+await test("why: a taxi-day axis names the taxi split", async()=>{
+  localStorage.removeItem("agenda_archive");
+  CFG.taxi_axes={morning:["D"],noon:[]}; CFG.taxi_axes_pcts={morning:{D:100},noon:{}};
+  newWeekByButton(MON); await tick();
+  document.getElementById("btnAuto").click(); await tick();
+  const VS=CFG.special_values.vehicle_special;
+  const dk=Object.keys(S.days).find(d=>S.days[d].vehicle_morning===VS);
+  ok(dk,"no taxi morning this week");
+  ok(String(S.why[dk+"|axis_morning"]||"").includes("100%"),"axis reason: "+S.why[dk+"|axis_morning"]);
+});
+await test("why: changing a cell by hand drops its reason", async()=>{
+  localStorage.removeItem("agenda_archive");
+  newWeekByButton(MON); await tick();
+  document.getElementById("btnAuto").click(); await tick();
+  ok(S.why[MON+"|apt_il"],"no reason to begin with");
+  const sel=document.querySelector(`table.sched select[data-dk="${MON}"][data-f="apt_il"]`);
+  sel.value=""; sel.dispatchEvent(new Event("change")); await tick();
+  ok(!S.why[MON+"|apt_il"],"reason kept after a manual change");
+});
+
 window.__results=results;
 return results;
 })();
