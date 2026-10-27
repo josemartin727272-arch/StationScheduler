@@ -393,7 +393,7 @@ print_orient:"כיוון דף",print_portrait:"לאורך",print_landscape:"לר
 s_print:"🖨️ הגדרות הדפסה",print_mode:"מצב הדפסה",
 print_single:"סידור מלא — דף A4 שלם, עותק אחד",
 print_multi:"סידורים מרובים — כמה עותקים קטנים על דף אחד",
-print_copies:"מספר עותקים",print_by:"איך לחלק",print_by_count:"לפי מספר עותקים",print_by_size:"לפי גודל (ס״מ)",print_layout:"{c} × {r} = {n} עותקים · כל עותק {w}×{h} ס״מ",print_w:"רוחב כל עותק (ס״מ)",print_h:"גובה כל עותק (ס״מ)",
+print_copies:"מספר עותקים",print_lang:"שפת ההדפסה",print_by:"איך לחלק",print_by_count:"לפי מספר עותקים",print_by_size:"לפי גודל (ס״מ)",print_layout:"{c} × {r} = {n} עותקים · כל עותק {w}×{h} ס״מ",print_w:"רוחב כל עותק (ס״מ)",print_h:"גובה כל עותק (ס״מ)",
 print_preview:"תצוגה מקדימה של הפריסה",
 print_auto:"מלא את כל הדף אוטומטית",print_auto_size:"{c}×{r} על הדף · כל עותק {w}×{h} ס״מ",
 print_clipped:"⚠️ העותק נמוך מדי — {n} שורות נחתכות. דרוש גובה של כ-{h} ס״מ לשבוע מלא.",
@@ -515,7 +515,7 @@ print_orient:"Page direction",print_portrait:"Portrait",print_landscape:"Landsca
 s_print:"🖨️ Print settings",print_mode:"Print mode",
 print_single:"Full schedule — one whole A4 page, a single copy",
 print_multi:"Several copies — small copies laid out on one sheet",
-print_copies:"Copies",print_by:"How to divide",print_by_count:"By number of copies",print_by_size:"By size (cm)",print_layout:"{c} × {r} = {n} copies · each {w}×{h} cm",print_w:"Width of each copy (cm)",print_h:"Height of each copy (cm)",
+print_copies:"Copies",print_lang:"Print language",print_by:"How to divide",print_by_count:"By number of copies",print_by_size:"By size (cm)",print_layout:"{c} × {r} = {n} copies · each {w}×{h} cm",print_w:"Width of each copy (cm)",print_h:"Height of each copy (cm)",
 print_preview:"Layout preview",
 print_auto:"Fill the whole sheet automatically",print_auto_size:"{c}×{r} on the sheet · each copy {w}×{h}cm",
 print_clipped:"⚠️ The copy is too short — {n} rows are cut off. A full week needs about {h}cm.",
@@ -637,7 +637,7 @@ print_orient:"Orientación",print_portrait:"Vertical",print_landscape:"Horizonta
 s_print:"🖨️ Ajustes de impresión",print_mode:"Modo de impresión",
 print_single:"Horario completo — una hoja A4 entera, una copia",
 print_multi:"Varias copias — copias pequeñas en una sola hoja",
-print_copies:"Copias",print_by:"Cómo dividir",print_by_count:"Por número de copias",print_by_size:"Por tamaño (cm)",print_layout:"{c} × {r} = {n} copias · cada una {w}×{h} cm",print_w:"Ancho de cada copia (cm)",print_h:"Alto de cada copia (cm)",
+print_copies:"Copias",print_lang:"Idioma de impresión",print_by:"Cómo dividir",print_by_count:"Por número de copias",print_by_size:"Por tamaño (cm)",print_layout:"{c} × {r} = {n} copias · cada una {w}×{h} cm",print_w:"Ancho de cada copia (cm)",print_h:"Alto de cada copia (cm)",
 print_preview:"Vista previa de la distribución",
 print_auto:"Llenar toda la hoja automáticamente",print_auto_size:"{c}×{r} en la hoja · cada copia {w}×{h} cm",
 print_clipped:"⚠️ La copia es muy baja — se cortan {n} filas. Una semana completa necesita unos {h} cm.",
@@ -3311,10 +3311,11 @@ const GUIDE = [
     {he:"סידור מלא — עותק אחד שתופס את כל דף ה-A4.", en:"Full schedule — one copy filling the whole A4 page.", es:"Horario completo — una copia que llena toda la hoja A4."},
     {he:"סידורים מרובים ← לפי מספר עותקים (1–8): המערכת בוחרת את החלוקה (למשל 2×2, 2×3) שנותנת את האותיות הגדולות ביותר.", en:"Several copies → by number of copies (1–8): the app picks the grid (e.g. 2×2, 2×3) that gives the largest type.", es:"Varias copias → por número de copias (1–8): la app elige la cuadrícula (p. ej. 2×2, 2×3) que da la letra más grande."},
     {he:"סידורים מרובים ← לפי גודל (ס״מ): כותבים רוחב וגובה לכל עותק, והמערכת מרצפת את הדף בכמה שנכנסים, ומסובבת את הדף לכיוון שמכיל הכי הרבה — למשל 13×9 ס״מ = 2 × 2 = 4 (לרוחב), 9×6 ס״מ = 3 × 3 = 9. השורה שליד השדות אומרת כמה יצא ובאיזה כיוון. דף A4 הוא 21×29.7 ס״מ, ולכן לגודל גדול נכנסים מעט עותקים.", en:"Several copies → by size (cm): type a width and height per copy, and the app tiles the page with as many as fit, turning the page the way that holds the most — e.g. 13×9 cm = 2 × 2 = 4 (landscape), 9×6 cm = 3 × 3 = 9. The line next to the fields says how many and which way. A4 is 21×29.7 cm, so a large size fits few copies.", es:"Varias copias → por tamaño (cm): escribe ancho y alto por copia, y la app llena la hoja con todas las que entren, girando la hoja hacia donde caben más — p. ej. 13×9 cm = 2 × 2 = 4 (horizontal), 9×6 cm = 3 × 3 = 9. La línea junto a los campos dice cuántas y en qué sentido. A4 mide 21×29,7 cm, así que un tamaño grande deja pocas copias."},
+    {he:"שפת ההדפסה — עברית, English או Español, בנפרד משפת המסך (ברירת מחדל: ספרדית). באנגלית ובספרדית ה-PDF חד במיוחד, כי הטקסט נכתב בו כטקסט.", en:"Print language — Hebrew, English or Spanish, apart from the screen language (default: Spanish). In English and Spanish the PDF is extra sharp, because the text is written into it as text.", es:"Idioma de impresión — hebreo, inglés o español, aparte del idioma de la pantalla (por defecto: español). En inglés y español el PDF es muy nítido, porque el texto se escribe como texto."},
     {he:"לאורך / לרוחב — כיוון הדף. „לרוחב” מודפס כתמונה מסובבת על דף רגיל — הדף יוצא מלא; מסובבים את הנייר כדי לקרוא. קו מקווקו בין העותקים הוא קו החיתוך.", en:"Portrait / landscape — the page direction. “Landscape” prints as a turned picture on an ordinary page — the page comes out full; turn the paper to read it. A dashed line between copies is the cutting line.", es:"Vertical / horizontal — la orientación. “Horizontal” se imprime como imagen girada en una hoja normal — la hoja sale llena; gira el papel para leerla. La línea discontinua entre copias es la línea de corte."}]},
-  {p:{he:"🖨️ הדפסה מדפיס תמונה מדויקת של הדף, שמוקטנת לבד אם המדפסת או האייפד מוסיפים שוליים — כך שום חלק לא נדחף לדף שני. הכפתור פעיל אחרי שנייה-שתיים, כשהדף מוכן. ✕ סגור חוזר לסידור. ההגדרות נשמרות במכשיר.",
-      en:"🖨️ Print prints an exact picture of the sheet, which shrinks by itself if the printer or iPad adds margins — so nothing is pushed onto a second page. The button is active after a second or two, when the sheet is ready. ✕ Close returns to the schedule. Settings are kept on the device.",
-      es:"🖨️ Imprimir imprime una imagen exacta de la hoja, que se achica sola si la impresora o el iPad agregan márgenes — así nada pasa a una segunda página. El botón se activa tras uno o dos segundos, cuando la hoja está lista. ✕ Cerrar vuelve al horario. Los ajustes quedan en el dispositivo."}},
+  {p:{he:"באייפד, 🖨️ הדפסה פותח את תפריט השיתוף עם ה-PDF — שם בוחרים „הדפס”. במחשב, 🖨️ הדפסה מדפיס תמונה מדויקת של הדף, שמוקטנת לבד אם המדפסת או האייפד מוסיפים שוליים — כך שום חלק לא נדחף לדף שני. הכפתור פעיל אחרי שנייה-שתיים, כשהדף מוכן. ✕ סגור חוזר לסידור. ההגדרות נשמרות במכשיר.",
+      en:"On the iPad, 🖨️ Print opens the share menu with the PDF — choose “Print” there. On a computer, 🖨️ Print prints an exact picture of the sheet, which shrinks by itself if the printer or iPad adds margins — so nothing is pushed onto a second page. The button is active after a second or two, when the sheet is ready. ✕ Close returns to the schedule. Settings are kept on the device.",
+      es:"En el iPad, 🖨️ Imprimir abre el menú compartir con el PDF — elige “Imprimir” allí. En una computadora, 🖨️ Imprimir imprime una imagen exacta de la hoja, que se achica sola si la impresora o el iPad agregan márgenes — así nada pasa a una segunda página. El botón se activa tras uno o dos segundos, cuando la hoja está lista. ✕ Cerrar vuelve al horario. Los ajustes quedan en el dispositivo."}},
   {h:{he:"📄 שמור PDF", en:"📄 Save PDF", es:"📄 Guardar PDF"}},
   {p:{he:"באותה תצוגה. ה-PDF הוא תמיד דף A4 לאורך בגודל אמיתי (סידור לרוחב מסובב בתוכו). כשמדפיסים אותו — לבחור במדפסת גודל 100% ולא „התאם לדף”. הקובץ מוכן שנייה-שתיים אחרי פתיחת התצוגה (עד אז הכפתור כתוב „מכין PDF…”). באייפד נפתח תפריט שיתוף — „שמור בקבצים”, הדפסה או וואטסאפ; במחשב/אנדרואיד הקובץ יורד. שינית כיוון או עותקים — קובץ חדש מוכן לבד.",
       en:"In the same view. The PDF is always a portrait A4 page at real size (a landscape sheet is turned inside it). When printing it, choose 100% size on the printer, not “fit to page”. The file is ready a second or two after the view opens (until then the button reads “Preparing PDF…”). On an iPad the share menu opens — “Save to Files”, print or WhatsApp; on a computer/Android the file downloads. Changed direction or copies — a new file is prepared by itself.",
@@ -3427,9 +3428,9 @@ const GUIDE = [
 /* ─────────────────────────────────────────────────────────────────── */
 {id:"news", icon:"🆕", title:{he:"מה חדש — עדכוני 27/10/2026", en:"What's new — updates of 27/10/2026", es:"Novedades — actualizaciones del 27/10/2026"},
  blocks:[
-  {p:{he:"כל מה שהשתנה במערכת ביום אחד, מגרסה 44 עד גרסה 58, לפי סדר העלייה לאוויר.",
-      en:"Everything that changed in one day, from version 44 to version 58, in the order it went live.",
-      es:"Todo lo que cambió en un día, de la versión 44 a la 58, en el orden en que se publicó."}},
+  {p:{he:"כל מה שהשתנה במערכת ביום אחד, מגרסה 44 עד גרסה 59, לפי סדר העלייה לאוויר.",
+      en:"Everything that changed in one day, from version 44 to version 59, in the order it went live.",
+      es:"Todo lo que cambió en un día, de la versión 44 a la 59, en el orden en que se publicó."}},
   {h:{he:"גרסה 44 — נוחות ותיקונים", en:"Version 44 — comfort and fixes", es:"Versión 44 — comodidad y arreglos"}},
   {li:[
     {he:"הדף לא קופץ יותר למעלה אחרי הזנה או מחיקה; קטעים פתוחים נשארים פתוחים.", en:"The page no longer jumps to the top after typing or deleting; open sections stay open.", es:"La página ya no salta arriba al escribir o borrar; las secciones abiertas quedan abiertas."},
@@ -3481,7 +3482,12 @@ const GUIDE = [
   {h:{he:"גרסה 58 — גודל אמיתי על הנייר", en:"Version 58 — real size on paper", es:"Versión 58 — tamaño real en el papel"}},
   {li:[
     {he:"גם ה-PDF הוא עכשיו דף לאורך (תוכן לרוחב מסובב בתוכו), כך שהדפסה מתפריט השיתוף לא מקטינה אותו — עותק של 13×9 ס״מ יוצא 13×9 ס״מ.", en:"The PDF is now a portrait page too (landscape content turned inside), so printing from the share menu does not shrink it — a 13×9 cm copy comes out 13×9 cm.", es:"El PDF ahora también es una página vertical (el contenido horizontal va girado), así imprimir desde el menú compartir no lo achica — una copia de 13×9 cm sale de 13×9 cm."},
-    {he:"השורה „אשר סידור מוניות — תאריכים” מעל הטבלה הוסרה; המקום עובר לטבלה.", en:"The “Asher Taxi Scheduler — dates” line above the table is gone; the space goes to the table.", es:"Se quitó la línea “Asher Programador de Taxis — fechas” sobre la tabla; el espacio pasa a la tabla."}]}
+    {he:"השורה „אשר סידור מוניות — תאריכים” מעל הטבלה הוסרה; המקום עובר לטבלה.", en:"The “Asher Taxi Scheduler — dates” line above the table is gone; the space goes to the table.", es:"Se quitó la línea “Asher Programador de Taxis — fechas” sobre la tabla; el espacio pasa a la tabla."}]},
+  {h:{he:"גרסה 59 — הדפסה חדה בספרדית", en:"Version 59 — sharp Spanish print", es:"Versión 59 — impresión nítida en español"}},
+  {li:[
+    {he:"שפת הדפסה נפרדת משפת המסך — ברירת מחדל ספרדית.", en:"A print language separate from the screen's — Spanish by default.", es:"Idioma de impresión aparte del de la pantalla — español por defecto."},
+    {he:"ב-PDF באנגלית/ספרדית הטקסט הוא טקסט אמיתי (גופן Helvetica) ולא צילום — חד בכל גודל; שורה עם זוג שמות מקבלת שתי שורות.", en:"In an English/Spanish PDF the text is real text (Helvetica), not a photo — sharp at any size; a row with a pair of names gets two lines.", es:"En un PDF en inglés/español el texto es texto real (Helvetica), no una foto — nítido en cualquier tamaño; una fila con una pareja de nombres recibe dos líneas."},
+    {he:"באייפד, כפתור 🖨️ הדפסה פותח את תפריט השיתוף עם ה-PDF (שם בוחרים „הדפס”).", en:"On the iPad, the 🖨️ Print button opens the share menu with the PDF (choose “Print” there).", es:"En el iPad, el botón 🖨️ Imprimir abre el menú compartir con el PDF (allí eliges “Imprimir”)."}]}
  ]}
 ];
 
@@ -3611,7 +3617,7 @@ function downloadCsv(days,weekStart){
 /* The print settings belong to the print view: they are decisions about one
    sheet of paper, not about the station, so they live on the device and not
    in the config. */
-const PRINT_DEFAULTS={ mode:"single", by:"count", copies:4, w:9, h:6, orientation:"portrait" };
+const PRINT_DEFAULTS={ mode:"single", by:"count", copies:4, w:9, h:6, orientation:"portrait", lang:"es" };
 /* A4 in millimetres, and the margin each mode prints with */
 const A4={ portrait:[210,297], landscape:[297,210] };
 /* 8mm is a comfortable margin for a portrait sheet; landscape and a sheet of
@@ -3661,7 +3667,7 @@ function pageLayout(ps){
 const _fitMemo=new Map();
 function fitFont(wmm,hmm,solo){
   if(!S.days) return Math.min(wmm/8,hmm/12);
-  const key=(solo?"s":"")+wmm.toFixed(1)+"x"+hmm.toFixed(1)+"|"+JSON.stringify(S.days)+S.lang;
+  const key=(solo?"s":"")+wmm.toFixed(1)+"x"+hmm.toFixed(1)+"|"+JSON.stringify(S.days)+S.lang+rawPrintSettings().lang;
   if(_fitMemo.has(key)) return _fitMemo.get(key);
   const MM=96/25.4, probe=document.createElement("div");
   probe.className="pcopy";
@@ -3697,7 +3703,10 @@ function rawPrintSettings(){
            by:p.by==="size"||(p.by==null&&p.auto===false)?"size":"count",
            copies:Math.max(1,Math.min(8,parseInt(p.copies,10)||4)),
            w:Math.max(2,Math.min(30,parseFloat(p.w)||9)),
-           h:Math.max(2,Math.min(30,parseFloat(p.h)||6)) };
+           h:Math.max(2,Math.min(30,parseFloat(p.h)||6)),
+           /* the language on paper, apart from the screen's: the station
+              prints for workers who read Spanish */
+           lang:["he","en","es"].includes(p.lang)?p.lang:"es" };
 }
 function printSettings(){
   const ps=rawPrintSettings();
@@ -3716,38 +3725,157 @@ function savePrintSettings(ps){
 /* One copy of the week, built for paper rather than for the screen: its own
    markup, its own class, and every size in points so the printer is told what
    the letters should actually measure. */
-function printTable(){
+/* run fn with the print language as the language */
+function inPrintLang(fn){
+  const saved=S.lang; S.lang=rawPrintSettings().lang;
+  try{ return fn(); } finally{ S.lang=saved; }
+}
+/* what one copy of the week holds — the same for the screen preview, the
+   picture and the drawn PDF */
+function sheetModel(){
   const keys=Object.keys(S.days).sort();
   const VS=CFG.special_values.vehicle_special;
-  /* percentages, not millimetres: the table is told to be the whole page and
-     the columns divide it, so landscape fills the sheet instead of leaving a
-     strip of white down the side */
-  const labelPct=22, colW=((100-labelPct)/keys.length).toFixed(2);
-  /* no title line above the table: the dates are in its header row, and the
-     space is worth more to the table on a small copy */
-  let h="";
-  h+=`<table class="print-table"><colgroup><col style="width:${labelPct}%">`+
-     keys.map(()=>`<col style="width:${colW}%">`).join("")+`</colgroup>`;
-  h+=`<thead><tr><th>${esc(t("row_dates"))}</th>`;
-  keys.forEach(dk=>h+=`<th>${esc(dayLabel(dk))}<br>${fmtDM(dk)}</th>`);
-  h+=`</tr></thead><tbody>`;
-  for(const rk of reorderableKeys()){
-    /* a workplace row carries its group's colour onto the paper */
-    const sx=sectionByRow(rk), g=sx?groupById(sx.sec.group_id):null;
-    const cls=g?` class="grp" style="--bg:${esc(g.color||"#eee")}"`:"";
-    h+=`<tr${cls}><td class="label">${esc(rowLabel(rk))}</td>`;
-    h+=keys.map(k=>{
-      if(AWAY_ROWS.includes(rk))
-        return `<td>${esc(awayList(S.days[k],rk).join(", "))}</td>`;
-      const raw=S.days[k][rk]||"", v=valueLabel(raw);
-      const y=(rk==="vehicle_morning"||rk==="vehicle_noon")&&raw===VS;
-      /* a paired cell may break after the +, so a narrow copy shows both
-         names on two lines instead of cutting the second one off */
-      return `<td class="${y?"y":""}">${esc(v).replace(/\+/g,"+\u200B")}</td>`;
-    }).join("");
-    h+=`</tr>`;
+  return { lang:S.lang,
+    head:[t("row_dates"), ...keys.map(dk=>[dayLabel(dk), fmtDM(dk)])],
+    rows:reorderableKeys().map(rk=>{
+      const sx=sectionByRow(rk), g=sx?groupById(sx.sec.group_id):null;
+      return { label:rowLabel(rk), bg:g?(g.color||"#eee"):null,
+        cells:keys.map(k=>{
+          if(AWAY_ROWS.includes(rk)) return {text:awayList(S.days[k],rk).join(", ")};
+          const raw=S.days[k][rk]||"";
+          return {text:valueLabel(raw), yellow:(rk==="vehicle_morning"||rk==="vehicle_noon")&&raw===VS};
+        }) };
+    }) };
+}
+function printTable(){
+  return inPrintLang(()=>{
+    const m=sheetModel(), days=m.head.length-1;
+    const labelPct=22, colW=((100-labelPct)/days).toFixed(2);
+    /* no title line above the table: the dates are in its header row */
+    let h=`<table class="print-table" dir="${m.lang==="he"?"rtl":"ltr"}"><colgroup><col style="width:${labelPct}%">`+
+       Array.from({length:days},()=>`<col style="width:${colW}%">`).join("")+`</colgroup>`;
+    h+=`<thead><tr><th>${esc(m.head[0])}</th>`+
+       m.head.slice(1).map(([d,dm])=>`<th>${esc(d)}<br>${dm}</th>`).join("")+`</tr></thead><tbody>`;
+    m.rows.forEach(r=>{
+      h+=`<tr${r.bg?` class="grp" style="--bg:${esc(r.bg)}"`:""}><td class="label">${esc(r.label)}</td>`+
+        /* a pair may break after its "+", never inside a name */
+        r.cells.map(c=>`<td class="${c.yellow?"y":""}">${esc(c.text).replace(/\+/g,"+\u200B")}</td>`).join("")+`</tr>`;
+    });
+    return h+`</tbody></table>`;
+  });
+}
+/* ── the sheet drawn: sharp text in the PDF ───────────────────────────────
+   For a Latin-script print language the sheet is drawn as lines, fills and
+   real text (Helvetica, built into every PDF reader) instead of a photo of
+   the screen, so small type stays sharp. Hebrew has no built-in PDF font,
+   so a Hebrew print keeps the picture. One list of drawing operations feeds
+   both the PDF and the high-resolution print picture. */
+const PT_MM=25.4/72;
+function vectorable(m){
+  const all=[m.head[0], ...m.head.slice(1).flat(), ...m.rows.flatMap(r=>[r.label, ...r.cells.map(c=>c.text)])];
+  return m.lang!=="he" && all.every(x=>[...String(x)].every(ch=>ch.charCodeAt(0)<=0xFF));
+}
+/* the ways a text may sit in a cell: one line, or two split at "+", ", " or a space */
+function textLines(s){
+  const out=[[s]];
+  let i=s.indexOf("+");
+  if(i>0) out.push([s.slice(0,i+1), s.slice(i+1)]);
+  else {
+    const at=(sep)=>{ let best=-1;
+      for(let j=s.indexOf(sep); j>0; j=s.indexOf(sep,j+1))
+        if(best<0||Math.abs(j-s.length/2)<Math.abs(best-s.length/2)) best=j;
+      return best; };
+    i=at(", "); if(i>0) out.push([s.slice(0,i+1), s.slice(i+2)]);
+    else { i=at(" "); if(i>0) out.push([s.slice(0,i), s.slice(i+1)]); }
   }
-  return h+`</tbody></table>`;
+  return out;
+}
+function vectorOps(ps, pdf){
+  const L=pageLayout(ps), multi=ps.mode==="multi";
+  const m=inPrintLang(()=>sheetModel());
+  const wpt=str=>{ pdf.setFontSize(10); return pdf.getTextWidth(String(str))/10; };   // mm per pt
+  const PADX=0.7, PADY=0.35, LH=1.15;
+  const c0=L.cells[0], frame=multi?1.3:0;
+  const iw=c0.w-2*frame, ih=c0.h-2*frame;
+  const days=m.head.length-1, labelW=iw*0.27, dayW=(iw-labelW)/days;
+  /* every row as [text, width] cells: the heading, then the week */
+  const grid=[[[m.head[0],labelW], ...m.head.slice(1).map(hd=>[hd.join(" "),dayW])],
+              ...m.rows.map(r=>[[r.label,labelW], ...r.cells.map(c=>[c.text,dayW])])];
+  /* how a text sits at size f: the fewest lines that fit the width */
+  const layout=(s,w,f)=>{ if(!s) return [];
+    return textLines(s).find(l=>Math.max(...l.map(x=>wpt(x)*f))<=w-2*PADX+0.01)||null; };
+  const rowLines=f=>grid.map(row=>{ let n=1;
+    for(const [s,w] of row){ const l=layout(s,w,f); if(!l) return Infinity; n=Math.max(n,l.length); }
+    return n; });
+  /* the largest size at which every cell fits and the rows — one line each,
+     two where a pair or a long name needs them — fill no more than the copy */
+  const fits=f=>{ const n=rowLines(f); if(n.includes(Infinity)) return false;
+    return n.reduce((a,k)=>a+k*f*PT_MM*LH+2*PADY,0)<=ih; };
+  let lo=3, hi=16;
+  for(let i=0;i<14;i++){ const mid=(lo+hi)/2; if(fits(mid)) lo=mid; else hi=mid; }
+  const f=Math.floor(lo*10)/10, lines=rowLines(f);
+  const used=lines.reduce((a,k)=>a+k*f*PT_MM*LH+2*PADY,0);
+  const extra=Math.max(0,(ih-used)/grid.length);          // the slack, shared by every row
+  const rowH=lines.map(k=>k*f*PT_MM*LH+2*PADY+extra);
+  const ops=[];
+  const cell=(x,y,w,h,fill,text,align)=>{
+    if(fill) ops.push({t:"rect",x,y,w,h,fill});
+    ops.push({t:"rect",x,y,w,h,stroke:"#000",lw:0.2});
+    if(!text) return;
+    const ls=layout(text,w,f)||[text], lh=f*PT_MM*LH;
+    let by=y+(h-ls.length*lh)/2+f*PT_MM*0.82;
+    ls.forEach(line=>{
+      const tw=wpt(line)*f, tx=align==="start"?x+PADX:x+(w-tw)/2;
+      ops.push({t:"text",x:tx,y:by,s:line,size:f}); by+=lh; });
+  };
+  L.cells.forEach(c=>{
+    if(multi) ops.push({t:"rect",x:c.x,y:c.y,w:c.w,h:c.h,stroke:"#999",lw:0.3,dash:true});
+    const x0=c.x+frame; let y=c.y+frame;
+    cell(x0,y,labelW,rowH[0],"#f0f0f0",m.head[0],"start");
+    m.head.slice(1).forEach((hd,i)=>cell(x0+labelW+i*dayW,y,dayW,rowH[0],"#f0f0f0",hd.join(" "),"center"));
+    y+=rowH[0];
+    m.rows.forEach((r,ri)=>{
+      const h=rowH[ri+1];
+      cell(x0,y,labelW,h,r.bg||"#f7f7f7",r.label,"start");
+      r.cells.forEach((cc,di)=>cell(x0+labelW+di*dayW,y,dayW,h,cc.yellow?"#fff3bf":r.bg,cc.text,"center"));
+      y+=h;
+    });
+  });
+  return {ops, f, box:L.box};
+}
+/* sheet millimetres → the portrait page; a landscape sheet stands turned
+   a quarter clockwise, as on the printed picture */
+function drawOpsPdf(pdf, V, ps){
+  const land=ps.orientation==="landscape", m=pageMargin(ps.mode,ps.orientation), bh=V.box.h;
+  const P=(x,y)=>land?[m+bh-y, m+x]:[m+x, m+y];
+  pdf.setFont("helvetica","normal");
+  V.ops.forEach(o=>{
+    if(o.t==="rect"){
+      const [x,y]=land?[m+bh-(o.y+o.h), m+o.x]:[m+o.x, m+o.y], w=land?o.h:o.w, h=land?o.w:o.h;
+      if(o.fill){ pdf.setFillColor(o.fill); pdf.rect(x,y,w,h,"F"); }
+      if(o.stroke){ pdf.setDrawColor(o.stroke); pdf.setLineWidth(o.lw);
+        pdf.setLineDashPattern(o.dash?[1.2,1]:[],0); pdf.rect(x,y,w,h,"S"); pdf.setLineDashPattern([],0); }
+    } else {
+      const [x,y]=P(o.x,o.y);
+      pdf.setFontSize(o.size); pdf.setTextColor("#000");
+      pdf.text(o.s, x, y, land?{angle:-90}:undefined);
+    }
+  });
+}
+/* the same drawing as a picture (for the print button on a computer) */
+function drawOpsCanvas(V, ps, dpi){
+  const k=dpi/25.4, cv=document.createElement("canvas");
+  cv.width=Math.round(V.box.w*k); cv.height=Math.round(V.box.h*k);
+  const cx=cv.getContext("2d"); cx.fillStyle="#fff"; cx.fillRect(0,0,cv.width,cv.height);
+  V.ops.forEach(o=>{
+    if(o.t==="rect"){
+      if(o.fill){ cx.fillStyle=o.fill; cx.fillRect(o.x*k,o.y*k,o.w*k,o.h*k); }
+      if(o.stroke){ cx.strokeStyle=o.stroke; cx.lineWidth=o.lw*k; cx.setLineDash(o.dash?[1.2*k,1*k]:[]);
+        cx.strokeRect(o.x*k,o.y*k,o.w*k,o.h*k); cx.setLineDash([]); }
+    } else { cx.fillStyle="#000"; cx.font=`${o.size*PT_MM*k}px Helvetica, Arial, sans-serif`;
+      cx.fillText(o.s, o.x*k, o.y*k); }
+  });
+  return cv;
 }
 /* @page cannot be set from a style property, so the rule is rewritten whole */
 function applyPageRule(orient,mode){
@@ -3826,6 +3954,9 @@ function paintPrintBar(){
       ${radio("pvOrient","portrait",ps.orientation,t("print_portrait"))}
       ${radio("pvOrient","landscape",ps.orientation,t("print_landscape"))}
     </div>`}
+    <div class="pb-row"><label>${esc(t("print_lang"))}
+      <select id="pvLang">${[["es","Español"],["en","English"],["he","עברית"]].map(([v,n])=>
+        `<option value="${v}" ${ps.lang===v?"selected":""}>${n}</option>`).join("")}</select></label></div>
     <div class="pb-row">
       <button class="btn primary" id="printGo" ${_pdf.blob?"":"disabled"}>${esc(t("print"))}</button>
       <button class="btn" id="printPdf" ${_pdf.blob?"":"disabled"}>${esc(t(_pdf.blob?"pdf_save":"pdf_busy"))}</button></div>`;
@@ -3844,7 +3975,8 @@ function wirePrintBar(){
              by:(pick("pvBy")||cur.by)==="size"?"size":"count",
              copies:Math.max(1,Math.min(8,num("pvCopies",cur.copies))),
              w:Math.max(2,Math.min(30,num("pvW",cur.w))),
-             h:Math.max(2,Math.min(30,num("pvH",cur.h))) };
+             h:Math.max(2,Math.min(30,num("pvH",cur.h))),
+             lang:(bar.querySelector("#pvLang")||{}).value||cur.lang };
   };
   const apply=(repaintBar)=>{
     const ps=read();
@@ -3856,14 +3988,17 @@ function wirePrintBar(){
     preparePdf();
   };
   /* these change which fields exist, so they redraw the panel */
-  bar.querySelectorAll('input[name="pvMode"],input[name="pvOrient"],input[name="pvBy"]')
+  bar.querySelectorAll('input[name="pvMode"],input[name="pvOrient"],input[name="pvBy"],#pvLang')
     .forEach(r=>r.onchange=()=>apply(true));
   /* typing a number redraws the sheet only, so the field keeps its focus */
   ["pvCopies","pvW","pvH"].forEach(id=>{
     const el=bar.querySelector("#"+id);
     if(el) el.oninput=el.onchange=()=>apply(false);
   });
-  bar.querySelector("#printGo").onclick=()=>window.print();
+  /* An app opened from the iPad home screen cannot print the page itself —
+     window.print() does nothing there — so the print button hands over the
+     PDF instead; the share sheet's Print prints it at real size. */
+  bar.querySelector("#printGo").onclick=()=>isIOS()?savePdf():window.print();
   bar.querySelector("#printPdf").onclick=savePdf;
   bar.querySelector("#printClose").onclick=closePrint;
 }
@@ -3873,6 +4008,10 @@ function wirePrintBar(){
    sheet is drawn to an image (html2canvas) and placed on an A4 page (jsPDF);
    both libraries live in vendor/ and are cached for offline use like the
    rest of the app. They load on the first tap, not with the page. */
+function isIOS(){
+  return /iPad|iPhone|iPod/.test(navigator.userAgent)||
+    (navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);   // iPadOS reports a Mac
+}
 function loadScript(src){
   return new Promise((ok,fail)=>{
     if(document.querySelector(`script[data-src="${src}"]`)) return ok();
@@ -3905,6 +4044,22 @@ async function buildSchedulePdf(){
   const land=ps.orientation==="landscape";
   const m=pageMargin(ps.mode,ps.orientation);
   const box=sheetBox(ps);                       // the sheet as laid out
+  if(inPrintLang(()=>vectorable(sheetModel()))){
+    const pdf=new jspdf.jsPDF({orientation:"portrait", unit:"mm", format:"a4"});
+    const V=vectorOps(ps,pdf);
+    drawOpsPdf(pdf,V,ps);
+    _pdf.vectorPt=V.f;
+    /* the print picture from the same drawing, at 300 dpi */
+    const cv=drawOpsCanvas(V,ps,300);
+    _pdf.img=cv.toDataURL("image/png");
+    let pic=cv;
+    if(land){ pic=document.createElement("canvas"); pic.width=cv.height; pic.height=cv.width;
+      const c2=pic.getContext("2d"); c2.translate(pic.width,0); c2.rotate(Math.PI/2); c2.drawImage(cv,0,0); }
+    _pdf.printImg=land?pic.toDataURL("image/png"):_pdf.img;
+    _pdf.printSize=land?{w:box.h,h:box.w}:{w:box.w,h:box.h};
+    return pdf.output("blob");
+  }
+  _pdf.vectorPt=null;
   const canvas=await renderSheetCanvas(box.w);
   _pdf.img=canvas.toDataURL("image/jpeg",0.92);
   /* Every PDF is a portrait page. Printed from the share sheet, a landscape

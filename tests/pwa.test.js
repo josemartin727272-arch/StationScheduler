@@ -334,6 +334,7 @@ function charsInOrder(cell,a,b){
 }
 await test("print: 13-D prints as 13-D, not D-13, in the Hebrew sheet", async()=>{
   freshWeek(); S.lang="he"; const k=Object.keys(S.days)[0];
+  savePrintSettings({...rawPrintSettings(), lang:"he"});     // since v59 the print has its own language
   S.days[k].entry="13-D"; S.screen="sched"; render(); doPrint(); await tick();
   const td=[...document.querySelectorAll("#printArea td")].find(x=>x.textContent==="13-D");
   ok(td,"cell not found");
@@ -726,7 +727,9 @@ await test("values: holiday in the hours row reads Holiday / Feriado", async()=>
   S.lang="he";
 });
 await test("values: print, Excel and statistics use the display language too", async()=>{
-  theaterWeek(); S.lang="en"; S.screen="sched"; render(); doPrint(); await tick();
+  theaterWeek(); S.lang="en"; S.screen="sched"; render();
+  savePrintSettings({...rawPrintSettings(), lang:"en"});     // print follows the print language (v59)
+  doPrint(); await tick();
   ok([...document.querySelectorAll("#printArea td")].some(td=>td.textContent==="Binoculars"),"print shows Hebrew");
   closePrint();
   const csv=scheduleCsv(S.days); ok(csv.includes("Binoculars")&&!csv.includes("משקפת"),"Excel shows Hebrew");
@@ -869,6 +872,53 @@ await test("print: the picture is set to the sheet's real size in mm", async()=>
   const img=document.getElementById("printImg"), L=pageLayout(printSettings());
   /* a landscape sheet stands turned on the page: its height is the sheet's width */
   eq(img.style.width,L.box.h+"mm","printed width"); eq(img.style.height,L.box.w+"mm","printed height");
+  closePrint(); localStorage.removeItem("agenda_print");
+});
+
+/* ── v59 · sharp Spanish print, print language, iPad print button ────── */
+const pdfBytes=async b=>{ const u=new Uint8Array(await b.arrayBuffer()); let s=""; for(let i=0;i<u.length;i+=8192) s+=String.fromCharCode(...u.subarray(i,i+8192)); return s; };
+await test("print language: Spanish by default, whatever the screen language", async()=>{
+  localStorage.removeItem("agenda_print"); S.lang="he";
+  await printWith({mode:"single",orientation:"portrait"});
+  eq(printSettings().lang,"es","default print language");
+  const th=[...document.querySelectorAll("#printArea th")].map(x=>x.textContent).join(" ");
+  ok(/Lunes/.test(th),"print header not Spanish: "+th);
+  eq(document.querySelector("#printArea .print-table").getAttribute("dir"),"ltr","Spanish sheet direction");
+  ok(document.getElementById("pvLang"),"no print-language picker");
+  closePrint(); localStorage.removeItem("agenda_print");
+});
+await test("sharp PDF: in Spanish the text is real text, not a photo", async()=>{
+  await printWith({mode:"multi",by:"size",w:13,h:9,orientation:"landscape",lang:"es"});
+  const s=await pdfBytes(await pdfPrepared());
+  ok(/\(Lunes/.test(s),"no Spanish text drawn in the PDF");
+  ok(!/\/Subtype \/Image/.test(s),"the PDF still holds a picture");
+  ok(/\/MediaBox \[0 0 595\.2\d* 841\.8\d*\]/.test(s),"page is not portrait");
+  closePrint(); localStorage.removeItem("agenda_print");
+});
+await test("sharp PDF: type is fitted — big on a full sheet, readable on 13×9", async()=>{
+  await printWith({mode:"single",orientation:"portrait",lang:"es"}); await pdfPrepared();
+  ok(_pdf.vectorPt>=10,"full sheet type "+_pdf.vectorPt+"pt"); closePrint();
+  await printWith({mode:"multi",by:"size",w:13,h:9,orientation:"landscape",lang:"es"}); await pdfPrepared();
+  ok(_pdf.vectorPt>=5,"13×9 type "+_pdf.vectorPt+"pt"); closePrint();
+  localStorage.removeItem("agenda_print");
+});
+await test("sharp PDF: Hebrew print falls back to the picture", async()=>{
+  await printWith({mode:"single",orientation:"portrait",lang:"he"});
+  const s=await pdfBytes(await pdfPrepared());
+  ok(/\/Subtype \/Image/.test(s),"Hebrew print without its picture");
+  closePrint(); localStorage.removeItem("agenda_print");
+});
+await test("iPad: the print button opens the share sheet with the PDF", async()=>{
+  const ua=Object.getOwnPropertyDescriptor(Navigator.prototype,"userAgent");
+  Object.defineProperty(navigator,"userAgent",{get:()=>"Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X)",configurable:true});
+  let shared=null, printed=false; const undo=stubShare(d=>{ shared=d; return Promise.resolve(); });
+  const wp=window.print; window.print=()=>{ printed=true; };
+  try{
+    await printWith({mode:"single",orientation:"portrait",lang:"es"});
+    document.getElementById("printGo").click(); await tick();
+  } finally{ undo(); window.print=wp; delete navigator.userAgent; if(ua) Object.defineProperty(Navigator.prototype,"userAgent",ua); }
+  ok(shared&&shared.files&&shared.files[0].type==="application/pdf","print did not hand over the PDF");
+  ok(!printed,"window.print was called on an iPad");
   closePrint(); localStorage.removeItem("agenda_print");
 });
 
