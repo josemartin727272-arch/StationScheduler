@@ -126,9 +126,11 @@ await test("pdf: changing the page direction prepares a fresh PDF", async()=>{
   freshWeek(); S.screen="sched"; render();
   savePrintSettings({...printSettings(), orientation:"portrait", mode:"single"});
   doPrint(); await pdfPrepared();
+  const before=_pdf.img;
   document.querySelector('input[name="pvOrient"][value="landscape"]').click();
-  const txt=await (await pdfPrepared()).text();
-  ok(/\/MediaBox \[0 0 841\.8\d* 595\.2\d*\]/.test(txt),"still portrait");
+  await pdfPrepared();
+  /* since v58 every PDF is a portrait page; a landscape sheet is turned inside it */
+  ok(_pdf.img&&_pdf.img!==before,"no fresh PDF after turning the page");
 });
 
 /* ── 5. employees balanced within the week ───────────────────────────── */
@@ -786,8 +788,7 @@ await test("fill: each copy's table fills its frame, top to bottom", async()=>{
   await printWith({mode:"multi",by:"count",copies:4,orientation:"portrait"});
   const copies=[...document.querySelectorAll("#printArea .pcopy")]; eq(copies.length,4,"copies drawn");
   copies.forEach(c=>{ const cb=c.getBoundingClientRect(), tb=c.querySelector(".print-table").getBoundingClientRect();
-    const hd=c.querySelector(".print-head").getBoundingClientRect();
-    ok((tb.bottom-hd.top)/cb.height>=0.9,"copy filled "+Math.round((tb.bottom-hd.top)/cb.height*100)+"%");
+    ok((tb.bottom-tb.top)/cb.height>=0.9,"copy filled "+Math.round((tb.bottom-tb.top)/cb.height*100)+"%");
     ok(tb.bottom<=cb.bottom+1,"table spills out of its frame");
     const cut=[...c.querySelectorAll(".print-table td:not(.label)")].filter(td=>td.scrollWidth>td.clientWidth+1).map(td=>td.textContent);
     eq(cut.join(","),"","values cut short in a copy"); });
@@ -842,7 +843,9 @@ await test("landscape: the printed picture is turned to fill a portrait sheet", 
   ok(img.naturalHeight>img.naturalWidth,"picture not turned: "+img.naturalWidth+"x"+img.naturalHeight);
   ok(/size:A4 portrait/.test(document.getElementById("pageStyle").textContent),"page rule not portrait");
   const txt=await (await pdfPrepared()).text();
-  ok(/\/MediaBox \[0 0 841\.8\d* 595\.2\d*\]/.test(txt),"PDF should stay landscape");
+  /* v58: the PDF is a portrait page too, so printing it from the share sheet
+     does not shrink a landscape page onto portrait paper (~65% — 13 cm came out 8.5) */
+  ok(/\/MediaBox \[0 0 595\.2\d* 841\.8\d*\]/.test(txt),"PDF page is not portrait");
   closePrint(); localStorage.removeItem("agenda_print");
 });
 await test("type: row names and dates use the same type as the values", async()=>{
@@ -852,6 +855,20 @@ await test("type: row names and dates use the same type as the values", async()=
   const f=el=>getComputedStyle(el);
   eq(f(lab).fontSize,f(val).fontSize,"row-name size"); eq(f(lab).fontWeight,f(val).fontWeight,"row-name weight");
   eq(f(th).fontSize,f(val).fontSize,"date size"); eq(f(th).fontWeight,f(val).fontWeight,"date weight");
+  closePrint(); localStorage.removeItem("agenda_print");
+});
+
+/* ── v58 · no title line; real size on paper ─────────────────────────── */
+await test("print: no title line above the table — the space goes to the table", async()=>{
+  await printWith({mode:"multi",by:"size",w:13,h:9,orientation:"landscape"});
+  eq(document.querySelectorAll("#printArea .print-head").length,0,"title lines");
+  closePrint(); localStorage.removeItem("agenda_print");
+});
+await test("print: the picture is set to the sheet's real size in mm", async()=>{
+  await printWith({mode:"multi",by:"size",w:13,h:9,orientation:"landscape"});
+  const img=document.getElementById("printImg"), L=pageLayout(printSettings());
+  /* a landscape sheet stands turned on the page: its height is the sheet's width */
+  eq(img.style.width,L.box.h+"mm","printed width"); eq(img.style.height,L.box.w+"mm","printed height");
   closePrint(); localStorage.removeItem("agenda_print");
 });
 

@@ -345,7 +345,8 @@ table.sched td .why{font-size:.68rem;line-height:1.25;color:#5b6b7b;margin-top:2
   body.printing #printArea{position:static;inset:auto;overflow:visible;padding:0;
     display:block!important;width:100%;height:100%}
   #printArea .sheet{display:none!important}
-  #printImg{display:block!important;max-width:100%;max-height:100%;width:auto;height:auto;margin:0 auto}
+  #printImg{display:block!important;max-width:100%;max-height:100%;width:auto;height:auto;
+    object-fit:contain;object-position:top center;margin:0 auto}
 }
 /* the layout sketch in Settings */
 .radio-col{display:flex;flex-direction:column;gap:6px;margin-block-end:4px}
@@ -3315,9 +3316,9 @@ const GUIDE = [
       en:"🖨️ Print prints an exact picture of the sheet, which shrinks by itself if the printer or iPad adds margins — so nothing is pushed onto a second page. The button is active after a second or two, when the sheet is ready. ✕ Close returns to the schedule. Settings are kept on the device.",
       es:"🖨️ Imprimir imprime una imagen exacta de la hoja, que se achica sola si la impresora o el iPad agregan márgenes — así nada pasa a una segunda página. El botón se activa tras uno o dos segundos, cuando la hoja está lista. ✕ Cerrar vuelve al horario. Los ajustes quedan en el dispositivo."}},
   {h:{he:"📄 שמור PDF", en:"📄 Save PDF", es:"📄 Guardar PDF"}},
-  {p:{he:"באותה תצוגה. הקובץ מוכן שנייה-שתיים אחרי פתיחת התצוגה (עד אז הכפתור כתוב „מכין PDF…”). באייפד נפתח תפריט שיתוף — „שמור בקבצים”, הדפסה או וואטסאפ; במחשב/אנדרואיד הקובץ יורד. שינית כיוון או עותקים — קובץ חדש מוכן לבד.",
-      en:"In the same view. The file is ready a second or two after the view opens (until then the button reads “Preparing PDF…”). On an iPad the share menu opens — “Save to Files”, print or WhatsApp; on a computer/Android the file downloads. Changed direction or copies — a new file is prepared by itself.",
-      es:"En la misma vista. El archivo está listo uno o dos segundos después de abrirla (hasta entonces dice “Preparando PDF…”). En iPad se abre el menú compartir — “Guardar en Archivos”, imprimir o WhatsApp; en computadora/Android se descarga. Si cambias orientación o copias, se prepara uno nuevo solo."}},
+  {p:{he:"באותה תצוגה. ה-PDF הוא תמיד דף A4 לאורך בגודל אמיתי (סידור לרוחב מסובב בתוכו). כשמדפיסים אותו — לבחור במדפסת גודל 100% ולא „התאם לדף”. הקובץ מוכן שנייה-שתיים אחרי פתיחת התצוגה (עד אז הכפתור כתוב „מכין PDF…”). באייפד נפתח תפריט שיתוף — „שמור בקבצים”, הדפסה או וואטסאפ; במחשב/אנדרואיד הקובץ יורד. שינית כיוון או עותקים — קובץ חדש מוכן לבד.",
+      en:"In the same view. The PDF is always a portrait A4 page at real size (a landscape sheet is turned inside it). When printing it, choose 100% size on the printer, not “fit to page”. The file is ready a second or two after the view opens (until then the button reads “Preparing PDF…”). On an iPad the share menu opens — “Save to Files”, print or WhatsApp; on a computer/Android the file downloads. Changed direction or copies — a new file is prepared by itself.",
+      es:"En la misma vista. El PDF es siempre una página A4 vertical a tamaño real (una hoja horizontal va girada dentro). Al imprimirlo, elige tamaño 100% en la impresora, no “ajustar a la página”. El archivo está listo uno o dos segundos después de abrirla (hasta entonces dice “Preparando PDF…”). En iPad se abre el menú compartir — “Guardar en Archivos”, imprimir o WhatsApp; en computadora/Android se descarga. Si cambias orientación o copias, se prepara uno nuevo solo."}},
   {h:{he:"📤 ייצוא Excel", en:"📤 Excel export", es:"📤 Exportar a Excel"}},
   {p:{he:"מוריד קובץ CSV שנפתח נכון בעברית באקסל. שמות הימים בשפה שנבחרה.", en:"Downloads a CSV that opens correctly in Excel. Day names come in the chosen language.", es:"Descarga un CSV que abre bien en Excel. Los días salen en el idioma elegido."}},
   {h:{he:"📲 שלח לעובדים", en:"📲 Send to workers", es:"📲 Enviar a trabajadores"}},
@@ -3426,9 +3427,9 @@ const GUIDE = [
 /* ─────────────────────────────────────────────────────────────────── */
 {id:"news", icon:"🆕", title:{he:"מה חדש — עדכוני 27/10/2026", en:"What's new — updates of 27/10/2026", es:"Novedades — actualizaciones del 27/10/2026"},
  blocks:[
-  {p:{he:"כל מה שהשתנה במערכת ביום אחד, מגרסה 44 עד גרסה 57, לפי סדר העלייה לאוויר.",
-      en:"Everything that changed in one day, from version 44 to version 57, in the order it went live.",
-      es:"Todo lo que cambió en un día, de la versión 44 a la 57, en el orden en que se publicó."}},
+  {p:{he:"כל מה שהשתנה במערכת ביום אחד, מגרסה 44 עד גרסה 58, לפי סדר העלייה לאוויר.",
+      en:"Everything that changed in one day, from version 44 to version 58, in the order it went live.",
+      es:"Todo lo que cambió en un día, de la versión 44 a la 58, en el orden en que se publicó."}},
   {h:{he:"גרסה 44 — נוחות ותיקונים", en:"Version 44 — comfort and fixes", es:"Versión 44 — comodidad y arreglos"}},
   {li:[
     {he:"הדף לא קופץ יותר למעלה אחרי הזנה או מחיקה; קטעים פתוחים נשארים פתוחים.", en:"The page no longer jumps to the top after typing or deleting; open sections stay open.", es:"La página ya no salta arriba al escribir o borrar; las secciones abiertas quedan abiertas."},
@@ -3476,7 +3477,11 @@ const GUIDE = [
   {li:[
     {he:"„לרוחב” באמת יוצא לרוחב — גם באייפד.", en:"“Landscape” really prints landscape — on the iPad too.", es:"“Horizontal” realmente sale horizontal — también en el iPad."},
     {he:"לפי גודל: הדף מסתובב לכיוון שמכיל הכי הרבה עותקים (13×9 ס״מ = 4 בדף).", en:"By size: the page turns to hold the most copies (13×9 cm = 4 a page).", es:"Por tamaño: la hoja gira para que quepan más copias (13×9 cm = 4 por hoja)."},
-    {he:"שמות השורות והתאריכים באותו גופן וגודל כמו שאר הטבלה.", en:"Row names and dates in the same type and size as the rest of the table.", es:"Nombres de filas y fechas con la misma letra y tamaño que el resto de la tabla."}]}
+    {he:"שמות השורות והתאריכים באותו גופן וגודל כמו שאר הטבלה.", en:"Row names and dates in the same type and size as the rest of the table.", es:"Nombres de filas y fechas con la misma letra y tamaño que el resto de la tabla."}]},
+  {h:{he:"גרסה 58 — גודל אמיתי על הנייר", en:"Version 58 — real size on paper", es:"Versión 58 — tamaño real en el papel"}},
+  {li:[
+    {he:"גם ה-PDF הוא עכשיו דף לאורך (תוכן לרוחב מסובב בתוכו), כך שהדפסה מתפריט השיתוף לא מקטינה אותו — עותק של 13×9 ס״מ יוצא 13×9 ס״מ.", en:"The PDF is now a portrait page too (landscape content turned inside), so printing from the share menu does not shrink it — a 13×9 cm copy comes out 13×9 cm.", es:"El PDF ahora también es una página vertical (el contenido horizontal va girado), así imprimir desde el menú compartir no lo achica — una copia de 13×9 cm sale de 13×9 cm."},
+    {he:"השורה „אשר סידור מוניות — תאריכים” מעל הטבלה הוסרה; המקום עובר לטבלה.", en:"The “Asher Taxi Scheduler — dates” line above the table is gone; the space goes to the table.", es:"Se quitó la línea “Asher Programador de Taxis — fechas” sobre la tabla; el espacio pasa a la tabla."}]}
  ]}
 ];
 
@@ -3718,7 +3723,9 @@ function printTable(){
      the columns divide it, so landscape fills the sheet instead of leaving a
      strip of white down the side */
   const labelPct=22, colW=((100-labelPct)/keys.length).toFixed(2);
-  let h=`<div class="print-head">${esc(t("app_title"))} — ${fmtDM(keys[0])} → ${fmtDM(keys[keys.length-1])}</div>`;
+  /* no title line above the table: the dates are in its header row, and the
+     space is worth more to the table on a small copy */
+  let h="";
   h+=`<table class="print-table"><colgroup><col style="width:${labelPct}%">`+
      keys.map(()=>`<col style="width:${colW}%">`).join("")+`</colgroup>`;
   h+=`<thead><tr><th>${esc(t("row_dates"))}</th>`;
@@ -3896,21 +3903,23 @@ async function buildSchedulePdf(){
   await loadScript("vendor/jspdf.umd.min.js");
   const ps=printSettings();
   const land=ps.orientation==="landscape";
-  const pdf=new jspdf.jsPDF({orientation:land?"landscape":"portrait", unit:"mm", format:"a4"});
-  const [pw,ph]=land?[297,210]:[210,297], m=pageMargin(ps.mode,ps.orientation);
-  const boxW=pw-2*m, boxH=ph-2*m;
-  const canvas=await renderSheetCanvas(boxW);
-  /* as large as the page allows, never stretched out of shape */
-  const k=Math.min(boxW/canvas.width, boxH/canvas.height);
-  const w=canvas.width*k, h=canvas.height*k;
+  const m=pageMargin(ps.mode,ps.orientation);
+  const box=sheetBox(ps);                       // the sheet as laid out
+  const canvas=await renderSheetCanvas(box.w);
   _pdf.img=canvas.toDataURL("image/jpeg",0.92);
-  pdf.addImage(_pdf.img,"JPEG", m+(boxW-w)/2, m, w, h);
-  /* the picture that prints: a landscape sheet turned to stand on a portrait page */
+  /* Every PDF is a portrait page. Printed from the share sheet, a landscape
+     PDF page is shrunk onto portrait paper (a 13 cm copy came out 8.5 cm);
+     turning the landscape sheet inside a portrait page prints at real size. */
+  let pic=canvas;
   if(land){
-    const r=document.createElement("canvas"); r.width=canvas.height; r.height=canvas.width;
-    const cx=r.getContext("2d"); cx.translate(r.width,0); cx.rotate(Math.PI/2); cx.drawImage(canvas,0,0);
-    _pdf.printImg=r.toDataURL("image/jpeg",0.92);
-  } else _pdf.printImg=_pdf.img;
+    pic=document.createElement("canvas"); pic.width=canvas.height; pic.height=canvas.width;
+    const cx=pic.getContext("2d"); cx.translate(pic.width,0); cx.rotate(Math.PI/2); cx.drawImage(canvas,0,0);
+  }
+  _pdf.printImg=land?pic.toDataURL("image/jpeg",0.92):_pdf.img;
+  _pdf.printSize=land?{w:box.h,h:box.w}:{w:box.w,h:box.h};   // mm on the portrait page
+  const pdf=new jspdf.jsPDF({orientation:"portrait", unit:"mm", format:"a4"});
+  /* the sheet at its exact size, margin from the top-left of the page */
+  pdf.addImage(_pdf.printImg,"JPEG", m, m, _pdf.printSize.w, _pdf.printSize.h);
   return pdf.output("blob");
 }
 /* Safari opens the share sheet only straight out of a tap: making the PDF
@@ -3926,7 +3935,10 @@ function preparePdf(){
   const run=new Promise(r=>setTimeout(r,250))           // let a burst of changes settle
     .then(()=>gen===_pdf.gen&&document.body.classList.contains("printing")?buildSchedulePdf():null)
     .then(blob=>{ if(gen===_pdf.gen&&blob){ _pdf.blob=blob;
-        const im=document.getElementById("printImg"); if(im) im.src=_pdf.printImg;
+        const im=document.getElementById("printImg");
+        if(im){ im.src=_pdf.printImg;
+          /* the real size on paper; the print rule may only shrink it */
+          im.style.width=_pdf.printSize.w+"mm"; im.style.height=_pdf.printSize.h+"mm"; }
         paintPdfButton(); } return blob; })
     .catch(e=>{ console.error(e); return null; });
   _pdf.promise=run;
