@@ -302,6 +302,13 @@ body.printing>header,body.printing>main{visibility:hidden}
    inside the Hebrew sheet, while a Hebrew value still reads right to left */
 .print-table td:not(.label),table.sched select{unicode-bidi:plaintext}
 .bal-sum{font-size:.92rem;line-height:1.7}
+.lock-screen{position:fixed;inset:0;z-index:1000;background:var(--primary);display:flex;
+  align-items:center;justify-content:center;padding:16px}
+.lock-box{background:#fff;border-radius:18px;padding:24px;max-width:340px;width:100%;
+  display:flex;flex-direction:column;gap:12px;text-align:center}
+.lock-box input[type=password]{width:100%;font-size:1.1rem;padding:10px;margin-top:4px}
+.lock-ico{font-size:2.4rem}
+.lock-err{color:var(--danger);min-height:1.2em;font-weight:600}
 .send-panel .send-row{display:flex;justify-content:space-between;align-items:center;gap:8px;
   padding:6px 10px;border-radius:10px;margin-top:6px}
 .send-panel .send-row[data-sent]{opacity:.7}
@@ -375,7 +382,7 @@ log_export_week:"ייצוא הסידור לשבוע {w}",log_backup:"גיבוי 
 log_cfg_export:"ייצוא הגדרות",log_cfg_import:"ייבוא הגדרות",guide_lead:"מדריך קצר לכל מה שהמערכת יודעת לעשות. פתח פרק כדי לקרוא אותו.",
 week_start:"תחילת שבוע",generate:"צור סידור",auto_assign:"⚡ שיבוץ אוטומטי",save:"💾 שמור",export_excel:"📤 ייצוא Excel",print:"🖨️ הדפסה",
 warn_count:"מספר הערות על הסידור",close:"סגור",
-pdf_save:"📄 שמור PDF",rn_title:"✏️ שינוי שם עובד",rn_hint:"כאן — ולא ברשימה למעלה — השם החדש לוקח איתו את כל ההיסטוריה: סידורים שמורים, תקציב חופשה, שיבוצים קבועים ולוח החופשות.",rn_new:"שם חדש",rn_go:"שנה שם",rn_confirm:"לשנות את {a} ל-{b} בכל המערכת, כולל כל הסידורים השמורים?",rn_bad:"שם חדש לא יכול להיות ריק או להכיל + או ,",rn_taken:"{b} כבר קיים",rn_done:"{a} נקרא עכשיו {b}",log_rename:"שינוי שם: {a} → {b}",send_btn:"📲 שלח לעובדים",send_title:"📲 הודעה אישית לכל עובד",send_hint:"כל עובד מקבל רק את השבוע שלו, בשפת הקבוצה שלו. לחיצה פותחת את תפריט השיתוף — בוחרים וואטסאפ ואת העובד.",send_one:"שלח",msg_free:"פנוי",msg_holiday:"חג",grp_lang:"שפת ההודעות לעובדים",why_btn:"💬 למה?",why_week_word:"השבוע",why_raw:"{s}",why_person:"הכי מעט השבוע ({n} עד כה)",why_tie:"בתיקו — פחות לאחרונה",why_quota:"יעד שבועי: {v} × {n}",why_quota_any:"יעד שבועי: {n} פעמים",why_taxi_axis:"{s}: ציר {a} ({p}%)",why_axis:"ציר שמותר לשעה {v}",why_fit_axis:"שעה שמתאימה לציר {a}",why_balance:"איזון לפי 90 הימים האחרונים",s_fixed:"📌 שיבוצים קבועים",fx_hint:"תא שמתמלא מעצמו בכל שבוע חדש, ונשמר בשיבוץ האוטומטי כמו הזנה ידנית. עובד שנעדר באותו יום לא ישובץ, ותופיע הערה.",fx_none:"אין עדיין שיבוצים קבועים",fx_add:"➕ הוסף שיבוץ קבוע",warn_fixed_away:"שיבוץ קבוע לא הוחל — {e} נעדר ({r})",s_calendar:"🏖 לוח חופשות",cal_hint:"חופשות ונסיעות מראש. הן נכנסות לבד לשורות החופשה/נסיעה בשבוע שבו הן נופלות — כשנוצר שבוע וכשפותחים אותו. סימון ידני לא נמחק.",cal_none:"אין חופשות מתוכננות",cal_vac:"חופשה",cal_trip:"נסיעה",cal_from:"מ־",cal_to:"עד",cal_add:"➕ הוסף",cal_need_dates:"בחר עובד ושני תאריכים",cal_backwards:"תאריך הסיום לפני תאריך ההתחלה",undo_auto:"↶ בטל שיבוץ",bal_title:"⚖️ איזון השבוע",pdf_busy:"מכין PDF…",pdf_fail:"לא הצלחתי ליצור PDF",pdf_ready:"ה-PDF ירד",
+pdf_save:"📄 שמור PDF",s_lock:"🔒 סיסמה לאתר",lk_hint:"מי שנכנס לכתובת האתר יצטרך סיסמה. הסיסמה עצמה לא נשמרת בשום מקום — רק טביעת אצבע מוצפנת שלה. כתוב סיסמה (לפחות 8 תווים), לחץ „צור קוד”, ושלח את הקוד שיופיע ל-Claude כדי שיכניס אותו לאתר. את הסיסמה עצמה אל תשלח.",lk_on:"🔒 הסיסמה פעילה באתר",lk_off:"🔓 אין עדיין סיסמה לאתר",lk_new:"סיסמה חדשה",lk_again:"שוב, לאימות",lk_make:"צור קוד",lk_send:"זה הקוד לשלוח (לא הסיסמה):",lk_copy:"העתק",lk_copied:"הקוד הועתק",lk_short:"לפחות 8 תווים",lk_mismatch:"שתי הסיסמאות לא זהות",lk_forget:"שכח את המכשיר הזה (יבקש סיסמה בפתיחה הבאה)",lk_forgot:"בפתיחה הבאה תתבקש סיסמה",lock_prompt:"סיסמה",lock_remember:"זכור במכשיר הזה",lock_go:"כניסה",lock_wrong:"סיסמה שגויה",rn_title:"✏️ שינוי שם עובד",rn_hint:"כאן — ולא ברשימה למעלה — השם החדש לוקח איתו את כל ההיסטוריה: סידורים שמורים, תקציב חופשה, שיבוצים קבועים ולוח החופשות.",rn_new:"שם חדש",rn_go:"שנה שם",rn_confirm:"לשנות את {a} ל-{b} בכל המערכת, כולל כל הסידורים השמורים?",rn_bad:"שם חדש לא יכול להיות ריק או להכיל + או ,",rn_taken:"{b} כבר קיים",rn_done:"{a} נקרא עכשיו {b}",log_rename:"שינוי שם: {a} → {b}",send_btn:"📲 שלח לעובדים",send_title:"📲 הודעה אישית לכל עובד",send_hint:"כל עובד מקבל רק את השבוע שלו, בשפת הקבוצה שלו. לחיצה פותחת את תפריט השיתוף — בוחרים וואטסאפ ואת העובד.",send_one:"שלח",msg_free:"פנוי",msg_holiday:"חג",grp_lang:"שפת ההודעות לעובדים",why_btn:"💬 למה?",why_week_word:"השבוע",why_raw:"{s}",why_person:"הכי מעט השבוע ({n} עד כה)",why_tie:"בתיקו — פחות לאחרונה",why_quota:"יעד שבועי: {v} × {n}",why_quota_any:"יעד שבועי: {n} פעמים",why_taxi_axis:"{s}: ציר {a} ({p}%)",why_axis:"ציר שמותר לשעה {v}",why_fit_axis:"שעה שמתאימה לציר {a}",why_balance:"איזון לפי 90 הימים האחרונים",s_fixed:"📌 שיבוצים קבועים",fx_hint:"תא שמתמלא מעצמו בכל שבוע חדש, ונשמר בשיבוץ האוטומטי כמו הזנה ידנית. עובד שנעדר באותו יום לא ישובץ, ותופיע הערה.",fx_none:"אין עדיין שיבוצים קבועים",fx_add:"➕ הוסף שיבוץ קבוע",warn_fixed_away:"שיבוץ קבוע לא הוחל — {e} נעדר ({r})",s_calendar:"🏖 לוח חופשות",cal_hint:"חופשות ונסיעות מראש. הן נכנסות לבד לשורות החופשה/נסיעה בשבוע שבו הן נופלות — כשנוצר שבוע וכשפותחים אותו. סימון ידני לא נמחק.",cal_none:"אין חופשות מתוכננות",cal_vac:"חופשה",cal_trip:"נסיעה",cal_from:"מ־",cal_to:"עד",cal_add:"➕ הוסף",cal_need_dates:"בחר עובד ושני תאריכים",cal_backwards:"תאריך הסיום לפני תאריך ההתחלה",undo_auto:"↶ בטל שיבוץ",bal_title:"⚖️ איזון השבוע",pdf_busy:"מכין PDF…",pdf_fail:"לא הצלחתי ליצור PDF",pdf_ready:"ה-PDF ירד",
 print_orient:"כיוון דף",print_portrait:"לאורך",print_landscape:"לרוחב",
 s_print:"🖨️ הגדרות הדפסה",print_mode:"מצב הדפסה",
 print_single:"סידור מלא — דף A4 שלם, עותק אחד",
@@ -497,7 +504,7 @@ log_export_week:"Exported the schedule for {w}",log_backup:"Full backup download
 log_cfg_export:"Settings exported",log_cfg_import:"Settings imported",guide_lead:"A short guide to everything the app can do. Open a chapter to read it.",
 week_start:"Week start",generate:"New Schedule",auto_assign:"⚡ Auto Assign",save:"💾 Save",export_excel:"📤 Export Excel",print:"🖨️ Print",
 warn_count:"Notes on this schedule",close:"Close",
-pdf_save:"📄 Save PDF",rn_title:"✏️ Rename an employee",rn_hint:"Here — not in the list above — the new name takes the whole history along: saved schedules, vacation budget, fixed assignments and the absence calendar.",rn_new:"New name",rn_go:"Rename",rn_confirm:"Rename {a} to {b} everywhere, including every saved schedule?",rn_bad:"A new name cannot be empty or contain + or ,",rn_taken:"{b} already exists",rn_done:"{a} is now {b}",log_rename:"Renamed: {a} → {b}",send_btn:"📲 Send to workers",send_title:"📲 A personal message per worker",send_hint:"Each worker gets only their own week, in their group's language. A tap opens the share menu — pick WhatsApp and the worker.",send_one:"Send",msg_free:"Off",msg_holiday:"Holiday",grp_lang:"Language of workers' messages",why_btn:"💬 Why?",why_week_word:"this week",why_raw:"{s}",why_person:"fewest this week ({n} so far)",why_tie:"tie — fewer lately",why_quota:"weekly target: {v} × {n}",why_quota_any:"weekly target: {n} times",why_taxi_axis:"{s}: axis {a} ({p}%)",why_axis:"axis allowed for {v}",why_fit_axis:"time that suits axis {a}",why_balance:"balanced over the last 90 days",s_fixed:"📌 Fixed assignments",fx_hint:"A cell that fills itself in every new week and is kept by Auto Assign like a hand-typed value. Someone away that day is not placed, and a note says so.",fx_none:"No fixed assignments yet",fx_add:"➕ Add fixed assignment",warn_fixed_away:"Fixed assignment not applied — {e} is away ({r})",s_calendar:"🏖 Absence calendar",cal_hint:"Vacations and trips ahead. They land by themselves in the away rows of the week they fall in — when a week is created and when it is opened. Hand marks are never removed.",cal_none:"No planned absences",cal_vac:"Vacation",cal_trip:"Trip",cal_from:"From",cal_to:"To",cal_add:"➕ Add",cal_need_dates:"Pick a person and both dates",cal_backwards:"The end date is before the start date",undo_auto:"↶ Undo assign",bal_title:"⚖️ This week's balance",pdf_busy:"Preparing PDF…",pdf_fail:"Could not create the PDF",pdf_ready:"PDF downloaded",
+pdf_save:"📄 Save PDF",s_lock:"🔒 Site password",lk_hint:"Anyone who opens the site's address will need a password. The password itself is stored nowhere — only an encrypted fingerprint of it. Type a password (8+ characters), tap “Make code”, and send the code that appears to Claude to put on the site. Do not send the password.",lk_on:"🔒 The site password is on",lk_off:"🔓 No site password yet",lk_new:"New password",lk_again:"Again, to confirm",lk_make:"Make code",lk_send:"This is the code to send (not the password):",lk_copy:"Copy",lk_copied:"Code copied",lk_short:"At least 8 characters",lk_mismatch:"The two passwords differ",lk_forget:"Forget this device (asks again next time)",lk_forgot:"The password will be asked next time",lock_prompt:"Password",lock_remember:"Remember on this device",lock_go:"Enter",lock_wrong:"Wrong password",rn_title:"✏️ Rename an employee",rn_hint:"Here — not in the list above — the new name takes the whole history along: saved schedules, vacation budget, fixed assignments and the absence calendar.",rn_new:"New name",rn_go:"Rename",rn_confirm:"Rename {a} to {b} everywhere, including every saved schedule?",rn_bad:"A new name cannot be empty or contain + or ,",rn_taken:"{b} already exists",rn_done:"{a} is now {b}",log_rename:"Renamed: {a} → {b}",send_btn:"📲 Send to workers",send_title:"📲 A personal message per worker",send_hint:"Each worker gets only their own week, in their group's language. A tap opens the share menu — pick WhatsApp and the worker.",send_one:"Send",msg_free:"Off",msg_holiday:"Holiday",grp_lang:"Language of workers' messages",why_btn:"💬 Why?",why_week_word:"this week",why_raw:"{s}",why_person:"fewest this week ({n} so far)",why_tie:"tie — fewer lately",why_quota:"weekly target: {v} × {n}",why_quota_any:"weekly target: {n} times",why_taxi_axis:"{s}: axis {a} ({p}%)",why_axis:"axis allowed for {v}",why_fit_axis:"time that suits axis {a}",why_balance:"balanced over the last 90 days",s_fixed:"📌 Fixed assignments",fx_hint:"A cell that fills itself in every new week and is kept by Auto Assign like a hand-typed value. Someone away that day is not placed, and a note says so.",fx_none:"No fixed assignments yet",fx_add:"➕ Add fixed assignment",warn_fixed_away:"Fixed assignment not applied — {e} is away ({r})",s_calendar:"🏖 Absence calendar",cal_hint:"Vacations and trips ahead. They land by themselves in the away rows of the week they fall in — when a week is created and when it is opened. Hand marks are never removed.",cal_none:"No planned absences",cal_vac:"Vacation",cal_trip:"Trip",cal_from:"From",cal_to:"To",cal_add:"➕ Add",cal_need_dates:"Pick a person and both dates",cal_backwards:"The end date is before the start date",undo_auto:"↶ Undo assign",bal_title:"⚖️ This week's balance",pdf_busy:"Preparing PDF…",pdf_fail:"Could not create the PDF",pdf_ready:"PDF downloaded",
 print_orient:"Page direction",print_portrait:"Portrait",print_landscape:"Landscape",
 s_print:"🖨️ Print settings",print_mode:"Print mode",
 print_single:"Full schedule — one whole A4 page, a single copy",
@@ -619,7 +626,7 @@ log_export_week:"Se exportó el horario de {w}",log_backup:"Respaldo completo de
 log_cfg_export:"Configuración exportada",log_cfg_import:"Configuración importada",guide_lead:"Una guía breve de todo lo que hace la app. Abre un capítulo para leerlo.",
 week_start:"Inicio de semana",generate:"Nuevo Horario",auto_assign:"⚡ Asignación Automática",save:"💾 Guardar",export_excel:"📤 Exportar Excel",print:"🖨️ Imprimir",
 warn_count:"Observaciones del horario",close:"Cerrar",
-pdf_save:"📄 Guardar PDF",rn_title:"✏️ Cambiar nombre de un empleado",rn_hint:"Aquí — no en la lista de arriba — el nombre nuevo se lleva todo el historial: horarios guardados, presupuesto de vacaciones, asignaciones fijas y el calendario de ausencias.",rn_new:"Nombre nuevo",rn_go:"Cambiar",rn_confirm:"¿Cambiar {a} por {b} en todo el sistema, incluidos todos los horarios guardados?",rn_bad:"Un nombre nuevo no puede estar vacío ni contener + o ,",rn_taken:"{b} ya existe",rn_done:"{a} ahora es {b}",log_rename:"Cambio de nombre: {a} → {b}",send_btn:"📲 Enviar a trabajadores",send_title:"📲 Un mensaje personal por trabajador",send_hint:"Cada trabajador recibe solo su semana, en el idioma de su grupo. Un toque abre el menú compartir — elige WhatsApp y al trabajador.",send_one:"Enviar",msg_free:"Libre",msg_holiday:"Feriado",grp_lang:"Idioma de los mensajes",why_btn:"💬 ¿Por qué?",why_week_word:"esta semana",why_raw:"{s}",why_person:"menos veces esta semana ({n} hasta ahora)",why_tie:"empate — menos últimamente",why_quota:"objetivo semanal: {v} × {n}",why_quota_any:"objetivo semanal: {n} veces",why_taxi_axis:"{s}: ruta {a} ({p}%)",why_axis:"ruta permitida para {v}",why_fit_axis:"hora que encaja con la ruta {a}",why_balance:"equilibrado en los últimos 90 días",s_fixed:"📌 Asignaciones fijas",fx_hint:"Una celda que se llena sola en cada semana nueva y que la Asignación Automática respeta como un valor escrito a mano. Quien esté ausente ese día no se asigna, y aparece una nota.",fx_none:"Aún no hay asignaciones fijas",fx_add:"➕ Añadir asignación fija",warn_fixed_away:"Asignación fija no aplicada — {e} está ausente ({r})",s_calendar:"🏖 Calendario de ausencias",cal_hint:"Vacaciones y viajes por adelantado. Entran solos en las filas de ausencia de la semana en que caen — al crear la semana y al abrirla. Las marcas a mano nunca se borran.",cal_none:"No hay ausencias planificadas",cal_vac:"Vacaciones",cal_trip:"Viaje",cal_from:"Desde",cal_to:"Hasta",cal_add:"➕ Añadir",cal_need_dates:"Elige una persona y las dos fechas",cal_backwards:"La fecha final es anterior a la inicial",undo_auto:"↶ Deshacer asignación",bal_title:"⚖️ Equilibrio de la semana",pdf_busy:"Preparando PDF…",pdf_fail:"No se pudo crear el PDF",pdf_ready:"PDF descargado",
+pdf_save:"📄 Guardar PDF",s_lock:"🔒 Contraseña del sitio",lk_hint:"Quien abra la dirección del sitio necesitará una contraseña. La contraseña no se guarda en ningún lugar — solo una huella cifrada. Escribe una contraseña (8+ caracteres), toca “Crear código” y envía a Claude el código que aparece para ponerlo en el sitio. No envíes la contraseña.",lk_on:"🔒 La contraseña del sitio está activa",lk_off:"🔓 Aún no hay contraseña",lk_new:"Contraseña nueva",lk_again:"Otra vez, para confirmar",lk_make:"Crear código",lk_send:"Este es el código a enviar (no la contraseña):",lk_copy:"Copiar",lk_copied:"Código copiado",lk_short:"Al menos 8 caracteres",lk_mismatch:"Las dos contraseñas no coinciden",lk_forget:"Olvidar este dispositivo (pedirá la contraseña la próxima vez)",lk_forgot:"La próxima vez se pedirá la contraseña",lock_prompt:"Contraseña",lock_remember:"Recordar en este dispositivo",lock_go:"Entrar",lock_wrong:"Contraseña incorrecta",rn_title:"✏️ Cambiar nombre de un empleado",rn_hint:"Aquí — no en la lista de arriba — el nombre nuevo se lleva todo el historial: horarios guardados, presupuesto de vacaciones, asignaciones fijas y el calendario de ausencias.",rn_new:"Nombre nuevo",rn_go:"Cambiar",rn_confirm:"¿Cambiar {a} por {b} en todo el sistema, incluidos todos los horarios guardados?",rn_bad:"Un nombre nuevo no puede estar vacío ni contener + o ,",rn_taken:"{b} ya existe",rn_done:"{a} ahora es {b}",log_rename:"Cambio de nombre: {a} → {b}",send_btn:"📲 Enviar a trabajadores",send_title:"📲 Un mensaje personal por trabajador",send_hint:"Cada trabajador recibe solo su semana, en el idioma de su grupo. Un toque abre el menú compartir — elige WhatsApp y al trabajador.",send_one:"Enviar",msg_free:"Libre",msg_holiday:"Feriado",grp_lang:"Idioma de los mensajes",why_btn:"💬 ¿Por qué?",why_week_word:"esta semana",why_raw:"{s}",why_person:"menos veces esta semana ({n} hasta ahora)",why_tie:"empate — menos últimamente",why_quota:"objetivo semanal: {v} × {n}",why_quota_any:"objetivo semanal: {n} veces",why_taxi_axis:"{s}: ruta {a} ({p}%)",why_axis:"ruta permitida para {v}",why_fit_axis:"hora que encaja con la ruta {a}",why_balance:"equilibrado en los últimos 90 días",s_fixed:"📌 Asignaciones fijas",fx_hint:"Una celda que se llena sola en cada semana nueva y que la Asignación Automática respeta como un valor escrito a mano. Quien esté ausente ese día no se asigna, y aparece una nota.",fx_none:"Aún no hay asignaciones fijas",fx_add:"➕ Añadir asignación fija",warn_fixed_away:"Asignación fija no aplicada — {e} está ausente ({r})",s_calendar:"🏖 Calendario de ausencias",cal_hint:"Vacaciones y viajes por adelantado. Entran solos en las filas de ausencia de la semana en que caen — al crear la semana y al abrirla. Las marcas a mano nunca se borran.",cal_none:"No hay ausencias planificadas",cal_vac:"Vacaciones",cal_trip:"Viaje",cal_from:"Desde",cal_to:"Hasta",cal_add:"➕ Añadir",cal_need_dates:"Elige una persona y las dos fechas",cal_backwards:"La fecha final es anterior a la inicial",undo_auto:"↶ Deshacer asignación",bal_title:"⚖️ Equilibrio de la semana",pdf_busy:"Preparando PDF…",pdf_fail:"No se pudo crear el PDF",pdf_ready:"PDF descargado",
 print_orient:"Orientación",print_portrait:"Vertical",print_landscape:"Horizontal",
 s_print:"🖨️ Ajustes de impresión",print_mode:"Modo de impresión",
 print_single:"Horario completo — una hoja A4 entera, una copia",
@@ -2693,6 +2700,7 @@ function viewSettings(){
   h+=sect("targets",t("s_targets"),tgt);
   h+=sect("fixed",t("s_fixed"),fixedPanel());
   h+=sect("calendar",t("s_calendar"),calendarPanel());
+  h+=sect("lock",t("s_lock"),lockPanel());
   h+=sect("notes",t("s_notes"),notesPanel());
   h+=sect("log",t("s_log"),logPanel());
   return h;
@@ -3911,9 +3919,9 @@ const GUIDE = [
   blocks:[
   {qa:[
    {q:{he:"האם הנתונים שלי מאובטחים?", en:"Is my data safe?", es:"¿Están seguros mis datos?"},
-    a:{he:"כל הנתונים שמורים רק על המכשיר שלך. שום מידע לא נשלח לאינטרנט ולא לשום שרת.",
-       en:"Everything is stored on your device alone. No information is sent to the internet or to any server.",
-       es:"Todo se guarda solo en tu dispositivo. No se envía información a internet ni a ningún servidor."}},
+    a:{he:"כל הנתונים שמורים רק על המכשיר שלך. שום מידע לא נשלח לאינטרנט ולא לשום שרת — האתר אפילו חוסם כל ניסיון לשלוח משהו לאתר אחר, ומבקש ממנועי חיפוש לא להציג אותו. אפשר גם לקבוע סיסמה לכניסה לאתר: הגדרות ← 🔒 סיסמה לאתר.",
+       en:"Everything is stored on your device alone. No information is sent to the internet or to any server — the site even blocks any attempt to send something to another site, and asks search engines not to list it. You can also set a password for the site: Settings → 🔒 Site password.",
+       es:"Todo se guarda solo en tu dispositivo. No se envía información a internet ni a ningún servidor — el sitio incluso bloquea cualquier intento de enviar algo a otro sitio, y pide a los buscadores no mostrarlo. También puedes poner una contraseña al sitio: Ajustes → 🔒 Contraseña del sitio."}},
    {q:{he:"מה קורה אם אמחק את האפליקציה?", en:"What if I remove the app?", es:"¿Y si quito la app?"},
     a:{he:"הנתונים עלולים להימחק יחד איתה. לכן חשוב לגבות באופן קבוע.",
        en:"Your data may be erased with it. That is why regular backups matter.",
@@ -4613,6 +4621,7 @@ function wireFixedAndCalendar(){
 }
 function wireSettings(){
   wireFixedAndCalendar();
+  wireLockPanel();
   const $r=id=>document.getElementById(id);
   if($r("rnGo")) $r("rnGo").onclick=()=>{
     const from=$r("rnFrom").value, to=$r("rnTo").value.trim();
@@ -5180,8 +5189,100 @@ function wireSettings(){
     reopen("labels"); });
 }
 
+/* ═══════════════ password screen ═══════════════ */
+/* A password for anyone who opens the site's address. Only a salted
+   PBKDF2 fingerprint lives here — never the password. The station makes the
+   fingerprint itself in Settings → 🔒 and has it pasted in below. This is a
+   door, not a safe: the code is public, so it stops visitors, not someone
+   who reads the source. The schedules themselves never leave the device.
+   null ⇒ no password. */
+const SITE_LOCK = null;
+const LOCK_ITER = 200000;
+const hex=b=>[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,"0")).join("");
+async function lockHash(pw, saltHex, iter){
+  const salt=new Uint8Array(saltHex.match(/../g).map(h=>parseInt(h,16)));
+  const key=await crypto.subtle.importKey("raw", new TextEncoder().encode(pw), "PBKDF2", false, ["deriveBits"]);
+  return hex(await crypto.subtle.deriveBits({name:"PBKDF2", hash:"SHA-256", salt, iterations:iter}, key, 256));
+}
+async function makeLockCode(pw){
+  const salt=hex(crypto.getRandomValues(new Uint8Array(16)));
+  return `v1:${salt}:${LOCK_ITER}:${await lockHash(pw,salt,LOCK_ITER)}`;
+}
+async function checkPassword(pw, code){
+  const m=/^v1:([0-9a-f]{32}):(\d+):([0-9a-f]{64})$/.exec(code||"");
+  if(!m) return false;
+  return (await lockHash(pw, m[1], +m[2]))===m[3];
+}
+/* the app, behind the door when there is one */
+function startApp(lock){
+  const old=document.getElementById("lockScreen"); if(old) old.remove();
+  let remembered=false;
+  try{ remembered=!!lock&&localStorage.getItem("agenda_unlock")===lock; }catch(e){}
+  if(!lock||remembered){ render(); return; }
+  document.getElementById("app").innerHTML="";
+  const el=document.createElement("div");
+  el.id="lockScreen"; el.className="lock-screen";
+  el.innerHTML=`<form class="lock-box" autocomplete="off">
+      <div class="lock-ico">🚕🔒</div>
+      <h2>${esc(t("app_title"))}</h2>
+      <label>${esc(t("lock_prompt"))}<br>
+        <input type="password" id="lockPw" autocomplete="current-password"></label>
+      <label class="chk"><input type="checkbox" id="lockRemember" checked> ${esc(t("lock_remember"))}</label>
+      <button class="btn primary" id="lockGo" type="submit">${esc(t("lock_go"))}</button>
+      <div class="lock-err" id="lockErr" role="alert"></div>
+    </form>`;
+  document.body.appendChild(el);
+  const pw=el.querySelector("#lockPw"), err=el.querySelector("#lockErr"), go=el.querySelector("#lockGo");
+  el.querySelector("form").onsubmit=async ev=>{
+    ev.preventDefault();
+    go.disabled=true; err.textContent="";
+    const good=await checkPassword(pw.value, lock);
+    if(good){
+      try{ if(el.querySelector("#lockRemember").checked) localStorage.setItem("agenda_unlock",lock);
+           else localStorage.removeItem("agenda_unlock"); }catch(e){}
+      el.remove(); render(); return;
+    }
+    /* a pause after every miss makes guessing slow */
+    await new Promise(r=>setTimeout(r,900));
+    err.textContent=t("lock_wrong"); pw.value=""; go.disabled=false; pw.focus();
+  };
+  setTimeout(()=>pw.focus(),50);
+}
+function lockPanel(){
+  return `<div class="hint">${t("lk_hint")}</div>
+    <p><b>${t(SITE_LOCK?"lk_on":"lk_off")}</b></p>
+    <div class="row-flex">
+      <label>${t("lk_new")}<br><input type="password" id="lkPw" autocomplete="new-password"></label>
+      <label>${t("lk_again")}<br><input type="password" id="lkPw2" autocomplete="new-password"></label>
+      <button class="btn primary" id="lkMake">${t("lk_make")}</button></div>
+    <div id="lkOut" style="display:none">
+      <div class="msg">${t("lk_send")}</div>
+      <textarea id="lkCode" readonly style="min-height:60px;direction:ltr;font-family:monospace"></textarea>
+      <button class="btn small" id="lkCopy">📋 ${t("lk_copy")}</button></div>
+    ${SITE_LOCK?`<p><button class="btn small" id="lkForget">🔓 ${t("lk_forget")}</button></p>`:""}`;
+}
+function wireLockPanel(){
+  const $=id=>document.getElementById(id);
+  if(!$("lkMake")) return;
+  $("lkMake").onclick=async()=>{
+    const a=$("lkPw").value, b=$("lkPw2").value;
+    if(a.length<8){ toast("⚠️ "+t("lk_short")); return; }
+    if(a!==b){ toast("⚠️ "+t("lk_mismatch")); return; }
+    $("lkMake").disabled=true;
+    const code=await makeLockCode(a);
+    $("lkPw").value=""; $("lkPw2").value=""; $("lkMake").disabled=false;
+    $("lkCode").value=code; $("lkOut").style.display="";
+  };
+  $("lkCopy").onclick=()=>{ const v=$("lkCode").value;
+    (navigator.clipboard?navigator.clipboard.writeText(v):Promise.reject()).then(()=>toast("✅ "+t("lk_copied")))
+      .catch(()=>{ $("lkCode").select(); }); };
+  if($("lkForget")) $("lkForget").onclick=()=>{
+    try{ localStorage.removeItem("agenda_unlock"); }catch(e){}
+    toast("🔒 "+t("lk_forgot")); };
+}
+
 /* ═══════════════ boot ═══════════════ */
-render();
+startApp(SITE_LOCK);
 if("serviceWorker" in navigator && location.protocol.startsWith("http")){
   /* updateViaCache:"none" is the half of this that is easy to miss: the host
      serves service-worker.js with max-age=600, so without it the browser can

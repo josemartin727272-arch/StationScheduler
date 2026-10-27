@@ -617,6 +617,66 @@ await test("hardening: the PDF still builds under the policy", async()=>{
   ok(b&&b.size>5000,"no PDF");
 });
 
+/* ── v52 · password screen ─────────────────────────────────────────────── */
+await test("lock: a code made from a password checks that password and no other", async()=>{
+  const code=await makeLockCode("taxi-Secret 2026");
+  ok(/^v1:[0-9a-f]{32}:\d+:[0-9a-f]{64}$/.test(code),"code shape: "+code);
+  ok(!code.includes("Secret"),"the password is inside the code");
+  ok(await checkPassword("taxi-Secret 2026",code),"right password refused");
+  ok(!(await checkPassword("taxi-secret 2026",code)),"wrong password accepted");
+});
+await test("lock: with a site lock the app stays hidden until the password is given", async()=>{
+  const code=await makeLockCode("abcd1234");
+  localStorage.removeItem("agenda_unlock");
+  document.getElementById("app").innerHTML="";
+  startApp(code); await tick();
+  const ls=document.getElementById("lockScreen");
+  /* fixed-position: offsetParent is always null, so measure it instead */
+  ok(ls&&ls.getBoundingClientRect().width>200&&getComputedStyle(ls).display!=="none","no lock screen");
+  eq(document.getElementById("app").innerHTML,"","app drawn behind the lock");
+  document.getElementById("lockPw").value="wrong-one"; document.getElementById("lockGo").click();
+  await new Promise(r=>setTimeout(r,1500));
+  ok(document.getElementById("lockScreen"),"wrong password let in");
+  ok(document.getElementById("lockErr").textContent.length>0,"no error shown");
+  document.getElementById("lockPw").value="abcd1234"; document.getElementById("lockRemember").checked=true;
+  document.getElementById("lockGo").click();
+  await new Promise(r=>setTimeout(r,1500));
+  ok(!document.getElementById("lockScreen"),"right password kept out");
+  ok(document.getElementById("app").innerHTML.length>0,"app not drawn after unlock");
+  ok(!Object.values(localStorage).some(v=>String(v).includes("abcd1234")),"password stored in plain text");
+  /* remembered: the next open goes straight in */
+  document.getElementById("app").innerHTML=""; startApp(code); await tick();
+  ok(!document.getElementById("lockScreen"),"asked again on a remembered device");
+});
+await test("lock: without 'remember' the next open asks again", async()=>{
+  const code=await makeLockCode("abcd1234");
+  localStorage.removeItem("agenda_unlock");
+  startApp(code); await tick();
+  document.getElementById("lockPw").value="abcd1234"; document.getElementById("lockRemember").checked=false;
+  document.getElementById("lockGo").click(); await new Promise(r=>setTimeout(r,1500));
+  startApp(code); await tick();
+  ok(document.getElementById("lockScreen"),"remembered without being asked to");
+  document.getElementById("lockScreen").remove();
+});
+await test("lock: no site lock means the app opens as before", async()=>{
+  document.getElementById("app").innerHTML=""; startApp(null); await tick();
+  ok(!document.getElementById("lockScreen"),"lock shown with no lock set");
+  ok(document.getElementById("app").innerHTML.length>0,"app not drawn");
+});
+await test("lock: Settings turn a password into a code to send, refusing short or mismatched ones", async()=>{
+  S.screen="settings"; render(); reopen("lock"); await tick();
+  const f=id=>document.getElementById(id);
+  ok(f("lkPw")&&f("lkPw2")&&f("lkMake"),"no password form");
+  f("lkPw").value="short"; f("lkPw2").value="short"; f("lkMake").click(); await new Promise(r=>setTimeout(r,800));
+  ok(!f("lkCode")||!f("lkCode").value,"made a code for a short password");
+  f("lkPw").value="abcdefgh9"; f("lkPw2").value="abcdefgh8"; f("lkMake").click(); await new Promise(r=>setTimeout(r,800));
+  ok(!f("lkCode")||!f("lkCode").value,"made a code for mismatched passwords");
+  f("lkPw").value="abcdefgh9"; f("lkPw2").value="abcdefgh9"; f("lkMake").click(); await new Promise(r=>setTimeout(r,1500));
+  const code=f("lkCode")&&f("lkCode").value;
+  ok(code&&await checkPassword("abcdefgh9",code),"code does not match the password");
+  eq(f("lkPw").value,"","password left in the field");
+});
+
 CFG=JSON.parse(__origCfg);
 window.__results=results;
 return results;
