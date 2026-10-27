@@ -677,6 +677,26 @@ await test("lock: Settings turn a password into a code to send, refusing short o
   eq(f("lkPw").value,"","password left in the field");
 });
 
+/* ── v54 · the guide, end to end ──────────────────────────────────────── */
+await test("guide: every chapter renders in all three languages, quick start open", async()=>{
+  const ids=["intro","start","screens","setup","build","print","vacation","archive","stats","install","faq","tips","news"];
+  for(const lg of ["he","en","es"]){
+    S.lang=lg; S.screen="guide"; render(); await tick();
+    const ch=[...document.querySelectorAll("details.guide-ch")];
+    eq(ch.map(d=>d.dataset.guide).join(","),ids.join(","),lg+" chapters");
+    ch.forEach(d=>ok(d.querySelector(".guide-body").textContent.trim().length>60,lg+" "+d.dataset.guide+" empty"));
+    ok(document.querySelector('details.guide-ch[data-guide="start"]').open,lg+" quick start closed");
+  }
+  S.lang="he";
+});
+await test("guide: it covers every feature a new worker meets", async()=>{
+  S.lang="he"; S.screen="guide"; render(); await tick();
+  const tx=document.getElementById("app").textContent;
+  ["🔒","📌","🏖","💬","↶","⚖️","📲","📄","✏️","% שימוש בציר","מונית מיוחדת","לוח חופשות","שפת ההודעות","גיבוי"]
+    .forEach(w=>ok(tx.includes(w),"guide misses "+w));
+  ok(!tx.includes("בהגדרות ← 🖨️ הגדרות הדפסה"),"stale text: print settings in Settings");
+});
+
 CFG=JSON.parse(__origCfg);
 window.__results=results;
 return results;
